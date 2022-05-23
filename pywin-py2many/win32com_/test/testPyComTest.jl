@@ -12,6 +12,8 @@ import _thread
 
 sys.coinit_flags = 0
 
+
+
 import winerror
 import win32com_
 import win32com_.client.connect
@@ -24,13 +26,13 @@ import decimal
 import win32timezone
 importMsg = "**** PyCOMTest is not installed ***\n  PyCOMTest is a Python test specific COM client and server.\n  It is likely this server is not installed on this machine\n  To install the server, you must get the win32com_ sources\n  and build it using MS Visual C++"
 abstract type AbstractRandomEventHandler end
-abstract type AbstractNewStyleRandomEventHandler <: Abstractobject end
-abstract type AbstractTester <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractNewStyleRandomEventHandler <: object end
+abstract type AbstractTester <: win32com_.test.util.TestCase end
 error = Exception
 RegisterPythonServer(join, "Python.Test.PyCOMTest")
 using win32com_.client: gencache
 try
-    EnsureModule(gencache, "{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
+    gencache.EnsureModule("{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
 catch exn
     if exn isa pythoncom.com_error
         println("The PyCOMTest module can not be located or generated.")
@@ -39,7 +41,7 @@ catch exn
     end
 end
 using win32com_: universal
-RegisterInterfaces(universal, "{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
+universal.RegisterInterfaces("{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
 verbose = 0
 function check_get_set(func, arg)
     got = func(arg)
@@ -289,9 +291,9 @@ function TestCommon(o, is_generated)
     TestConstant("CharTest", -1)
     TestConstant("StringTest", "Hello Wo®ld")
     progress()
-    now = now(win32timezone)
+    now = win32timezone.now()
     now = replace(now, 0)
-    later = now + timedelta(datetime, 1)
+    later = now + datetime.timedelta(1)
     TestApplyResult(o.EarliestDate, (now, later), now)
     @assert(
         MakeDate(o, 18712.308206013888) ==
@@ -303,14 +305,14 @@ function TestCommon(o, is_generated)
         throw(error("Expecting 0, got %r" % (o.CurrencyProp,)))
     end
     for val in ("1234.5678", "1234.56", "1234")
-        o.CurrencyProp = Decimal(decimal, val)
-        if o.CurrencyProp != Decimal(decimal, val)
+        o.CurrencyProp = decimal.Decimal(val)
+        if o.CurrencyProp != decimal.Decimal(val)
             throw(error("%s got %r" % (val, o.CurrencyProp)))
         end
     end
-    v1 = Decimal(decimal, "1234.5678")
+    v1 = decimal.Decimal("1234.5678")
     TestApplyResult(o.DoubleCurrency, (v1,), v1 * 2)
-    v2 = Decimal(decimal, "9012.3456")
+    v2 = decimal.Decimal("9012.3456")
     TestApplyResult(o.AddCurrencies, (v1, v2), v1 + v2)
     TestTrickyTypesWithVariants(o, is_generated)
     progress()
@@ -377,7 +379,7 @@ function TestTrickyTypesWithVariants(o, is_generated)
         got = v.value
     end
     @assert(got == "foofoo")
-    val = Decimal(decimal, "1234.5678")
+    val = decimal.Decimal("1234.5678")
     if is_generated
         got = DoubleCurrencyByVal(o, val)
     else
@@ -390,9 +392,9 @@ end
 
 function TestDynamic()
     progress()
-    o = DumbDispatch(win32com_.client.dynamic, "PyCOMTest.PyCOMTest")
+    o = win32com_.client.dynamic.DumbDispatch("PyCOMTest.PyCOMTest")
     TestCommon(o, false)
-    counter = DumbDispatch(win32com_.client.dynamic, "PyCOMTest.SimpleCounter")
+    counter = win32com_.client.dynamic.DumbDispatch("PyCOMTest.SimpleCounter")
     TestCounter(counter, false)
     try
         check_get_set_raises(ValueError, o.GetSetInt, "foo")
@@ -507,7 +509,7 @@ function TestEvents(o, handler)
             session = Start(o)
             push!(sessions, session)
         end
-        sleep(time, 0.5)
+        time.sleep(0.5)
     finally
         for session in sessions
             Stop(o, session)
@@ -591,7 +593,7 @@ end
 function TestCounter(counter, bIsGenerated)
     progress()
     for i = 0:49
-        num = Int(pylib::random::random() * length(counter))
+        num = Int(pylib::random::random()() * length(counter))
         try
             if bIsGenerated
                 ret = Item(counter, num + 1)
@@ -676,8 +678,7 @@ function TestVTable(clsctx = pythoncom.CLSCTX_ALL)
     ob = Dispatch(win32com_.client, "Python.Test.PyCOMTest")
     TestLocalVTable(ob)
     tester = Dispatch(win32com_.client, "PyCOMTest.PyCOMTest")
-    testee = CoCreateInstance(
-        pythoncom,
+    testee = pythoncom.CoCreateInstance(
         "Python.Test.PyCOMTest",
         nothing,
         clsctx,
@@ -701,7 +702,7 @@ function TestVTable2()
     clsid = "Python.Test.PyCOMTest"
     clsctx = pythoncom.CLSCTX_SERVER
     try
-        testee = CoCreateInstance(pythoncom, clsid, nothing, clsctx, iid)
+        testee = pythoncom.CoCreateInstance(clsid, nothing, clsctx, iid)
     catch exn
         if exn isa TypeError
             #= pass =#
@@ -711,8 +712,7 @@ end
 
 function TestVTableMI()
     clsctx = pythoncom.CLSCTX_SERVER
-    ob = CoCreateInstance(
-        pythoncom,
+    ob = pythoncom.CoCreateInstance(
         "Python.Test.PyCOMTestMI",
         nothing,
         clsctx,
@@ -751,6 +751,7 @@ function TestQueryInterface(long_lived_server = 0, iterations = 5)
 end
 
 mutable struct Tester <: AbstractTester
+
 end
 function testVTableInProc(self::Tester)
     for i = 0:2
@@ -796,7 +797,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
         #= pass =#
     end
 
-    start_new(_thread, NullThreadFunc, ())
+    _thread.start_new(NullThreadFunc, ())
     if "-v" ∈ append!([PROGRAM_FILE], ARGS)
         verbose = 1
     end

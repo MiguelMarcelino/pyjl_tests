@@ -67,7 +67,7 @@ function make_framework_support(
          =#
     fin = readline(header_file_name)
     try
-        interface = parse_interface_info(makegwparse, interface_name, fin)
+        interface = makegwparse.parse_interface_info(interface_name, fin)
     finally
         close(fin)
     end
@@ -147,7 +147,9 @@ function _write_ifc_cpp(f, interface)
         "// ---------------------------------------------------\n//\n// Interface Implementation\n\nPy%(name)s::Py%(name)s(IUnknown *pdisp):\n\tPy%(base)s(pdisp)\n{\n\tob_type = &type;\n}\n\nPy%(name)s::~Py%(name)s()\n{\n}\n\n/* static */ %(name)s *Py%(name)s::GetI(PyObject *self)\n{\n\treturn (%(name)s *)Py%(base)s::GetI(self);\n}\n\n" %
         interface.__dict__,
     )
-    ptr = replace(interface.name, Regex("[a-z]") => s"")
+    ptr =
+    # Unsupported use of re.sub with less than 3 arguments
+        sub()("[a-z]", "", interface.name)
     strdict = Dict("interfacename" => interface.name, "ptr" => ptr)
     for method in interface.methods
         strdict["method"] = method.name
@@ -167,7 +169,7 @@ function _write_ifc_cpp(f, interface)
         needConversion = 0
         for arg in method.args
             try
-                argCvt = make_arg_converter(makegwparse, arg)
+                argCvt = makegwparse.make_arg_converter(arg)
                 if HasAttribute(arg, "in")
                     val = GetFormatChar(argCvt)
                     if val
@@ -252,7 +254,7 @@ function _write_ifc_cpp(f, interface)
                 continue
             end
             try
-                argCvt = make_arg_converter(makegwparse, arg)
+                argCvt = makegwparse.make_arg_converter(arg)
                 formatChar = GetFormatChar(argCvt)
                 if formatChar
                     formatChars = formatChars + formatChar
@@ -397,7 +399,7 @@ function _write_gw_cpp(f, interface)
                 end
                 if HasAttribute(arg, "in")
                     try
-                        argCvt = make_arg_converter(makegwparse, arg)
+                        argCvt = makegwparse.make_arg_converter(arg)
                         SetGatewayMode(argCvt)
                         formatchar = GetFormatChar(argCvt)
                         needConversion = needConversion || NeedUSES_CONVERSION(argCvt)
@@ -469,7 +471,7 @@ function _write_gw_cpp(f, interface)
                     continue
                 end
                 try
-                    argCvt = make_arg_converter(makegwparse, arg)
+                    argCvt = makegwparse.make_arg_converter(arg)
                     SetGatewayMode(argCvt)
                     val = GetFormatChar(argCvt)
                     if val

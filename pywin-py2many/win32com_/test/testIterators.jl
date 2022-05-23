@@ -1,17 +1,18 @@
 using PyCall
 pythoncom = pyimport("pythoncom")
 
+
 using win32com_.client.gencache: EnsureDispatch
 using win32com_.client: Dispatch
 import win32com_.server.util
 import win32com_.test.util
 
-abstract type Abstract_BaseTestCase <: Abstractwin32com_.test.util.TestCase end
+abstract type Abstract_BaseTestCase <: win32com_.test.util.TestCase end
 abstract type AbstractVBTestCase <: Abstract_BaseTestCase end
 abstract type AbstractSomeObject end
 abstract type AbstractWrappedPythonCOMServerTestCase <: Abstract_BaseTestCase end
 mutable struct _BaseTestCase <: Abstract_BaseTestCase
-    expected_data
+    expected_data::Any
 end
 function test_enumvariant_vb(self::_BaseTestCase)
     ob, iter = iter_factory(self)
@@ -83,9 +84,9 @@ function test_nonenum_wrapper(self::_BaseTestCase)
 end
 
 mutable struct VBTestCase <: AbstractVBTestCase
-    object
-    expected_data::Vector{Union{String, Int64}}
-    iter_factory
+    object::Any
+    expected_data::Vector{Union{String,Int64}}
+    iter_factory::Any
 end
 function setUp(self::VBTestCase)
     function factory()::Tuple
@@ -108,20 +109,20 @@ function tearDown(self::VBTestCase)
 end
 
 mutable struct SomeObject <: AbstractSomeObject
-    data
+    data::Any
     _public_methods_::Vector{String}
 
     SomeObject(data, _public_methods_::Vector{String} = ["GetCollection"]) =
         new(data, _public_methods_)
 end
 function GetCollection(self::SomeObject)
-    return NewCollection(win32com_.server.util, self.data)
+    return win32com_.server.util.NewCollection(self.data)
 end
 
 mutable struct WrappedPythonCOMServerTestCase <: AbstractWrappedPythonCOMServerTestCase
-    expected_data::Vector{Union{String, Int64}}
-    object
-    iter_factory
+    expected_data::Vector{Union{String,Int64}}
+    object::Any
+    iter_factory::Any
 end
 function setUp(self::WrappedPythonCOMServerTestCase)
     function factory()::Tuple
@@ -132,7 +133,7 @@ function setUp(self::WrappedPythonCOMServerTestCase)
     end
 
     self.expected_data = [1, "Two", 3]
-    sv = wrap(win32com_.server.util, SomeObject(self.expected_data))
+    sv = win32com_.server.util.wrap(SomeObject(self.expected_data))
     self.object = Dispatch(sv)
     self.iter_factory = factory
 end
@@ -142,12 +143,12 @@ function tearDown(self::WrappedPythonCOMServerTestCase)
 end
 
 function suite()
-    suite = TestSuite(unittest)
+    suite = unittest.TestSuite()
     for item in collect(values(globals()))
         if type_(item) == type_(unittest.TestCase) &&
            item <: unittest.TestCase &&
            item != _BaseTestCase
-            addTest(suite, makeSuite(unittest, item))
+            addTest(suite, unittest.makeSuite(item))
         end
     end
     return suite

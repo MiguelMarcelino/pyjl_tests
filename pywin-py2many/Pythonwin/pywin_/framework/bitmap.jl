@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import glob
 
 import win32con
@@ -10,15 +10,15 @@ import string
 include("app.jl")
 
 using win32com_.gen_py.mfc: docview, window
-abstract type AbstractBitmapDocument <: Abstractdocview.Document end
-abstract type AbstractBitmapView <: Abstractdocview.ScrollView end
-abstract type AbstractBitmapFrame <: Abstractwindow.MDIChildWnd end
-abstract type AbstractBitmapTemplate <: Abstractdocview.DocTemplate end
+abstract type AbstractBitmapDocument <: docview.Document end
+abstract type AbstractBitmapView <: docview.ScrollView end
+abstract type AbstractBitmapFrame <: window.MDIChildWnd end
+abstract type AbstractBitmapTemplate <: docview.DocTemplate end
 bStretch = 1
 mutable struct BitmapDocument <: AbstractBitmapDocument
     #= A bitmap document.  Holds the bitmap data itself. =#
-    bitmap
-    size
+    bitmap::Any
+    size::Any
 
     BitmapDocument(template) = begin
         docview.Document.__init__(self, template)
@@ -93,6 +93,7 @@ function OnDraw(self::BitmapView, dc)
 end
 
 mutable struct BitmapFrame <: AbstractBitmapFrame
+
 end
 function OnCreateClient(self::BitmapFrame, createparams, context)::Int64
     borderX = GetSystemMetrics(win32api, win32con.SM_CXFRAME)
@@ -110,6 +111,8 @@ function OnCreateClient(self::BitmapFrame, createparams, context)::Int64
 end
 
 mutable struct BitmapTemplate <: AbstractBitmapTemplate
+
+
     BitmapTemplate() = begin
         docview.DocTemplate.__init__(
             self,

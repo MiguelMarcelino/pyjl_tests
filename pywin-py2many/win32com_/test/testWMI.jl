@@ -1,8 +1,9 @@
 using win32com_.client: GetObject
 import win32com_.test.util
 
-abstract type AbstractSimple <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractSimple <: win32com_.test.util.TestCase end
 mutable struct Simple <: AbstractSimple
+
 end
 function testit(self::Simple)
     cses = InstancesOf(GetObject("WinMgMts:"), "Win32_Process")

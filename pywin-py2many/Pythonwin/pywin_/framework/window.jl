@@ -1,6 +1,6 @@
 import win32com_.gen_py.mfc.window
 import win32con
-abstract type AbstractMDIChildWnd <: Abstractwin32com_.gen_py.mfc.window.MDIChildWnd end
+abstract type AbstractMDIChildWnd <: win32com_.gen_py.mfc.window.MDIChildWnd end
 mutable struct MDIChildWnd <: AbstractMDIChildWnd
 
 end

@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 import win32com_.gen_py.scintilla.view
 using win32com_.gen_py.mfc: dialog
@@ -10,8 +10,8 @@ import win32con
 
 using win32com_.gen_py.framework.editor: GetEditorOption, SetEditorOption, DeleteEditorOption, GetEditorFontOption, SetEditorFontOption, defaultCharacterFormat, editorTemplate
 import win32com_.gen_py.scintilla.config
-abstract type AbstractEditorPropertyPage <: Abstractdialog.PropertyPage end
-abstract type AbstractEditorWhitespacePropertyPage <: Abstractdialog.PropertyPage end
+abstract type AbstractEditorPropertyPage <: dialog.PropertyPage end
+abstract type AbstractEditorWhitespacePropertyPage <: dialog.PropertyPage end
 paletteVGA = (("Black", 0, 0, 0), ("Navy", 0, 0, 128), ("Green", 0, 128, 0), ("Cyan", 0, 128, 128), ("Maroon", 128, 0, 0), ("Purple", 128, 0, 128), ("Olive", 128, 128, 0), ("Gray", 128, 128, 128), ("Silver", 192, 192, 192), ("Blue", 0, 0, 255), ("Lime", 0, 255, 0), ("Aqua", 0, 255, 255), ("Red", 255, 0, 0), ("Fuchsia", 255, 0, 255), ("Yellow", 255, 255, 0), ("White", 255, 255, 255))
 mutable struct EditorPropertyPage <: AbstractEditorPropertyPage
 autooptions::Vector

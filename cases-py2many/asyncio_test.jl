@@ -1,4 +1,5 @@
 
+
 @async function nested()
     return 42
 end
@@ -20,6 +21,6 @@ end
     end
 end
 if abspath(PROGRAM_FILE) == @__FILE__
-    run(asyncio, async_main())
-    run(asyncio, echo_server())
+    asyncio.run(async_main())
+    asyncio.run(echo_server())
 end

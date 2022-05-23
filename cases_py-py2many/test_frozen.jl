@@ -20,9 +20,7 @@ end
 @test (getvalue(out) == "Hello world!\n")
 end
 
-function main()
+if abspath(PROGRAM_FILE) == @__FILE__
 test_frozen = TestFrozen()
 test_frozen(test_frozen)
 end
-
-main()

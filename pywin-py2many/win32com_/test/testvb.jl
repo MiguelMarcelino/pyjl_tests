@@ -2,6 +2,7 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 import copy
 
+
 import winerror
 import win32com_.client
 import win32com_.client.dynamic
@@ -416,7 +417,7 @@ function TestStructs(vbtest)
         end
     end
     @assert(s != s.sub_val)
-    s2 = copy(copy, s)
+    s2 = copy.copy(s)
     @assert(s != s2)
     @assert(s === s2)
     s2.int_val = 123
@@ -424,7 +425,7 @@ function TestStructs(vbtest)
     s2 = GetStructFunc(vbtest)
     @assert(s === s2)
     SetStructSub(vbtest, s2)
-    s = Record(win32com_.client, "VBStruct", vbtest)
+    s = win32com_.client.Record("VBStruct", vbtest)
     @assert(s.int_val == 0)
     s.int_val = -1
     SetStructSub(vbtest, s)
@@ -522,16 +523,16 @@ function TestObjectSemantics(ob)
 end
 
 function DoTestAll()
-    o = Dispatch(win32com_.client, "PyCOMVBTest.Tester")
+    o = win32com_.client.Dispatch("PyCOMVBTest.Tester")
     TestObjectSemantics(o)
     TestVB(o, 1)
-    o = DumbDispatch(win32com_.client.dynamic, "PyCOMVBTest.Tester")
+    o = win32com_.client.dynamic.DumbDispatch("PyCOMVBTest.Tester")
     TestObjectSemantics(o)
     TestVB(o, 0)
 end
 
 function TestAll()
-    EnsureDispatch(win32com_.client.gencache, "PyCOMVBTest.Tester")
+    win32com_.client.gencache.EnsureDispatch("PyCOMVBTest.Tester")
     if !(__debug__)
         throw(RuntimeError("This must be run in debug mode - we use assert!"))
     end
@@ -540,18 +541,18 @@ function TestAll()
         println("All tests appear to have worked!")
     catch exn
         println("TestAll() failed!!")
-        current_exceptions() != [] ? current_exceptions()[end] : nothing
+        current_exceptions() != [] ? current_exceptions()[end] : nothing()
         error()
     end
 end
 
 function suite()
-    test = CapturingFunctionTestCase(util, TestAll, "VB tests")
-    suite = TestSuite(unittest)
+    test = util.CapturingFunctionTestCase(TestAll, "VB tests")
+    suite = unittest.TestSuite()
     addTest(suite, test)
     return suite
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    testmain(util)
+    util.testmain()
 end

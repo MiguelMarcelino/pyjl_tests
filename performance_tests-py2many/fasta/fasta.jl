@@ -1,4 +1,5 @@
 using BisectPy
+using ResumableFunctions
 
 alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 iub = collect(
@@ -13,16 +14,12 @@ homosapiens = [
     ("g", 0.1975473066391),
     ("t", 0.3015094502008),
 ]
-function genRandom(ia = 3877, ic = 29573, im = 139968)
-    Channel() do ch_genRandom
-        Channel() do ch_genRandom
-            seed = 42
-            imf = float(im)
-            while true
-                seed = (seed * ia + ic) % im
-                put!(ch_genRandom, seed / imf)
-            end
-        end
+@resumable function genRandom(ia = 3877, ic = 29573, im = 139968)
+    seed = 42
+    imf = float(im)
+    while true
+        seed = (seed * ia + ic) % im
+        @yield seed / imf
     end
 end
 
@@ -55,15 +52,16 @@ end
 function randomFasta(table, n::Int64)
     width = 60
     r = 0:width-1
+    gR = Random
     bb = bisect_right
     jn = x -> join(x, "")
     probs, chars = makeCumulative(table)
     for j = 0:n÷width-1
-        x = jn([chars[bb(probs, take!(Random))] for i in r])
+        x = jn([chars[bb(probs, gR())] for i in r])
         println(x)
     end
     if (n % width) != 0
-        println(jn([chars[bb(probs, take!(Random))] for i = 0:n%width-1]))
+        println(jn([chars[bb(probs, gR())] for i = 0:n%width-1]))
     end
 end
 

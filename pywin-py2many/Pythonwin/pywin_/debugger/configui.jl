@@ -4,9 +4,9 @@ import win32com_.gen_py.debugger
 include("dbgcon.jl")
 using win32com_.gen_py.mfc: dialog
 
-abstract type AbstractDebuggerOptionsPropPage <: Abstractdialog.PropertyPage end
+abstract type AbstractDebuggerOptionsPropPage <: dialog.PropertyPage end
 mutable struct DebuggerOptionsPropPage <: AbstractDebuggerOptionsPropPage
-    options
+    options::Any
 
     DebuggerOptionsPropPage() = begin
         dialog.PropertyPage.__init__(self, win32ui.IDD_PP_DEBUGGER)

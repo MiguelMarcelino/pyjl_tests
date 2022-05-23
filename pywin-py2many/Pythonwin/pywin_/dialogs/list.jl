@@ -1,17 +1,17 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using win32com_.gen_py.mfc: dialog
 import win32con
 import commctrl
-abstract type AbstractListDialog <: Abstractdialog.Dialog end
+abstract type AbstractListDialog <: dialog.Dialog end
 abstract type AbstractListsDialog <: AbstractListDialog end
 mutable struct ListDialog <: AbstractListDialog
-    items
-    selecteditem
-    itemsControl
-    butOK
-    butCancel
+    items::Any
+    selecteditem::Any
+    itemsControl::Any
+    butOK::Any
+    butCancel::Any
 
     ListDialog(title, list) = begin
         dialog.Dialog.__init__(self, _maketemplate(title))
@@ -96,8 +96,8 @@ function on_size(self::ListDialog, params)
 end
 
 mutable struct ListsDialog <: AbstractListsDialog
-    colHeadings
-    items
+    colHeadings::Any
+    items::Any
 
     ListsDialog(title, list, colHeadings = ["Item"]) = begin
         ListDialog(title, list)

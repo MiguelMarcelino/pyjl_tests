@@ -4,14 +4,14 @@ using win32com_.gen_py.mfc: dialog
 using win32com_.gen_py.framework: interact
 
 import win32con
-abstract type AbstractOptionsPropPage <: Abstractdialog.PropertyPage end
+abstract type AbstractOptionsPropPage <: dialog.PropertyPage end
 buttonControlMap = Dict(
     win32ui.IDC_BUTTON1 => win32ui.IDC_EDIT1,
     win32ui.IDC_BUTTON2 => win32ui.IDC_EDIT2,
     win32ui.IDC_BUTTON3 => win32ui.IDC_EDIT3,
 )
 mutable struct OptionsPropPage <: AbstractOptionsPropPage
-    HandleCharFormatChange
+    HandleCharFormatChange::Any
 
     OptionsPropPage() = begin
         dialog.PropertyPage.__init__(self, win32ui.IDD_PP_IDE)

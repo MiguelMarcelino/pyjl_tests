@@ -59,7 +59,7 @@ function Exec(self::Interpreter, exp)
 end
 
 function Register()
-    return UseCommandLine(win32com_.server.register, Interpreter)
+    return win32com_.server.register.UseCommandLine(Interpreter)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

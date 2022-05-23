@@ -28,29 +28,30 @@ import threading
 import win32com_.client
 import win32event
 
+
 using testServers: InterpCase
-abstract type AbstractThreadInterpCase <: AbstractInterpCase end
+abstract type AbstractThreadInterpCase <: InterpCase end
 freeThreaded = 1
 mutable struct ThreadInterpCase <: AbstractThreadInterpCase
-    BeginThreadsSimpleMarshal
+    BeginThreadsSimpleMarshal::Any
 end
 function _testInterpInThread(self::ThreadInterpCase, stopEvent, interp)
     try
         _doTestInThread(self, interp)
     finally
-        SetEvent(win32event, stopEvent)
+        win32event.SetEvent(stopEvent)
     end
 end
 
 function _doTestInThread(self::ThreadInterpCase, interp)
-    CoInitialize(pythoncom)
-    myThread = GetCurrentThreadId(win32api)
+    pythoncom.CoInitialize()
+    myThread = win32api.GetCurrentThreadId()
     if freeThreaded != 0
-        interp = CoGetInterfaceAndReleaseStream(pythoncom, interp, pythoncom.IID_IDispatch)
-        interp = Dispatch(win32com_.client, interp)
+        interp = pythoncom.CoGetInterfaceAndReleaseStream(interp, pythoncom.IID_IDispatch)
+        interp = win32com_.client.Dispatch(interp)
     end
     Exec(interp, "import win32api")
-    CoUninitialize(pythoncom)
+    pythoncom.CoUninitialize()
 end
 
 function BeginThreadsSimpleMarshal(self::ThreadInterpCase, numThreads)
@@ -60,18 +61,17 @@ function BeginThreadsSimpleMarshal(self::ThreadInterpCase, numThreads)
 
             Returns the handles the threads will set when complete.
              =#
-    interp = Dispatch(win32com_.client, "Python.Interpreter")
+    interp = win32com_.client.Dispatch("Python.Interpreter")
     events = []
     threads = []
     for i = 0:numThreads-1
-        hEvent = CreateEvent(win32event, nothing, 0, 0, nothing)
+        hEvent = win32event.CreateEvent(nothing, 0, 0, nothing)
         push!(events, hEvent)
-        interpStream = CoMarshalInterThreadInterfaceInStream(
-            pythoncom,
+        interpStream = pythoncom.CoMarshalInterThreadInterfaceInStream(
             pythoncom.IID_IDispatch,
             interp._oleobj_,
         )
-        t = Thread(threading, self._testInterpInThread, (hEvent, interpStream))
+        t = threading.Thread(self._testInterpInThread, (hEvent, interpStream))
         setDaemon(t, 1)
         start(t)
         push!(threads, t)
@@ -87,10 +87,9 @@ function BeginThreadsFastMarshal(self::ThreadInterpCase, numThreads)
 
             Returns the handles the threads will set when complete.
              =#
-    interp = Dispatch(win32com_.client, "Python.Interpreter")
+    interp = win32com_.client.Dispatch("Python.Interpreter")
     if freeThreaded != 0
-        interp = CoMarshalInterThreadInterfaceInStream(
-            pythoncom,
+        interp = pythoncom.CoMarshalInterThreadInterfaceInStream(
             pythoncom.IID_IDispatch,
             interp._oleobj_,
         )
@@ -98,8 +97,8 @@ function BeginThreadsFastMarshal(self::ThreadInterpCase, numThreads)
     events = []
     threads = []
     for i = 0:numThreads-1
-        hEvent = CreateEvent(win32event, nothing, 0, 0, nothing)
-        t = Thread(threading, self._testInterpInThread, (hEvent, interp))
+        hEvent = win32event.CreateEvent(nothing, 0, 0, nothing)
+        t = threading.Thread(self._testInterpInThread, (hEvent, interp))
         setDaemon(t, 1)
         start(t)
         push!(events, hEvent)
@@ -114,10 +113,9 @@ function _DoTestMarshal(self::ThreadInterpCase, fn, bCoWait = 0)
     while true
         try
             if bCoWait
-                rc = CoWaitForMultipleHandles(pythoncom, 0, 2000, events)
+                rc = pythoncom.CoWaitForMultipleHandles(0, 2000, events)
             else
-                rc = MsgWaitForMultipleObjects(
-                    win32event,
+                rc = win32event.MsgWaitForMultipleObjects(
                     events,
                     0,
                     2000,
@@ -132,12 +130,12 @@ function _DoTestMarshal(self::ThreadInterpCase, fn, bCoWait = 0)
                     break
                 end
             elseif rc == (win32event.WAIT_OBJECT_0 + length(events))
-                PumpWaitingMessages(pythoncom)
+                pythoncom.PumpWaitingMessages()
             else
                 @printf(
                     "Waiting for thread to stop with interfaces=%d, gateways=%d\n",
-                    _GetInterfaceCount(pythoncom),
-                    _GetGatewayCount(pythoncom)
+                    pythoncom._GetInterfaceCount(),
+                    pythoncom._GetGatewayCount()
                 )
             end
         catch exn

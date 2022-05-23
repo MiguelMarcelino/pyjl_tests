@@ -5,9 +5,9 @@ import dialog
 import win32con
 import commctrl
 abstract type AbstractRegistryControl end
-abstract type AbstractRegEditPropertyPage <: Abstractdialog.PropertyPage end
+abstract type AbstractRegEditPropertyPage <: dialog.PropertyPage end
 abstract type AbstractRegistryPage <: AbstractRegEditPropertyPage end
-abstract type AbstractRegistrySheet <: Abstractdialog.PropertySheet end
+abstract type AbstractRegistrySheet <: dialog.PropertySheet end
 mutable struct RegistryControl <: AbstractRegistryControl
 key
 end

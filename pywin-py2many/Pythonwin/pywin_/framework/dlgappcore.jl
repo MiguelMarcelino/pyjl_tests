@@ -1,18 +1,19 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 include("app.jl")
 
 import win32con
 
+
 using win32com_.gen_py.mfc: dialog
-abstract type AbstractAppDialog <: Abstractdialog.Dialog end
-abstract type AbstractDialogApp <: Abstractapp.CApp end
+abstract type AbstractAppDialog <: dialog.Dialog end
+abstract type AbstractDialogApp <: app.CApp end
 error = "Dialog Application Error"
 mutable struct AppDialog <: AbstractAppDialog
     #= The dialog box for the application =#
-    iconId
-    dll
+    iconId::Any
+    dll::Any
 
     AppDialog(id, dll = nothing) = begin
         dialog.Dialog.__init__(self, id, dll)
@@ -53,8 +54,8 @@ end
 
 mutable struct DialogApp <: AbstractDialogApp
     #= An application class, for an app with main dialog box =#
-    dlg
-    frame
+    dlg::Any
+    frame::Any
 end
 function InitInstance(self::DialogApp)
     LoadStdProfileSettings(win32ui)

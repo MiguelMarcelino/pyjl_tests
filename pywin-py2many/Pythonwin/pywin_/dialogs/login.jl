@@ -24,13 +24,15 @@ Merged with dlgpass and moved to win32com_.gen_py.dialogs by Mark Hammond Jan 19
  =#
 using Printf
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
+
+
 
 import win32con
 using win32com_.gen_py.mfc: dialog
-abstract type AbstractLoginDlg <: Abstractdialog.Dialog end
-abstract type AbstractPasswordDlg <: Abstractdialog.Dialog end
+abstract type AbstractLoginDlg <: dialog.Dialog end
+abstract type AbstractPasswordDlg <: dialog.Dialog end
 function MakeLoginDlgTemplate(title)
     style =
         (
@@ -102,6 +104,8 @@ function GetLogin(title = "Login", userid = "", password = "")::Tuple
 end
 
 mutable struct PasswordDlg <: AbstractPasswordDlg
+
+
     PasswordDlg(title) = begin
         dialog.Dialog.__init__(self, MakePasswordDlgTemplate(title))
         AddDDX(win32ui.IDC_EDIT1, "password")

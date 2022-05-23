@@ -9,7 +9,7 @@ using win32com_.client: Dispatch
 import winerror
 using win32com_.test.util: CaptureWriter
 mutable struct error <: Abstracterror
-    com_exception
+    com_exception::Any
 
     error(msg, com_exception = nothing) = begin
         Exception.__init__(self, msg, string(com_exception))
@@ -17,9 +17,9 @@ mutable struct error <: Abstracterror
     end
 end
 
-abstract type Abstracterror <: AbstractException end
+abstract type Abstracterror <: Exception end
 abstract type AbstractTestServer end
-abstract type AbstractTestLogHandler <: Abstractlogging.Handler end
+abstract type AbstractTestLogHandler <: logging.Handler end
 mutable struct TestServer <: AbstractTestServer
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
@@ -38,7 +38,7 @@ function Commit(self::TestServer, flags)
         throw(Exception("😀"))
     end
     excepinfo = (winerror.E_UNEXPECTED, "source", "😀", "helpfile", 1, winerror.E_FAIL)
-    throw(com_error(pythoncom, winerror.E_UNEXPECTED, "desc", excepinfo, nothing))
+    throw(pythoncom.com_error(winerror.E_UNEXPECTED, "desc", excepinfo, nothing))
 end
 
 function test()
@@ -262,7 +262,7 @@ end
 if logging != nothing
     mutable struct TestLogHandler <: AbstractTestLogHandler
         num_emits::Int64
-        last_record
+        last_record::Any
 
         TestLogHandler() = begin
             reset()
@@ -287,9 +287,9 @@ if logging != nothing
     function testLogger()
         @assert(!hasfield(typeof(win32com_), :logger))
         handler = TestLogHandler()
-        formatter = Formatter(logging, "%(message)s")
+        formatter = logging.Formatter("%(message)s")
         setFormatter(handler, formatter)
-        log = getLogger(logging, "win32com_test")
+        log = logging.getLogger("win32com_test")
         addHandler(log, handler)
         win32com_.logger = log
         com_server = wrap(TestServer(), pythoncom.IID_IStream)
@@ -327,6 +327,7 @@ if logging != nothing
         @assert(handler.num_emits == 1)
         reset(handler)
     end
+
 end
 if abspath(PROGRAM_FILE) == @__FILE__
     test()

@@ -28,18 +28,20 @@ pythoncom = pyimport("pythoncom")
 win32ui = pyimport("win32ui")
 win32api = pyimport("win32api")
 
-using win32com_.gen_py.tools: hierlist
+using Pythonwin.pywin_.tools.gen_py: hierlist
+
+
 
 import win32com_.ext_modules.win32con as win32con
 using win32com_.client: util
 using win32com_.client.tools: browser
 mutable struct HLIRoot <: AbstractHLIRoot
-    name
+    name::Any
 end
 function GetSubList(self::HLIRoot)
     return [
         HLIHeadingCategory(),
-        HLI_IEnumMoniker(EnumRunning(GetRunningObjectTable(pythoncom)), "Running Objects"),
+        HLI_IEnumMoniker(EnumRunning(pythoncom.GetRunningObjectTable()), "Running Objects"),
         HLIHeadingRegisterdTypeLibs(),
     ]
 end
@@ -48,8 +50,8 @@ function __cmp__(self::HLIRoot, other)
     return cmp(self.name, other.name)
 end
 
-abstract type AbstractHLIRoot <: Abstractbrowser.HLIPythonObject end
-abstract type AbstractHLICOM <: Abstractbrowser.HLIPythonObject end
+abstract type AbstractHLIRoot <: browser.HLIPythonObject end
+abstract type AbstractHLICOM <: browser.HLIPythonObject end
 abstract type AbstractHLICLSID <: AbstractHLICOM end
 abstract type AbstractHLI_Interface <: AbstractHLICOM end
 abstract type AbstractHLI_Enum <: AbstractHLI_Interface end
@@ -68,7 +70,7 @@ abstract type AbstractHLITypeLibFunction <: AbstractHLICOM end
 abstract type AbstractHLITypeLib <: AbstractHLICOM end
 abstract type AbstractHLIHeadingRegisterdTypeLibs <: AbstractHLICOM end
 mutable struct HLICOM <: AbstractHLICOM
-    name
+    name::Any
 end
 function GetText(self::HLICOM)
     return self.name
@@ -79,7 +81,7 @@ function CalculateIsExpandable(self::HLICOM)::Int64
 end
 
 mutable struct HLICLSID <: AbstractHLICLSID
-    name
+    name::Any
 
     HLICLSID(myobject, name = nothing) = begin
         if type_(myobject) == type_("")
@@ -108,10 +110,11 @@ function GetSubList(self::HLICLSID)::Vector
 end
 
 mutable struct HLI_Interface <: AbstractHLI_Interface
+
 end
 
 mutable struct HLI_Enum <: AbstractHLI_Enum
-    myobject
+    myobject::Any
 end
 function GetBitmapColumn(self::HLI_Enum)::Int64
     return 0
@@ -128,22 +131,23 @@ function CalculateIsExpandable(self::HLI_Enum)
 end
 
 mutable struct HLI_IEnumMoniker <: AbstractHLI_IEnumMoniker
-    myobject
+    myobject::Any
 end
 function GetSubList(self::HLI_IEnumMoniker)::Vector
-    ctx = CreateBindCtx(pythoncom)
+    ctx = pythoncom.CreateBindCtx()
     ret = []
-    for mon in Enumerator(util, self.myobject)
+    for mon in util.Enumerator(self.myobject)
         push!(ret, HLI_IMoniker(mon, GetDisplayName(mon, ctx, nothing)))
     end
     return ret
 end
 
 mutable struct HLI_IMoniker <: AbstractHLI_IMoniker
+
 end
 function GetSubList(self::HLI_IMoniker)::Vector
     ret = []
-    push!(ret, MakeHLI(browser, Hash(self.myobject), "Hash Value"))
+    push!(ret, browser.MakeHLI(Hash(self.myobject), "Hash Value"))
     subenum = Enum(self.myobject, 1)
     push!(ret, HLI_IEnumMoniker(subenum, "Sub Monikers"))
     return ret
@@ -158,14 +162,13 @@ function GetText(self::HLIHeadingCategory)::String
 end
 
 function GetSubList(self::HLIHeadingCategory)::Vector
-    catinf = CoCreateInstance(
-        pythoncom,
+    catinf = pythoncom.CoCreateInstance(
         pythoncom.CLSID_StdComponentCategoriesMgr,
         nothing,
         pythoncom.CLSCTX_INPROC,
         pythoncom.IID_ICatInformation,
     )
-    enum = Enumerator(util, EnumCategories(catinf))
+    enum = util.Enumerator(EnumCategories(catinf))
     ret = []
     try
         for (catid, lcid, desc) in enum
@@ -192,24 +195,24 @@ function GetText(self::HLICategory)
 end
 
 function GetSubList(self::HLICategory)::Vector
-    DoWaitCursor(win32ui, 1)
+    win32ui.DoWaitCursor(1)
     catid, lcid, desc = self.myobject
-    catinf = CoCreateInstance(
-        pythoncom,
+    catinf = pythoncom.CoCreateInstance(
         pythoncom.CLSID_StdComponentCategoriesMgr,
         nothing,
         pythoncom.CLSCTX_INPROC,
         pythoncom.IID_ICatInformation,
     )
     ret = []
-    for clsid in Enumerator(util, EnumClassesOfCategories(catinf, (catid,), ()))
+    for clsid in util.Enumerator(EnumClassesOfCategories(catinf, (catid,), ()))
         push!(ret, HLICLSID(clsid))
     end
-    DoWaitCursor(win32ui, 0)
+    win32ui.DoWaitCursor(0)
     return ret
 end
 
 mutable struct HLIHelpFile <: AbstractHLIHelpFile
+
 end
 function CalculateIsExpandable(self::HLIHelpFile)::Int64
     return 0
@@ -228,7 +231,7 @@ function TakeDefaultAction(self::HLIHelpFile)
     else
         cmd = win32con.HELP_FINDER
     end
-    WinHelp(win32api, GetSafeHwnd(GetMainFrame(win32ui)), fname, cmd, ctx)
+    win32api.WinHelp(GetSafeHwnd(win32ui.GetMainFrame()), fname, cmd, ctx)
 end
 
 function GetBitmapColumn(self::HLIHelpFile)::Int64
@@ -236,32 +239,32 @@ function GetBitmapColumn(self::HLIHelpFile)::Int64
 end
 
 mutable struct HLIRegisteredTypeLibrary <: AbstractHLIRegisteredTypeLibrary
+
 end
 function GetSubList(self::HLIRegisteredTypeLibrary)::Vector
     clsidstr, versionStr = self.myobject
     collected = []
     helpPath = ""
-    key = RegOpenKey(
-        win32api,
+    key = win32api.RegOpenKey(
         win32con.HKEY_CLASSES_ROOT,
         "TypeLib\\%s\\%s" % (clsidstr, versionStr),
     )
-    DoWaitCursor(win32ui, 1)
+    win32ui.DoWaitCursor(1)
     try
         num = 0
         while true
             try
-                subKey = RegEnumKey(win32api, key, num)
+                subKey = win32api.RegEnumKey(key, num)
             catch exn
                 if exn isa win32api.error
                     break
                 end
             end
-            hSubKey = RegOpenKey(win32api, key, subKey)
+            hSubKey = win32api.RegOpenKey(key, subKey)
             try
-                value, typ = RegQueryValueEx(win32api, hSubKey, nothing)
+                value, typ = win32api.RegQueryValueEx(hSubKey, nothing)
                 if typ == win32con.REG_EXPAND_SZ
-                    value = ExpandEnvironmentStrings(win32api, value)
+                    value = win32api.ExpandEnvironmentStrings(value)
                 end
             catch exn
                 if exn isa win32api.error
@@ -275,21 +278,21 @@ function GetSubList(self::HLIRegisteredTypeLibrary)::Vector
             else
                 try
                     lcid = parse(Int, subKey)
-                    lcidkey = RegOpenKey(win32api, key, subKey)
+                    lcidkey = win32api.RegOpenKey(key, subKey)
                     lcidnum = 0
                     while true
                         try
-                            platform = RegEnumKey(win32api, lcidkey, lcidnum)
+                            platform = win32api.RegEnumKey(lcidkey, lcidnum)
                         catch exn
                             if exn isa win32api.error
                                 break
                             end
                         end
                         try
-                            hplatform = RegOpenKey(win32api, lcidkey, platform)
-                            fname, typ = RegQueryValueEx(win32api, hplatform, nothing)
+                            hplatform = win32api.RegOpenKey(lcidkey, platform)
+                            fname, typ = win32api.RegQueryValueEx(hplatform, nothing)
                             if typ == win32con.REG_EXPAND_SZ
-                                fname = ExpandEnvironmentStrings(win32api, fname)
+                                fname = win32api.ExpandEnvironmentStrings(fname)
                             end
                         catch exn
                             if exn isa win32api.error
@@ -299,7 +302,7 @@ function GetSubList(self::HLIRegisteredTypeLibrary)::Vector
                         push!(collected, (lcid, platform, fname))
                         lcidnum = lcidnum + 1
                     end
-                    RegCloseKey(win32api, lcidkey)
+                    win32api.RegCloseKey(lcidkey)
                 catch exn
                     if exn isa ValueError
                         #= pass =#
@@ -309,8 +312,8 @@ function GetSubList(self::HLIRegisteredTypeLibrary)::Vector
             num = num + 1
         end
     finally
-        DoWaitCursor(win32ui, 0)
-        RegCloseKey(win32api, key)
+        win32ui.DoWaitCursor(0)
+        win32api.RegCloseKey(key)
     end
     ret = []
     push!(ret, HLICLSID(clsidstr))
@@ -333,6 +336,7 @@ function GetSubList(self::HLIRegisteredTypeLibrary)::Vector
 end
 
 mutable struct HLITypeLibEntry <: AbstractHLITypeLibEntry
+
 end
 function GetText(self::HLITypeLibEntry)::Union[str, Any]
     tlb, index = self.myobject
@@ -352,7 +356,7 @@ function GetSubList(self::HLITypeLibEntry)::Vector
     name, doc, ctx, helpFile = GetDocumentation(tlb, index)
     ret = []
     if doc
-        push!(ret, HLIDocString(browser, doc, "Doc"))
+        push!(ret, browser.HLIDocString(doc, "Doc"))
     end
     if helpFile
         push!(ret, HLIHelpFile((helpFile, ctx)))
@@ -361,9 +365,10 @@ function GetSubList(self::HLITypeLibEntry)::Vector
 end
 
 mutable struct HLICoClass <: AbstractHLICoClass
+
 end
 function GetSubList(self::HLICoClass)
-    ret = GetSubList(HLITypeLibEntry)
+    ret = HLITypeLibEntry.GetSubList(self)
     tlb, index = self.myobject
     typeinfo = GetTypeInfo(tlb, index)
     attr = GetTypeAttr(typeinfo)
@@ -373,7 +378,7 @@ function GetSubList(self::HLICoClass)
         refAttr = GetTypeAttr(refType)
         append(
             ret,
-            MakeHLI(browser, refAttr[1], "Name=%s, Flags = %d" % (refAttr[1], flags)),
+            browser.MakeHLI(refAttr[1], "Name=%s, Flags = %d" % (refAttr[1], flags)),
         )
     end
     return ret
@@ -381,7 +386,7 @@ end
 
 mutable struct HLITypeLibMethod <: AbstractHLITypeLibMethod
     entry_type::String
-    name
+    name::Any
 
     HLITypeLibMethod(ob, name = nothing) = begin
         HLITypeLibEntry(ob, name)
@@ -389,7 +394,7 @@ mutable struct HLITypeLibMethod <: AbstractHLITypeLibMethod
     end
 end
 function GetSubList(self::HLITypeLibMethod)
-    ret = GetSubList(HLITypeLibEntry)
+    ret = HLITypeLibEntry.GetSubList(self)
     tlb, index = self.myobject
     typeinfo = GetTypeInfo(tlb, index)
     attr = GetTypeAttr(typeinfo)
@@ -403,8 +408,8 @@ function GetSubList(self::HLITypeLibMethod)
 end
 
 mutable struct HLITypeLibEnum <: AbstractHLITypeLibEnum
-    id
-    name
+    id::Any
+    name::Any
 
     HLITypeLibEnum(myitem) = begin
         HLITypeLibEntry(myitem, name)
@@ -423,14 +428,14 @@ function GetSubList(self::HLITypeLibEnum)::Vector
     for j = 0:attr[8]-1
         vdesc = GetVarDesc(typeinfo, j)
         name = GetNames(typeinfo, vdesc[1])[1]
-        push!(ret, MakeHLI(browser, vdesc[2], name))
+        push!(ret, browser.MakeHLI(vdesc[2], name))
     end
     return ret
 end
 
 mutable struct HLITypeLibProperty <: AbstractHLITypeLibProperty
-    id
-    name
+    id::Any
+    name::Any
 
     HLITypeLibProperty(myitem) = begin
         HLICOM(myitem, name)
@@ -446,25 +451,25 @@ function GetSubList(self::HLITypeLibProperty)::Vector
     typeinfo, index = self.myobject
     names = GetNames(typeinfo, self.id)
     if length(names) > 1
-        push!(ret, MakeHLI(browser, names[2:end], "Named Params"))
+        push!(ret, browser.MakeHLI(names[2:end], "Named Params"))
     end
     vd = GetVarDesc(typeinfo, index)
-    push!(ret, MakeHLI(browser, self.id, "Dispatch ID"))
-    push!(ret, MakeHLI(browser, vd[2], "Value"))
-    push!(ret, MakeHLI(browser, vd[3], "Elem Desc"))
-    push!(ret, MakeHLI(browser, vd[4], "Var Flags"))
-    push!(ret, MakeHLI(browser, vd[5], "Var Kind"))
+    push!(ret, browser.MakeHLI(self.id, "Dispatch ID"))
+    push!(ret, browser.MakeHLI(vd[2], "Value"))
+    push!(ret, browser.MakeHLI(vd[3], "Elem Desc"))
+    push!(ret, browser.MakeHLI(vd[4], "Var Flags"))
+    push!(ret, browser.MakeHLI(vd[5], "Var Kind"))
     return ret
 end
 
 mutable struct HLITypeLibFunction <: AbstractHLITypeLibFunction
-    id
-    name
+    id::Any
+    name::Any
     funcflags::Vector{Tuple{String}}
-    funckinds::Dict{Any, String}
-    invokekinds::Dict{Any, String}
+    funckinds::Dict{Any,String}
+    invokekinds::Dict{Any,String}
     type_flags::Vector{Tuple{String}}
-    vartypes::Dict{Any, String}
+    vartypes::Dict{Any,String}
 
     HLITypeLibFunction(
         myitem,
@@ -478,13 +483,13 @@ mutable struct HLITypeLibFunction <: AbstractHLITypeLibFunction
             (pythoncom.FUNCFLAG_FHIDDEN, "Hidden"),
             (pythoncom.FUNCFLAG_FUSESGETLASTERROR, "Uses GetLastError"),
         ],
-        funckinds::Dict{Any, String} = Dict(
+        funckinds::Dict{Any,String} = Dict(
             pythoncom.FUNC_VIRTUAL => "Virtual",
             pythoncom.FUNC_PUREVIRTUAL => "Pure Virtual",
             pythoncom.FUNC_STATIC => "Static",
             pythoncom.FUNC_DISPATCH => "Dispatch",
         ),
-        invokekinds::Dict{Any, String} = Dict(
+        invokekinds::Dict{Any,String} = Dict(
             pythoncom.INVOKE_FUNC => "Function",
             pythoncom.INVOKE_PROPERTYGET => "Property Get",
             pythoncom.INVOKE_PROPERTYPUT => "Property Put",
@@ -496,7 +501,7 @@ mutable struct HLITypeLibFunction <: AbstractHLITypeLibFunction
             (pythoncom.VT_BYREF, "ByRef"),
             (pythoncom.VT_RESERVED, "Reserved"),
         ],
-        vartypes::Dict{Any, String} = Dict(
+        vartypes::Dict{Any,String} = Dict(
             pythoncom.VT_EMPTY => "Empty",
             pythoncom.VT_NULL => "NULL",
             pythoncom.VT_I2 => "Integer 2",
@@ -581,13 +586,13 @@ function GetSubList(self::HLITypeLibFunction)::Vector
     ret = []
     typeinfo, index = self.myobject
     names = GetNames(typeinfo, self.id)
-    push!(ret, MakeHLI(browser, self.id, "Dispatch ID"))
+    push!(ret, browser.MakeHLI(self.id, "Dispatch ID"))
     if length(names) > 1
-        push!(ret, MakeHLI(browser, join(names[2:end], ", "), "Named Params"))
+        push!(ret, browser.MakeHLI(join(names[2:end], ", "), "Named Params"))
     end
     fd = GetFuncDesc(typeinfo, index)
     if fd[2]
-        push!(ret, MakeHLI(browser, fd[2], "Possible result values"))
+        push!(ret, browser.MakeHLI(fd[2], "Possible result values"))
     end
     if fd[9]
         typ, flags, default = fd[9]
@@ -595,7 +600,7 @@ function GetSubList(self::HLITypeLibFunction)::Vector
         if flags
             val = "%s (Flags=%d, default=%s)" % (val, flags, default)
         end
-        push!(ret, MakeHLI(browser, val, "Return Type"))
+        push!(ret, browser.MakeHLI(val, "Return Type"))
     end
     for argDesc in fd[3]
         typ, flags, default = argDesc
@@ -606,7 +611,7 @@ function GetSubList(self::HLITypeLibFunction)::Vector
         if default != nothing
             val = "%s (Default=%s)" % (val, default)
         end
-        push!(ret, MakeHLI(browser, val, "Argument"))
+        push!(ret, browser.MakeHLI(val, "Argument"))
     end
     try
         fkind = self.funckinds[fd[4]+1]
@@ -615,7 +620,7 @@ function GetSubList(self::HLITypeLibFunction)::Vector
             fkind = "Unknown"
         end
     end
-    push!(ret, MakeHLI(browser, fkind, "Function Kind"))
+    push!(ret, browser.MakeHLI(fkind, "Function Kind"))
     try
         ikind = self.invokekinds[fd[5]+1]
     catch exn
@@ -623,8 +628,8 @@ function GetSubList(self::HLITypeLibFunction)::Vector
             ikind = "Unknown"
         end
     end
-    push!(ret, MakeHLI(browser, ikind, "Invoke Kind"))
-    push!(ret, MakeHLI(browser, fd[7], "Number Optional Params"))
+    push!(ret, browser.MakeHLI(ikind, "Invoke Kind"))
+    push!(ret, browser.MakeHLI(fd[7], "Number Optional Params"))
     flagDescs = []
     for (flag, desc) in self.funcflags
         if flag & fd[10]
@@ -632,7 +637,7 @@ function GetSubList(self::HLITypeLibFunction)::Vector
         end
     end
     if flagDescs
-        push!(ret, MakeHLI(browser, join(flagDescs, ", "), "Function Flags"))
+        push!(ret, browser.MakeHLI(join(flagDescs, ", "), "Function Flags"))
     end
     return ret
 end
@@ -648,16 +653,16 @@ HLITypeKinds = Dict(
     pythoncom.TKIND_UNION => (HLITypeLibEntry, "Union"),
 )
 mutable struct HLITypeLib <: AbstractHLITypeLib
-    myobject
+    myobject::Any
 end
 function GetSubList(self::HLITypeLib)::Vector
     ret = []
-    push!(ret, MakeHLI(browser, self.myobject, "Filename"))
+    push!(ret, browser.MakeHLI(self.myobject, "Filename"))
     try
-        tlb = LoadTypeLib(pythoncom, self.myobject)
+        tlb = pythoncom.LoadTypeLib(self.myobject)
     catch exn
         if exn isa pythoncom.com_error
-            return [MakeHLI(browser, "%s can not be loaded" % self.myobject)]
+            return [browser.MakeHLI("%s can not be loaded" % self.myobject)]
         end
     end
     for i = 0:GetTypeInfoCount(tlb)-1
@@ -665,7 +670,7 @@ function GetSubList(self::HLITypeLib)::Vector
             push!(ret, HLITypeKinds[GetTypeInfoType(tlb, i)][0]((tlb, i)))
         catch exn
             if exn isa pythoncom.com_error
-                push!(ret, MakeHLI(browser, "The type info can not be loaded!"))
+                push!(ret, browser.MakeHLI("The type info can not be loaded!"))
             end
         end
     end
@@ -683,26 +688,26 @@ end
 
 function GetSubList(self::HLIHeadingRegisterdTypeLibs)::Vector
     ret = []
-    key = RegOpenKey(win32api, win32con.HKEY_CLASSES_ROOT, "TypeLib")
-    DoWaitCursor(win32ui, 1)
+    key = win32api.RegOpenKey(win32con.HKEY_CLASSES_ROOT, "TypeLib")
+    win32ui.DoWaitCursor(1)
     try
         num = 0
         while true
             try
-                keyName = RegEnumKey(win32api, key, num)
+                keyName = win32api.RegEnumKey(key, num)
             catch exn
                 if exn isa win32api.error
                     break
                 end
             end
-            subKey = RegOpenKey(win32api, key, keyName)
+            subKey = win32api.RegOpenKey(key, keyName)
             name = nothing
             try
                 subNum = 0
                 bestVersion = 0.0
                 while true
                     try
-                        versionStr = RegEnumKey(win32api, subKey, subNum)
+                        versionStr = win32api.RegEnumKey(subKey, subNum)
                     catch exn
                         if exn isa win32api.error
                             break
@@ -717,12 +722,12 @@ function GetSubList(self::HLIHeadingRegisterdTypeLibs)::Vector
                     end
                     if versionFlt > bestVersion
                         bestVersion = versionFlt
-                        name = RegQueryValue(win32api, subKey, versionStr)
+                        name = win32api.RegQueryValue(subKey, versionStr)
                     end
                     subNum = subNum + 1
                 end
             finally
-                RegCloseKey(win32api, subKey)
+                win32api.RegCloseKey(subKey)
             end
             if name != nothing
                 push!(ret, HLIRegisteredTypeLibrary((keyName, versionStr), name))
@@ -730,8 +735,8 @@ function GetSubList(self::HLIHeadingRegisterdTypeLibs)::Vector
             num = num + 1
         end
     finally
-        RegCloseKey(win32api, key)
-        DoWaitCursor(win32ui, 0)
+        win32api.RegCloseKey(key)
+        win32ui.DoWaitCursor(0)
     end
     sort(ret)
     return ret
@@ -740,10 +745,10 @@ end
 function main(modal = false)
     root = HLIRoot("COM Browser")
     if "app" ∈ sys.modules
-        MakeTemplate(browser)
+        browser.MakeTemplate()
         OpenObject(browser.template, root)
     else
-        dlg = dynamic_browser(browser, root)
+        dlg = browser.dynamic_browser(root)
         if modal
             DoModal(dlg)
         else
@@ -755,8 +760,8 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
-    ni = _GetInterfaceCount(pythoncom)
-    ng = _GetGatewayCount(pythoncom)
+    ni = pythoncom._GetInterfaceCount()
+    ng = pythoncom._GetGatewayCount()
     if ni || ng
         @printf("Warning - exiting with %d/%d objects alive\n", ni, ng)
     end

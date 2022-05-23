@@ -1,8 +1,10 @@
 using PyCall
+pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
-pythoncom = pyimport("pythoncom")
 import tempfile
+
+
 
 import copy
 
@@ -16,31 +18,32 @@ catch exn
 end
 import win32con
 
+
 using win32com_.shell: shell
 using win32com_.shell.shellcon: *
 using win32com_.storagecon: *
 import win32com_.test.util
-abstract type AbstractShellTester <: Abstractwin32com_.test.util.TestCase end
-abstract type AbstractPIDLTester <: Abstractwin32com_.test.util.TestCase end
-abstract type AbstractFILEGROUPDESCRIPTORTester <: Abstractwin32com_.test.util.TestCase end
-abstract type AbstractFileOperationTester <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractShellTester <: win32com_.test.util.TestCase end
+abstract type AbstractPIDLTester <: win32com_.test.util.TestCase end
+abstract type AbstractFILEGROUPDESCRIPTORTester <: win32com_.test.util.TestCase end
+abstract type AbstractFileOperationTester <: win32com_.test.util.TestCase end
 using pywin32_testutil: str2bytes
 mutable struct ShellTester <: AbstractShellTester
+
 end
 function testShellLink(self::ShellTester)
-    desktop = string(SHGetSpecialFolderPath(shell, 0, CSIDL_DESKTOP))
+    desktop = string(shell.SHGetSpecialFolderPath(0, CSIDL_DESKTOP))
     num = 0
-    shellLink = CoCreateInstance(
-        pythoncom,
+    shellLink = pythoncom.CoCreateInstance(
         shell.CLSID_ShellLink,
         nothing,
         pythoncom.CLSCTX_INPROC_SERVER,
         shell.IID_IShellLink,
     )
     persistFile = QueryInterface(shellLink, pythoncom.IID_IPersistFile)
-    names = [join for n in listdir(os, desktop)]
-    programs = string(SHGetSpecialFolderPath(shell, 0, CSIDL_PROGRAMS))
-    extend(names, [join for n in listdir(os, programs)])
+    names = [join for n in os.listdir(desktop)]
+    programs = string(shell.SHGetSpecialFolderPath(0, CSIDL_PROGRAMS))
+    extend(names, [join for n in os.listdir(programs)])
     for name in names
         try
             Load(persistFile, name, STGM_READ)
@@ -61,7 +64,7 @@ function testShellLink(self::ShellTester)
 end
 
 function testShellFolder(self::ShellTester)
-    sf = SHGetDesktopFolder(shell)
+    sf = shell.SHGetDesktopFolder()
     names_1 = []
     for i in sf
         name = GetDisplayNameOf(sf, i, SHGDN_NORMAL)
@@ -80,27 +83,28 @@ function testShellFolder(self::ShellTester)
 end
 
 mutable struct PIDLTester <: AbstractPIDLTester
+
 end
 function _rtPIDL(self::PIDLTester, pidl)
-    pidl_str = PIDLAsString(shell, pidl)
-    pidl_rt = StringAsPIDL(shell, pidl_str)
+    pidl_str = shell.PIDLAsString(pidl)
+    pidl_rt = shell.StringAsPIDL(pidl_str)
     assertEqual(self, pidl_rt, pidl)
-    pidl_str_rt = PIDLAsString(shell, pidl_rt)
+    pidl_str_rt = shell.PIDLAsString(pidl_rt)
     assertEqual(self, pidl_str_rt, pidl_str)
 end
 
 function _rtCIDA(self::PIDLTester, parent, kids)
     cida = (parent, kids)
-    cida_str = CIDAAsString(shell, cida)
-    cida_rt = StringAsCIDA(shell, cida_str)
+    cida_str = shell.CIDAAsString(cida)
+    cida_rt = shell.StringAsCIDA(cida_str)
     assertEqual(self, cida, cida_rt)
-    cida_str_rt = CIDAAsString(shell, cida_rt)
+    cida_str_rt = shell.CIDAAsString(cida_rt)
     assertEqual(self, cida_str_rt, cida_str)
 end
 
 function testPIDL(self::PIDLTester)
     expect = str2bytes("\000\000\000")
-    assertEqual(self, PIDLAsString(shell, [str2bytes("")]), expect)
+    assertEqual(self, shell.PIDLAsString([str2bytes("")]), expect)
     _rtPIDL(self, [str2bytes("\000")])
     _rtPIDL(self, [str2bytes(""), str2bytes(""), str2bytes("")])
     _rtPIDL(self, repeat([str2bytes("\000") * 2048], 2048))
@@ -123,24 +127,25 @@ function testBadShortPIDL(self::PIDLTester)
 end
 
 mutable struct FILEGROUPDESCRIPTORTester <: AbstractFILEGROUPDESCRIPTORTester
+
 end
 function _getTestTimes(self::FILEGROUPDESCRIPTORTester)::Tuple
     if pywintypes.TimeType <: datetime.datetime
-        ctime = now(win32timezone)
+        ctime = win32timezone.now()
         ctime = replace(ctime, (ctime.microsecond ÷ 1000) * 1000)
-        atime = ctime + timedelta(datetime, 1)
-        wtime = atime + timedelta(datetime, 1)
+        atime = ctime + datetime.timedelta(1)
+        wtime = atime + datetime.timedelta(1)
     else
-        ctime = Time(pywintypes, 11)
-        atime = Time(pywintypes, 12)
-        wtime = Time(pywintypes, 13)
+        ctime = pywintypes.Time(11)
+        atime = pywintypes.Time(12)
+        wtime = pywintypes.Time(13)
     end
     return (ctime, atime, wtime)
 end
 
 function _testRT(self::FILEGROUPDESCRIPTORTester, fd)
-    fgd_string = FILEGROUPDESCRIPTORAsString(shell, [fd])
-    fd2 = StringAsFILEGROUPDESCRIPTOR(shell, fgd_string)[1]
+    fgd_string = shell.FILEGROUPDESCRIPTORAsString([fd])
+    fd2 = shell.StringAsFILEGROUPDESCRIPTOR(fgd_string)[1]
     fd = copy(fd)
     fd2 = copy(fd2)
     if "dwFlags" ∉ fd
@@ -156,13 +161,13 @@ function _testRT(self::FILEGROUPDESCRIPTORTester, fd)
 end
 
 function _testSimple(self::FILEGROUPDESCRIPTORTester, make_unicode)
-    fgd = FILEGROUPDESCRIPTORAsString(shell, [], make_unicode)
-    header = pack(struct_, "i", 0)
+    fgd = shell.FILEGROUPDESCRIPTORAsString([], make_unicode)
+    header = struct_.pack("i", 0)
     assertEqual(self, header, fgd[begin:length(header)])
     _testRT(self, dict())
     d = dict()
-    fgd = FILEGROUPDESCRIPTORAsString(shell, [d], make_unicode)
-    header = pack(struct_, "i", 1)
+    fgd = shell.FILEGROUPDESCRIPTORAsString([d], make_unicode)
+    header = struct_.pack("i", 1)
     assertEqual(self, header, fgd[begin:length(header)])
     _testRT(self, d)
 end
@@ -176,7 +181,7 @@ function testSimpleUnicode(self::FILEGROUPDESCRIPTORTester)
 end
 
 function testComplex(self::FILEGROUPDESCRIPTORTester)
-    clsid = MakeIID(pythoncom, "{CD637886-DB8B-4b04-98B5-25731E1495BE}")
+    clsid = pythoncom.MakeIID("{CD637886-DB8B-4b04-98B5-25731E1495BE}")
     ctime, atime, wtime = _getTestTimes(self)
     d = dict(
         "foo.txt",
@@ -226,8 +231,8 @@ function testUnicode(self::FILEGROUPDESCRIPTORTester)
             sys_maxsize + 1,
         ),
     ]
-    s = FILEGROUPDESCRIPTORAsString(shell, d, 1)
-    d2 = StringAsFILEGROUPDESCRIPTOR(shell, s)
+    s = shell.FILEGROUPDESCRIPTORAsString(d, 1)
+    d2 = shell.StringAsFILEGROUPDESCRIPTOR(s)
     for t in d2
         #Delete Unsupported
         del(t)
@@ -236,9 +241,9 @@ function testUnicode(self::FILEGROUPDESCRIPTORTester)
 end
 
 mutable struct FileOperationTester <: AbstractFileOperationTester
-    src_name
-    dest_name
-    test_data
+    src_name::Any
+    dest_name::Any
+    test_data::Any
 end
 function setUp(self::FileOperationTester)
     self.src_name = join
@@ -266,7 +271,7 @@ end
 
 function testCopy(self::FileOperationTester)
     s = (0, FO_COPY, self.src_name, self.dest_name)
-    rc, aborted = SHFileOperation(shell, s)
+    rc, aborted = shell.SHFileOperation(s)
     assertTrue(self, !(aborted))
     assertEqual(self, 0, rc)
     assertTrue(self, isfile(os.path, self.src_name))
@@ -275,7 +280,7 @@ end
 
 function testRename(self::FileOperationTester)
     s = (0, FO_RENAME, self.src_name, self.dest_name)
-    rc, aborted = SHFileOperation(shell, s)
+    rc, aborted = shell.SHFileOperation(s)
     assertTrue(self, !(aborted))
     assertEqual(self, 0, rc)
     assertTrue(self, isfile(os.path, self.dest_name))
@@ -284,7 +289,7 @@ end
 
 function testMove(self::FileOperationTester)
     s = (0, FO_MOVE, self.src_name, self.dest_name)
-    rc, aborted = SHFileOperation(shell, s)
+    rc, aborted = shell.SHFileOperation(s)
     assertTrue(self, !(aborted))
     assertEqual(self, 0, rc)
     assertTrue(self, isfile(os.path, self.dest_name))
@@ -293,12 +298,12 @@ end
 
 function testDelete(self::FileOperationTester)
     s = (0, FO_DELETE, self.src_name, nothing, FOF_NOCONFIRMATION)
-    rc, aborted = SHFileOperation(shell, s)
+    rc, aborted = shell.SHFileOperation(s)
     assertTrue(self, !(aborted))
     assertEqual(self, 0, rc)
     assertTrue(self, !isfile(os.path, self.src_name))
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    testmain(win32com_.test.util)
+    win32com_.test.util.testmain()
 end

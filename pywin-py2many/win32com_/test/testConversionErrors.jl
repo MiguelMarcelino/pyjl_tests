@@ -3,9 +3,9 @@ import win32com_.client
 import win32com_.test.util
 import win32com_.server.util
 abstract type AbstractTester end
-abstract type AbstractTestException <: AbstractException end
+abstract type AbstractTestException <: Exception end
 abstract type AbstractBadConversions end
-abstract type AbstractTestCase <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 mutable struct Tester <: AbstractTester
     _public_methods_::Vector{String}
 
@@ -16,19 +16,22 @@ function TestValue(self::Tester, v)
 end
 
 function test_ob()
-    return Dispatch(win32com_.client, wrap(win32com_.server.util, Tester()))
+    return win32com_.client.Dispatch(win32com_.server.util.wrap(Tester()))
 end
 
 mutable struct TestException <: AbstractTestException
+
 end
 
 mutable struct BadConversions <: AbstractBadConversions
+
 end
 function __float__(self::BadConversions)
     throw(TestException())
 end
 
 mutable struct TestCase <: AbstractTestCase
+
 end
 function test_float(self::TestCase)
     try

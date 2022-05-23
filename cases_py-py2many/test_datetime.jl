@@ -50,8 +50,5 @@ end
 return tests
 end
 
-function main()
-
+if abspath(PROGRAM_FILE) == @__FILE__
 end
-
-main()

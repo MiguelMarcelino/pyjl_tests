@@ -1,5 +1,6 @@
 #= Generate a .py file from an OLE TypeLibrary file.
 
+
  This module is concerned only with the actual writing of
  a .py file.  It draws on the @build@ module, which builds
  the knowledge of a COM interface.
@@ -8,18 +9,20 @@
 using Getopt
 using Printf
 using PyCall
-win32ui = pyimport("win32ui")
 pythoncom = pyimport("pythoncom")
+win32ui = pyimport("win32ui")
 import win32com_.gen_py
 using win32com_.gen_py.dialogs: status
 import getopt
 import codecs
 usageHelp = " \nUsage:\n\n  makepy.py [-i] [-v|q] [-h] [-u] [-o output_file] [-d] [typelib, ...]\n\n  -i    -- Show information for the specified typelib.\n\n  -v    -- Verbose output.\n\n  -q    -- Quiet output.\n\n  -h    -- Do not generate hidden methods.\n\n  -u    -- Python 1.5 and earlier: Do NOT convert all Unicode objects to\n           strings.\n\n           Python 1.6 and later: Convert all Unicode objects to strings.\n\n  -o    -- Create output in a specified output file.  If the path leading\n           to the file does not exist, any missing directories will be\n           created.\n           NOTE: -o cannot be used with -d.  This will generate an error.\n\n  -d    -- Generate the base code now and the class code on demand.\n           Recommended for large type libraries.\n\n  typelib -- A TLB, DLL, OCX or anything containing COM type information.\n             If a typelib is not specified, a window containing a textbox\n             will open from which you can select a registered type\n             library.\n\nExamples:\n\n  makepy.py -d\n\n    Presents a list of registered type libraries from which you can make\n    a selection.\n\n  makepy.py -d \"Microsoft Excel 8.0 Object Library\"\n\n    Generate support for the type library with the specified description\n    (in this case, the MS Excel object model).\n\n"
 import importlib
-using win32com_.client: genpy, selecttlb, gencache
-abstract type AbstractSimpleProgress <: Abstractgenpy.GeneratorProgress end
+include("genpy.jl")
+include("selecttlb.jl")
+include("gencache.jl")
+abstract type AbstractSimpleProgress <: genpy.GeneratorProgress end
 abstract type AbstractGUIProgress <: AbstractSimpleProgress end
-using win32com_.client: Dispatch
+using __init__: Dispatch
 bForDemandDefault = 0
 error = "makepy.error"
 function usage()
@@ -29,13 +32,12 @@ end
 
 function ShowInfo(spec)
     if !(spec)
-        tlbSpec = SelectTlb(selecttlb, selecttlb.FLAG_HIDDEN)
+        tlbSpec = selecttlb.SelectTlb(selecttlb.FLAG_HIDDEN)
         if tlbSpec === nothing
             return
         end
         try
-            tlb = LoadRegTypeLib(
-                pythoncom,
+            tlb = pythoncom.LoadRegTypeLib(
                 tlbSpec.clsid,
                 tlbSpec.major,
                 tlbSpec.minor,
@@ -85,7 +87,7 @@ end
 
 mutable struct SimpleProgress <: AbstractSimpleProgress
     #= A simple progress class prints its output to stderr =#
-    verboseLevel
+    verboseLevel::Any
 end
 function Close(self::SimpleProgress)
     #= pass =#
@@ -122,7 +124,7 @@ function LogWarning(self::SimpleProgress, desc)
 end
 
 mutable struct GUIProgress <: AbstractGUIProgress
-    dialog
+    dialog::Any
 
     GUIProgress(verboseLevel) = begin
         SimpleProgress(verboseLevel)
@@ -137,9 +139,9 @@ function Close(self::GUIProgress)
 end
 
 function Starting(self::GUIProgress, tlb_desc)
-    Starting(SimpleProgress, self, tlb_desc)
+    SimpleProgress.Starting(self, tlb_desc)
     if self.dialog === nothing
-        self.dialog = ThreadedStatusProgressDialog(status, tlb_desc)
+        self.dialog = status.ThreadedStatusProgressDialog(tlb_desc)
     else
         SetTitle(self.dialog, tlb_desc)
     end
@@ -166,18 +168,18 @@ function GetTypeLibsForSpec(arg)::Vector
     typelibs = []
     try
         try
-            tlb = LoadTypeLib(pythoncom, arg)
-            spec = TypelibSpec(selecttlb, nothing, 0, 0, 0)
+            tlb = pythoncom.LoadTypeLib(arg)
+            spec = selecttlb.TypelibSpec(nothing, 0, 0, 0)
             FromTypelib(spec, tlb, arg)
             push!(typelibs, (tlb, spec))
         catch exn
             if exn isa pythoncom.com_error
-                tlbs = FindTlbsWithDescription(selecttlb, arg)
+                tlbs = selecttlb.FindTlbsWithDescription(arg)
                 if length(tlbs) == 0
                     try
                         ob = Dispatch(arg)
                         tlb, index = GetContainingTypeLib(GetTypeInfo(ob._oleobj_))
-                        spec = TypelibSpec(selecttlb, nothing, 0, 0, 0)
+                        spec = selecttlb.TypelibSpec(nothing, 0, 0, 0)
                         FromTypelib(spec, tlb)
                         append(tlbs, spec)
                     catch exn
@@ -191,15 +193,14 @@ function GetTypeLibsForSpec(arg)::Vector
                 end
                 for spec in tlbs
                     if spec.dll === nothing
-                        tlb = LoadRegTypeLib(
-                            pythoncom,
+                        tlb = pythoncom.LoadRegTypeLib(
                             spec.clsid,
                             spec.major,
                             spec.minor,
                             spec.lcid,
                         )
                     else
-                        tlb = LoadTypeLib(pythoncom, spec.dll)
+                        tlb = pythoncom.LoadTypeLib(spec.dll)
                     end
                     attr = GetLibAttr(tlb)
                     spec.major = attr[4]
@@ -212,7 +213,7 @@ function GetTypeLibsForSpec(arg)::Vector
         return typelibs
     catch exn
         if exn isa pythoncom.com_error
-            t, v, tb = exc_info(sys)
+            t, v, tb = sys.exc_info()
             write(sys.stderr, "Unable to load type library from \'%s\' - %s\n" % (arg, v))
             tb = nothing
             quit(1)
@@ -242,21 +243,20 @@ function GenerateFromTypeLibSpec(
     end
     if isa(typelibInfo, tuple)
         typelibCLSID, lcid, major, minor = typelibInfo
-        tlb = LoadRegTypeLib(pythoncom, typelibCLSID, major, minor, lcid)
-        spec = TypelibSpec(selecttlb, typelibCLSID, lcid, major, minor)
+        tlb = pythoncom.LoadRegTypeLib(typelibCLSID, major, minor, lcid)
+        spec = selecttlb.TypelibSpec(typelibCLSID, lcid, major, minor)
         FromTypelib(spec, tlb, string(typelibCLSID))
         typelibs = [(tlb, spec)]
     elseif isa(typelibInfo, selecttlb.TypelibSpec)
         if typelibInfo.dll === nothing
-            tlb = LoadRegTypeLib(
-                pythoncom,
+            tlb = pythoncom.LoadRegTypeLib(
                 typelibInfo.clsid,
                 typelibInfo.major,
                 typelibInfo.minor,
                 typelibInfo.lcid,
             )
         else
-            tlb = LoadTypeLib(pythoncom, typelibInfo.dll)
+            tlb = pythoncom.LoadTypeLib(typelibInfo.dll)
         end
         typelibs = [(tlb, typelibInfo)]
     elseif hasfield(typeof(typelibInfo), :GetLibAttr)
@@ -265,7 +265,7 @@ function GenerateFromTypeLibSpec(
         lcid = tla[2]
         major = tla[4]
         minor = tla[5]
-        spec = TypelibSpec(selecttlb, guid, lcid, major, minor)
+        spec = selecttlb.TypelibSpec(guid, lcid, major, minor)
         typelibs = [(typelibInfo, spec)]
     else
         typelibs = GetTypeLibsForSpec(typelibInfo)
@@ -276,15 +276,10 @@ function GenerateFromTypeLibSpec(
     progress = progressInstance
     bToGenDir = file === nothing
     for (typelib, info) in typelibs
-        gen = Generator(genpy, typelib, info.dll, progress, bBuildHidden)
+        gen = genpy.Generator(typelib, info.dll, progress, bBuildHidden)
         if file === nothing
-            this_name = GetGeneratedFileName(
-                gencache,
-                info.clsid,
-                info.lcid,
-                info.major,
-                info.minor,
-            )
+            this_name =
+                gencache.GetGeneratedFileName(info.clsid, info.lcid, info.major, info.minor)
             full_name = join
             if bForDemand
                 try
@@ -309,7 +304,7 @@ function GenerateFromTypeLibSpec(
                     end
                 end
                 if !isdir(os.path, full_name)
-                    mkdir(os, full_name)
+                    os.mkdir(full_name)
                 end
                 outputName = join
             else
@@ -329,10 +324,10 @@ function GenerateFromTypeLibSpec(
                 finish_writer(gen, outputName, fileUse, worked)
             end
         end
-        invalidate_caches(importlib)
+        importlib.invalidate_caches()
         if bToGenDir
             SetDescription(progress, "Importing module")
-            AddModuleToCache(gencache, info.clsid, info.lcid, info.major, info.minor)
+            gencache.AddModuleToCache(info.clsid, info.lcid, info.major, info.minor)
         end
     end
     Close(progress)
@@ -351,7 +346,7 @@ function GenerateChildFromTypeLibSpec(
     end
     if type_(typelibInfo) == type_(())
         typelibCLSID, lcid, major, minor = typelibInfo
-        tlb = LoadRegTypeLib(pythoncom, typelibCLSID, major, minor, lcid)
+        tlb = pythoncom.LoadRegTypeLib(typelibCLSID, major, minor, lcid)
     else
         tlb = typelibInfo
         tla = GetLibAttr(typelibInfo)
@@ -360,7 +355,7 @@ function GenerateChildFromTypeLibSpec(
         major = tla[4]
         minor = tla[5]
     end
-    spec = TypelibSpec(selecttlb, typelibCLSID, lcid, major, minor)
+    spec = selecttlb.TypelibSpec(typelibCLSID, lcid, major, minor)
     FromTypelib(spec, tlb, string(typelibCLSID))
     typelibs = [(tlb, spec)]
     if progressInstance === nothing
@@ -369,13 +364,13 @@ function GenerateChildFromTypeLibSpec(
     progress = progressInstance
     for (typelib, info) in typelibs
         dir_name =
-            GetGeneratedFileName(gencache, info.clsid, info.lcid, info.major, info.minor)
+            gencache.GetGeneratedFileName(info.clsid, info.lcid, info.major, info.minor)
         dir_path_name = join
         LogBeginGenerate(progress, dir_path_name)
-        gen = Generator(genpy, typelib, info.dll, progress)
+        gen = genpy.Generator(typelib, info.dll, progress)
         generate_child(gen, child, dir_path_name)
         SetDescription(progress, "Importing module")
-        invalidate_caches(importlib)
+        importlib.invalidate_caches()
         __import__(("win32com_.gen_py." + dir_name) * "." + child)
     end
     Close(progress)
@@ -388,7 +383,7 @@ function main()::Int64
     doit = 1
     bForDemand = bForDemandDefault
     try
-        opts, args = getopt(getopt, append!([PROGRAM_FILE], ARGS)[2:end], "vo:huiqd")
+        opts, args = getopt.getopt(append!([PROGRAM_FILE], ARGS)[2:end], "vo:huiqd")
         for (o, v) in opts
             if o == "-h"
                 hiddenSpec = 0
@@ -427,7 +422,7 @@ function main()::Int64
         return 0
     end
     if length(args) == 0
-        rc = SelectTlb(selecttlb)
+        rc = selecttlb.SelectTlb()
         if rc === nothing
             quit(1)
         end
@@ -436,12 +431,12 @@ function main()::Int64
     if outputName != nothing
         path = dirname(os.path, outputName)
         if path != "" && !exists(os.path, path)
-            makedirs(os, path)
+            os.makedirs(path)
         end
         if sys.version_info > (3, 0)
             f = readline(outputName)
         else
-            f = readline(codecs)
+            f = readline(codecs)(outputName, "w", "mbcs")
         end
     else
         f = nothing

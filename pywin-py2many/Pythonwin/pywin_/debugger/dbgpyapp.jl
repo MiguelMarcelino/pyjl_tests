@@ -3,13 +3,14 @@ win32ui = pyimport("win32ui")
 using win32com_.gen_py.framework: interact
 import win32con
 
+
 import string
 
 using win32com_.gen_py.framework: intpyapp
-abstract type AbstractDebuggerPythonApp <: Abstractintpyapp.InteractivePythonApp end
+abstract type AbstractDebuggerPythonApp <: intpyapp.InteractivePythonApp end
 version = "0.3.0"
 mutable struct DebuggerPythonApp <: AbstractDebuggerPythonApp
-    frame
+    frame::Any
 end
 function LoadMainFrame(self::DebuggerPythonApp)
     #= Create the main applications frame =#

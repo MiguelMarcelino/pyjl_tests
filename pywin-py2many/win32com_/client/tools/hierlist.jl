@@ -2,12 +2,14 @@ using PyCall
 win32ui = pyimport("win32ui")
 win32api = pyimport("win32api")
 
+
 import win32con
+
 
 using win32com_.gen_py.mfc: object, window, docview, dialog
 import commctrl
-abstract type AbstractHierDialog <: Abstractdialog.Dialog end
-abstract type AbstractHierList <: Abstractobject.Object end
+abstract type AbstractHierDialog <: dialog.Dialog end
+abstract type AbstractHierList <: object.Object end
 abstract type AbstractHierListWithItems <: AbstractHierList end
 abstract type AbstractHierListItem end
 function GetItemText(item)
@@ -24,12 +26,12 @@ function GetItemText(item)
 end
 
 mutable struct HierDialog <: AbstractHierDialog
-    dlgID
-    hierList
-    title
-    bitmapID
-    childListBoxID
-    dll
+    dlgID::Any
+    hierList::Any
+    title::Any
+    bitmapID::Any
+    childListBoxID::Any
+    dll::Any
 
     HierDialog(
         title,
@@ -50,18 +52,18 @@ function OnInitDialog(self::HierDialog)
 end
 
 mutable struct HierList <: AbstractHierList
-    listControl
-    bitmapID
-    root
-    listBoxId
+    listControl::Any
+    bitmapID::Any
+    root::Any
+    listBoxId::Any
     itemHandleMap::Dict
     filledItemHandlesMap::Dict
-    bitmapMask
-    imageList
-    notify_parent
-    OnTreeItemExpanding
-    OnTreeItemSelChanged
-    OnTreeItemDoubleClick
+    bitmapMask::Any
+    imageList::Any
+    notify_parent::Any
+    OnTreeItemExpanding::Any
+    OnTreeItemSelChanged::Any
+    OnTreeItemDoubleClick::Any
 end
 function __getattr__(self::HierList, attr)
     try
@@ -79,8 +81,8 @@ end
 
 function SetStyle(self::HierList, newStyle)
     hwnd = GetSafeHwnd(self.listControl)
-    style = GetWindowLong(win32api, hwnd, win32con.GWL_STYLE)
-    SetWindowLong(win32api, hwnd, win32con.GWL_STYLE, style | newStyle)
+    style = win32api.GetWindowLong(hwnd, win32con.GWL_STYLE)
+    win32api.SetWindowLong(hwnd, win32con.GWL_STYLE, style | newStyle)
 end
 
 function HierInit(self::HierList, parent, listControl = nothing)
@@ -89,7 +91,7 @@ function HierInit(self::HierList, parent, listControl = nothing)
     else
         bitmapMask = self.bitmapMask
     end
-    self.imageList = CreateImageList(win32ui, self.bitmapID, 16, 0, bitmapMask)
+    self.imageList = win32ui.CreateImageList(self.bitmapID, 16, 0, bitmapMask)
     if listControl === nothing
         if self.listBoxId === nothing
             self.listBoxId = win32ui.IDC_LIST1
@@ -307,7 +309,7 @@ end
 
 function PerformItemSelected(self::HierList, item)
     try
-        SetStatusText(win32ui, "Selected " + GetText(self, item))
+        win32ui.SetStatusText("Selected " + GetText(self, item))
     catch exn
         if exn isa win32ui.error
             #= pass =#
@@ -316,13 +318,13 @@ function PerformItemSelected(self::HierList, item)
 end
 
 function TakeDefaultAction(self::HierList, item)
-    MessageBox(win32ui, "Got item " + GetText(self, item))
+    win32ui.MessageBox("Got item " + GetText(self, item))
 end
 
 mutable struct HierListWithItems <: AbstractHierListWithItems
-    bitmapID
-    bitmapMask
-    listBoxID
+    bitmapID::Any
+    bitmapMask::Any
+    listBoxID::Any
 
     HierListWithItems(
         root,
@@ -341,7 +343,7 @@ end
 function GetBitmapColumn(self::HierListWithItems, item)
     rc = DelegateCall(self, item.GetBitmapColumn)
     if rc === nothing
-        rc = GetBitmapColumn(HierList, self)
+        rc = HierList.GetBitmapColumn(self, item)
     end
     return rc
 end
@@ -368,7 +370,7 @@ function PerformItemSelected(self::HierListWithItems, item)
         getfield(item, :PerformItemSelected) : nothing
     )
     if func === nothing
-        return PerformItemSelected(HierList, self)
+        return HierList.PerformItemSelected(self, item)
     else
         return DelegateCall(self, func)
     end
@@ -380,13 +382,15 @@ function TakeDefaultAction(self::HierListWithItems, item)
         getfield(item, :TakeDefaultAction) : nothing
     )
     if func === nothing
-        return TakeDefaultAction(HierList, self)
+        return HierList.TakeDefaultAction(self, item)
     else
         return DelegateCall(self, func)
     end
 end
 
 mutable struct HierListItem <: AbstractHierListItem
+
+
     HierListItem() = begin
         #= pass =#
         new()

@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 using win32com_.gen_py.mfc: docview, dialog, window
@@ -24,12 +24,12 @@ return dlist
 end
 
 abstract type Abstractdirpath end
-abstract type AbstractGrepTemplate <: Abstractdocview.RichEditDocTemplate end
-abstract type AbstractGrepFrame <: Abstractwindow.MDIChildWnd end
-abstract type AbstractGrepDocument <: Abstractdocview.RichEditDoc end
-abstract type AbstractGrepView <: Abstractdocview.RichEditView end
-abstract type AbstractGrepDialog <: Abstractdialog.Dialog end
-abstract type AbstractGrepParamsDialog <: Abstractdialog.Dialog end
+abstract type AbstractGrepTemplate <: docview.RichEditDocTemplate end
+abstract type AbstractGrepFrame <: window.MDIChildWnd end
+abstract type AbstractGrepDocument <: docview.RichEditDoc end
+abstract type AbstractGrepView <: docview.RichEditView end
+abstract type AbstractGrepDialog <: dialog.Dialog end
+abstract type AbstractGrepParamsDialog <: dialog.Dialog end
 mutable struct dirpath <: Abstractdirpath
 dirs::Vector
 recurse::Int64

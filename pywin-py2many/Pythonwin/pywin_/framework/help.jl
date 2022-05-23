@@ -1,7 +1,7 @@
 using OrderedCollections
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32help
 import winerror
 using win32com_.gen_py.dialogs: list

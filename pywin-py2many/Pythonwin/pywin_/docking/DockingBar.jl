@@ -1,11 +1,11 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.mfc.dialog
 import win32con
 using win32com_.gen_py.mfc: afxres, window
 
-abstract type AbstractDockingBar <: Abstractwindow.Wnd end
+abstract type AbstractDockingBar <: window.Wnd end
 clrBtnHilight = GetSysColor(win32api, win32con.COLOR_BTNHILIGHT)
 clrBtnShadow = GetSysColor(win32api, win32con.COLOR_BTNSHADOW)
 function CenterPoint(rect)
@@ -29,30 +29,30 @@ function PtInRect(rect, pt)
 end
 
 mutable struct DockingBar <: AbstractDockingBar
-    OnCaptureChanged
-    OnLButtonDblClk
-    OnLButtonDown
-    OnLButtonUp
-    OnMouseMove
-    OnNcLButtonDblClk
-    OnNcLButtonDown
-    OnNcPaint
-    OnWindowPosChanged
-    _obj_
+    OnCaptureChanged::Any
+    OnLButtonDblClk::Any
+    OnLButtonDown::Any
+    OnLButtonUp::Any
+    OnMouseMove::Any
+    OnNcLButtonDblClk::Any
+    OnNcLButtonDown::Any
+    OnNcPaint::Any
+    OnWindowPosChanged::Any
+    _obj_::Any
     bInRecalcNC::Int64
     bTracking::Int64
-    brushBkgd
-    cCaptionSize
-    cMinHeight
-    cMinWidth
+    brushBkgd::Any
+    cCaptionSize::Any
+    cMinHeight::Any
+    cMinWidth::Any
     cxBorder::Int64
     cxEdge::Int64
     cxGripper::Int64
     cyBorder::Int64
-    dialog
-    dockBar
+    dialog::Any
+    dockBar::Any
     nDockBarID::Int64
-    ptOld
+    ptOld::Any
     rectBorder::Tuple{Int64}
     rectClose::Tuple{Int64}
     rectGripper::Tuple{Int64}
@@ -62,7 +62,7 @@ mutable struct DockingBar <: AbstractDockingBar
     sizeHorz::Tuple{Int64}
     sizeMin::Tuple{Int64}
     sizeVert::Tuple{Int64}
-    obj
+    obj::Any
 
     DockingBar(obj = nothing) = begin
         if obj === nothing

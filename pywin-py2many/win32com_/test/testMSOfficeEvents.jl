@@ -3,13 +3,15 @@ pythoncom = pyimport("pythoncom")
 using win32com_.client: DispatchWithEvents, Dispatch
 import msvcrt
 
+
 import threading
-stopEvent = Event(threading)
+stopEvent = threading.Event()
 abstract type AbstractExcelEvents end
 abstract type AbstractWorkbookEvents end
 abstract type AbstractWordEvents end
 function TestExcel()
     mutable struct ExcelEvents <: AbstractExcelEvents
+
     end
     function OnNewWorkbook(self::ExcelEvents, wb)
         if type_(wb) != types.InstanceType
@@ -51,6 +53,7 @@ function TestExcel()
     end
 
     mutable struct WorkbookEvents <: AbstractWorkbookEvents
+
     end
     function OnActivate(self::WorkbookEvents)
         println("workbook OnActivate")
@@ -78,6 +81,7 @@ end
 
 function TestWord()
     mutable struct WordEvents <: AbstractWordEvents
+
     end
     function OnDocumentChange(self::WordEvents)
         self.seen_events["OnDocumentChange"] = nothing
@@ -106,14 +110,14 @@ function TestWord()
 end
 
 function _WaitForFinish(ob, timeout)::Int64
-    end_ = pylib::time() + timeout
+    end_ = pylib::time()() + timeout
     while true
-        if kbhit(msvcrt)
-            getch(msvcrt)
+        if msvcrt.kbhit()
+            msvcrt.getch()
             has_break = true
             break
         end
-        PumpWaitingMessages(pythoncom)
+        pythoncom.PumpWaitingMessages()
         wait(stopEvent, 0.2)
         if isSet(stopEvent)
             clear(stopEvent)
@@ -129,7 +133,7 @@ function _WaitForFinish(ob, timeout)::Int64
                 #= pass =#
             end
         end
-        if pylib::time() > end_
+        if pylib::time()() > end_
             return 0
         end
     end

@@ -2,12 +2,14 @@ using PyCall
 datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
 
+
+
 import win32com_.client
 import win32com_.test.util
 import win32com_.server.util
 using win32timezone: TimeZoneInfo
 abstract type AbstractTester end
-abstract type AbstractTestCase <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 mutable struct Tester <: AbstractTester
     _public_methods_::Vector{String}
 
@@ -19,10 +21,11 @@ function TestDate(self::Tester, d)
 end
 
 function test_ob()
-    return Dispatch(win32com_.client, wrap(win32com_.server.util, Tester()))
+    return win32com_.client.Dispatch(win32com_.server.util.wrap(Tester()))
 end
 
 mutable struct TestCase <: AbstractTestCase
+
 end
 function check(self::TestCase, d, expected = nothing)
     if !pywintypes.TimeType <: datetime
@@ -33,18 +36,18 @@ function check(self::TestCase, d, expected = nothing)
 end
 
 function testUTC(self::TestCase)
-    check(self, datetime(2000, 12, 25, 500000, utc(TimeZoneInfo)))
+    check(self, datetime(2000, 12, 25, 500000, TimeZoneInfo.utc()))
 end
 
 function testLocal(self::TestCase)
-    check(self, datetime(2000, 12, 25, 500000, local_(TimeZoneInfo)))
+    check(self, datetime(2000, 12, 25, 500000, TimeZoneInfo.local()))
 end
 
 function testMSTruncated(self::TestCase)
     check(
         self,
-        datetime(2000, 12, 25, 500500, utc(TimeZoneInfo)),
-        datetime(2000, 12, 25, 500000, utc(TimeZoneInfo)),
+        datetime(2000, 12, 25, 500500, TimeZoneInfo.utc()),
+        datetime(2000, 12, 25, 500000, TimeZoneInfo.utc()),
     )
 end
 

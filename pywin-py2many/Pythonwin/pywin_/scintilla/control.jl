@@ -1,7 +1,7 @@
 using PyCall
 using StringEncodings
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 include("formatter.jl")
 using win32com_.gen_py.mfc: window
 using win32com_.gen_py: default_scintilla_encoding
@@ -17,7 +17,7 @@ abstract type AbstractScintillaNotification end
 abstract type AbstractScintillaControlInterface end
 abstract type AbstractCScintillaEditInterface <: AbstractScintillaControlInterface end
 abstract type AbstractCScintillaColorEditInterface <: AbstractCScintillaEditInterface end
-abstract type AbstractCScintillaEdit <: Abstractwindow.Wnd end
+abstract type AbstractCScintillaEdit <: window.Wnd end
 dllid = nothing
 if win32ui.debug
 try

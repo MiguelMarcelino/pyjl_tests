@@ -7,12 +7,12 @@ import win32com_.server.util
 abstract type AbstractSimpleConnection end
 mutable struct SimpleConnection <: AbstractSimpleConnection
     #= A simple, single connection object =#
-    cookie
-    cp
-    debug
-    coInstance
-    eventCLSID
-    eventInstance
+    cookie::Any
+    cp::Any
+    debug::Any
+    coInstance::Any
+    eventCLSID::Any
+    eventInstance::Any
 
     SimpleConnection(
         coInstance = nothing,
@@ -41,7 +41,7 @@ function _wrap(self::SimpleConnection, obj)
     if self.debug
         useDispatcher = dispatcher.DefaultDebugDispatcher
     end
-    return wrap(win32com_.server.util, obj, useDispatcher)
+    return win32com_.server.util.wrap(obj, useDispatcher)
 end
 
 function Connect(self::SimpleConnection, coInstance, eventInstance, eventCLSID = nothing)

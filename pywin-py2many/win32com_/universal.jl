@@ -2,6 +2,7 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 import win32com_.client.build
 
+
 using win32com_.client: gencache
 abstract type AbstractArg end
 abstract type AbstractMethod end
@@ -17,14 +18,14 @@ function RegisterInterfaces(
 )::Vector
     ret = []
     try
-        mod = GetModuleForTypelib(gencache, typelibGUID, lcid, major, minor)
+        mod = gencache.GetModuleForTypelib(typelibGUID, lcid, major, minor)
     catch exn
         if exn isa ImportError
             mod = nothing
         end
     end
     if mod === nothing
-        tlb = LoadRegTypeLib(pythoncom, typelibGUID, major, minor, lcid)
+        tlb = pythoncom.LoadRegTypeLib(typelibGUID, major, minor, lcid)
         typecomp_lib = GetTypeComp(tlb)
         if interface_names === nothing
             interface_names = []
@@ -50,8 +51,7 @@ function RegisterInterfaces(
                 type_info = GetRefTypeInfo(type_info, refhtype)
                 attr = GetTypeAttr(type_info)
             end
-            item = VTableItem(
-                win32com_.client.build,
+            item = win32com_.client.build.VTableItem(
                 type_info,
                 attr,
                 GetDocumentation(type_info, -1),
@@ -85,7 +85,7 @@ function RegisterInterfaces(
                     )
                 end
             end
-            sub_mod = GetModuleForCLSID(gencache, iid)
+            sub_mod = gencache.GetModuleForCLSID(iid)
             is_dispatch = (
                 hasfield(typeof(sub_mod), :name + _vtables_dispatch_) ?
                 getfield(sub_mod, :name + _vtables_dispatch_) : nothing
@@ -127,19 +127,19 @@ function _CalcTypeSize(typeTuple)
 end
 
 mutable struct Arg <: AbstractArg
-    name
-    size
+    name::Any
+    size::Any
     offset::Int64
 end
 
 mutable struct Method <: AbstractMethod
-    _gw_in_args
-    _gw_out_args
+    _gw_in_args::Any
+    _gw_out_args::Any
     args::Vector
     cbArgs::Int64
-    dispid
-    invkind
-    name
+    dispid::Any
+    invkind::Any
+    name::Any
     isEventSink::Int64
 
     Method(method_info, isEventSink = 0) = begin
@@ -178,9 +178,9 @@ function _GenerateOutArgTuple(self::Method)::Tuple
 end
 
 mutable struct Definition <: AbstractDefinition
-    _iid
+    _iid::Any
     _methods::Vector
-    _is_dispatch
+    _is_dispatch::Any
 
     Definition(iid, is_dispatch, method_defs) = begin
         for info in method_defs

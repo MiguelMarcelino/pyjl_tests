@@ -1,14 +1,16 @@
 using PyCall
 pythoncom = pyimport("pythoncom")
 
+
 import win32com_.test.util
 import winerror
-abstract type AbstractTestROT <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestROT <: win32com_.test.util.TestCase end
 mutable struct TestROT <: AbstractTestROT
+
 end
 function testit(self::TestROT)
-    ctx = CreateBindCtx(pythoncom)
-    rot = GetRunningObjectTable(pythoncom)
+    ctx = pythoncom.CreateBindCtx()
+    rot = pythoncom.GetRunningObjectTable()
     num = 0
     for mk in rot
         name = GetDisplayName(mk, ctx, nothing)

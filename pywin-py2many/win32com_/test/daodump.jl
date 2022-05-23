@@ -1,5 +1,6 @@
 using Printf
 
+
 import win32com_.client
 function DumpDB(db, bDeep = 1)
     DumpTables(db, bDeep)
@@ -57,7 +58,7 @@ end
 
 function DumpContainerDocuments(container)
     for doc in container.Documents
-        timeStr = ctime(time, parse(Int, doc.LastUpdated))
+        timeStr = time.ctime(parse(Int, doc.LastUpdated))
         print("$(doc.Name) - updated $(timeStr)")
         println("$(doc.LastUpdated))")
     end

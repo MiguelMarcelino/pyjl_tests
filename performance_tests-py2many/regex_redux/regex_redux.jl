@@ -1,5 +1,7 @@
 using Distributed
 
+
+
 function init(arg)
     global seq
     seq = arg
@@ -10,7 +12,7 @@ function var_find(f)::Int64
 end
 
 function main()
-    seq = read(stdin, String)
+    seq = read(stdin, String)()
     ilen = length(seq)
     seq = replace(seq, r">.*\n|\n" => s"")
     clen = length(seq)

@@ -4,6 +4,7 @@ pythoncom = pyimport("pythoncom")
 using distutils.dep_util: newer
 import win32com_.server.register
 
+
 import win32com_
 import winerror
 using win32com_.server.util: wrap
@@ -53,24 +54,23 @@ function BuildTypelib()
     tlb = splitext(os.path, idl)[1] + ".tlb"
     if newer(idl, tlb)
         @printf("Compiling %s\n", idl)
-        rc = system(os, "midl \"%s\"" % (idl,))
+        rc = os.system("midl \"%s\"" % (idl,))
         if rc
             throw(RuntimeError("Compiling MIDL failed!"))
         end
         for fname in split("dlldata.c pippo_i.c pippo_p.c pippo.h")
-            remove(os, join)
+            os.remove(join)
         end
     end
     @printf("Registering %s\n", tlb)
-    tli = LoadTypeLib(pythoncom, tlb)
-    RegisterTypeLib(pythoncom, tli, tlb)
+    tli = pythoncom.LoadTypeLib(tlb)
+    pythoncom.RegisterTypeLib(tli, tlb)
 end
 
 function UnregisterTypelib()
     k = CPippo
     try
-        UnRegisterTypeLib(
-            pythoncom,
+        pythoncom.UnRegisterTypeLib(
             k._typelib_guid_,
             k._typelib_version_[1],
             k._typelib_version_[2],
@@ -100,7 +100,7 @@ function main(argv = nothing)
     else
         BuildTypelib()
     end
-    UseCommandLine(win32com_.server.register, CPippo)
+    win32com_.server.register.UseCommandLine(CPippo)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

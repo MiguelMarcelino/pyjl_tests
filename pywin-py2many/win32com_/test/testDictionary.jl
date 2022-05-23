@@ -1,20 +1,24 @@
 using PyCall
+pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
-pythoncom = pyimport("pythoncom")
 import win32com_.servers.dictionary
 using win32com_.test.util: RegisterPythonServer
+
+
 
 import win32com_.server.util
 import win32com_.test.util
 import win32com_.client
 
+
+
 import winerror
 import win32timezone
 
-abstract type AbstractTestCase <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 function MakeTestDictionary()
-    return Dispatch(win32com_.client, "Python.Dictionary")
+    return win32com_.client.Dispatch("Python.Dictionary")
 end
 
 function TestDictAgainst(dict, check)
@@ -51,7 +55,7 @@ function TestDict(quiet = nothing)
     dict["NewKey"] = nothing
     delete!(checkDict, "NewKey")
     TestDictAgainst(dict, checkDict)
-    now = now(win32timezone)
+    now = win32timezone.now()
     now = replace(now, round(now.microsecond / 1000) * 1000)
     dict["Now"] = now
     checkDict["Now"] = now
@@ -116,6 +120,7 @@ function TestDict(quiet = nothing)
 end
 
 mutable struct TestCase <: AbstractTestCase
+
 end
 function testDict(self::TestCase)
     TestDict()

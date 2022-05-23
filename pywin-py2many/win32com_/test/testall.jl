@@ -18,8 +18,8 @@ end
 win32com_src_dir = abspath(os.path, join)
 import win32com_
 win32com_.__path__[1] = win32com_src_dir
-abstract type AbstractPyCOMTest <: AbstractTestCase end
-abstract type AbstractPippoTest <: AbstractTestCase end
+abstract type AbstractPyCOMTest <: TestCase end
+abstract type AbstractPippoTest <: TestCase end
 
 import win32com_.client
 using win32com_.test.util:
@@ -32,11 +32,11 @@ using win32com_.test.util:
     RegisterPythonServer
 verbosity = 1
 function GenerateAndRunOldStyle()
-    GenerateAll(GenTestScripts)
+    GenTestScripts.GenerateAll()
     try
         #= pass =#
     finally
-        CleanAll(GenTestScripts)
+        GenTestScripts.CleanAll()
     end
 end
 
@@ -45,15 +45,15 @@ function CleanGenerated()
         if verbosity > 1
             @printf("Deleting files from %s\n", win32com_.__gen_path__)
         end
-        rmtree(shutil, win32com_.__gen_path__)
+        shutil.rmtree(win32com_.__gen_path__)
     end
-    __init__(win32com_.client.gencache)
+    win32com_.client.gencache.__init__()
 end
 
 function RemoveRefCountOutput(data)::String
     while true
         last_line_pos = rfind(data, "\n")
-        if !match(re, "\\[\\d+ refs\\]", data[last_line_pos+2:end])
+        if !re.match("\\[\\d+ refs\\]", data[last_line_pos+2:end])
             has_break = true
             break
         end
@@ -66,7 +66,7 @@ function RemoveRefCountOutput(data)::String
 end
 
 function ExecuteSilentlyIfOK(cmd, testcase)::String
-    f = popen(os, cmd)
+    f = os.popen(cmd)
     data = strip(read(f))
     rc = close(f)
     if rc
@@ -89,6 +89,7 @@ function testit(self::PyCOMTest)
 end
 
 mutable struct PippoTest <: AbstractPippoTest
+
 end
 function testit(self::PippoTest)
     RegisterPythonServer(pippo_server.__file__, "Python.Test.Pippo")
@@ -134,7 +135,7 @@ function get_test_mod_and_func(test_name, import_failures)::Tuple
         __import__(fq_mod_name)
         mod = sys.modules[fq_mod_name+1]
     catch exn
-        append(import_failures, (mod_name, exc_info(sys)[begin:2]))
+        append(import_failures, (mod_name, sys.exc_info()[begin:2]))
         return (nothing, nothing)
     end
     func = func_name === nothing ? (nothing) : (getfield(mod, :func_name))
@@ -142,7 +143,7 @@ function get_test_mod_and_func(test_name, import_failures)::Tuple
 end
 
 function make_test_suite(test_level = 1)
-    suite = TestSuite(unittest)
+    suite = unittest.TestSuite()
     import_failures = []
     loader = TestLoader()
     for i = 0:testLevel-1
@@ -173,7 +174,7 @@ function make_test_suite(test_level = 1)
             try
                 __import__(mod_name)
             catch exn
-                push!(import_failures, (mod_name, exc_info(sys)[begin:2]))
+                push!(import_failures, (mod_name, sys.exc_info()[begin:2]))
                 continue
             end
             mod = sys.modules[mod_name+1]
@@ -201,7 +202,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     try
-        opts, args = getopt(getopt, append!([PROGRAM_FILE], ARGS)[2:end], "v")
+        opts, args = getopt.getopt(append!([PROGRAM_FILE], ARGS)[2:end], "v")
     catch exn
         let why = exn
             if why isa getopt.error
@@ -256,7 +257,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
             "*** The following test modules could not be imported ***",
         )
         for (mod_name, (exc_type, exc_val)) in import_failures
-            desc = join(format_exception_only(traceback, exc_type, exc_val), "\n")
+            desc = join(traceback.format_exception_only(exc_type, exc_val), "\n")
             write(testResult.stream, "%s: %s" % (mod_name, desc))
         end
         writeln(
@@ -268,7 +269,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
         println("- unittest tests FAILED")
     end
     CheckClean()
-    CoUninitialize(pythoncom)
+    pythoncom.CoUninitialize()
     CleanGenerated()
     if !wasSuccessful(testResult)
         quit(1)

@@ -1,7 +1,7 @@
 using win32com_.client: gencache
 using win32com_.test: util
 
-abstract type AbstractArrayTest <: Abstractutil.TestCase end
+abstract type AbstractArrayTest <: util.TestCase end
 ZeroD = 0
 OneDEmpty = []
 OneD = [1, 2, 3]
@@ -35,10 +35,10 @@ function _normalize_array(a)::Vector
 end
 
 mutable struct ArrayTest <: AbstractArrayTest
-    arr
+    arr::Any
 end
 function setUp(self::ArrayTest)
-    self.arr = EnsureDispatch(gencache, "PyCOMTest.ArrayTest")
+    self.arr = gencache.EnsureDispatch("PyCOMTest.ArrayTest")
 end
 
 function tearDown(self::ArrayTest)
@@ -92,7 +92,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     try
-        testmain(util)
+        util.testmain()
     catch exn
         let rc = exn
             if rc isa SystemExit

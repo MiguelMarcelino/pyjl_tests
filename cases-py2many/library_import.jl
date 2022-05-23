@@ -1,6 +1,8 @@
 using PyCall
 datetime = pyimport("datetime")
 
+
+
 import JSON as js
 function typing_test()::Int64
     a::Vector{Int64} = [1, 2, 3]
@@ -33,7 +35,7 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     b = typing_test()
     @assert(b == 2)
-    @assert(match(re, "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{6}", calendar_test()))
+    @assert(re.match("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{6}", calendar_test()))
     res = calendar_json_test()
     println(res)
     println("OK")

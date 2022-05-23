@@ -5,7 +5,7 @@ import _thread
 import win32trace
 import win32event
 using win32com_.gen_py.framework: winout
-abstract type AbstractWindowOutput <: Abstractwinout.WindowOutput end
+abstract type AbstractWindowOutput <: winout.WindowOutput end
 outputWindow = nothing
 function CollectorThread(stopEvent, file)
 InitRead(win32trace)

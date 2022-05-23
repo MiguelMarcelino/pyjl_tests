@@ -6,7 +6,7 @@ doctests = "\n########### Tests mostly copied from test_listcomps.py ###########
 __test__ = Dict("doctests" => doctests)
 function test_main(verbose = nothing)
 run_doctest(support, test_setcomps, verbose)
-if verbose && hasattr(sys, "gettotalrefcount")
+if verbose && hasfield(typeof(sys), :gettotalrefcount)
 counts = repeat([nothing],5)
 for i in 0:length(counts) - 1
 run_doctest(support, test_setcomps, verbose)
@@ -17,8 +17,6 @@ println(counts)
 end
 end
 
-function main()
+if abspath(PROGRAM_FILE) == @__FILE__
 test_main()
 end
-
-main()

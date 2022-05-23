@@ -11,9 +11,11 @@ function __repr__(self::AbstractOptions)::String
     return AbstractOptions(self.n, self.v)
 end
 
+
 function __eq__(self::AbstractOptions, other::AbstractOptions)::Bool
     return __key(self) == __key(other)
 end
+
 
 function __key(self::AbstractOptions)
     (self.n, self.v)
@@ -27,7 +29,10 @@ function fib(i::Int64)::Int64
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    args = parse_args(Options)
+    args = Options.parse_args()
+    if args.v
+        println("args.v is true")
+    end
     if args.n == 0
         args.n = 5
     end

@@ -1,7 +1,7 @@
 using Printf
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 
@@ -12,7 +12,7 @@ include("app.jl")
 import string
 tools = Dict()
 idPos = 100
-abstract type AbstractToolMenuPropPage <: Abstractdialog.PropertyPage end
+abstract type AbstractToolMenuPropPage <: dialog.PropertyPage end
 defaultToolMenuItems = [("Browser", "win32ui.GetApp().OnViewBrowse(0,0)"), ("Browse PythonPath", "from win32com_.gen_py.tools import browseProjects;browseProjects.Browse()"), ("Edit Python Path", "from win32com_.gen_py.tools import regedit;regedit.EditRegistry()"), ("COM Makepy utility", "from win32com_.client import makepy;makepy.main()"), ("COM Browser", "from win32com_.client import combrowse;combrowse.main()"), ("Trace Collector Debugging tool", "from win32com_.gen_py.tools import TraceCollector;TraceCollector.MakeOutputWindow()")]
 function LoadToolMenuItems()::Vector
 items = []

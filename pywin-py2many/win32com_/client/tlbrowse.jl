@@ -3,12 +3,14 @@ pythoncom = pyimport("pythoncom")
 win32ui = pyimport("win32ui")
 win32api = pyimport("win32api")
 
+
+
 import commctrl
 
 using win32com_.gen_py.mfc: dialog
 import win32com_.ext_modules.win32con as win32con
-abstract type AbstractTLBrowserException <: AbstractException end
-abstract type AbstractTypeBrowseDialog <: AbstractTypeBrowseDialog_Parent end
+abstract type AbstractTLBrowserException <: Exception end
+abstract type AbstractTypeBrowseDialog <: TypeBrowseDialog_Parent end
 mutable struct TLBrowserException <: AbstractTLBrowserException
     #= TypeLib browser internal error =#
 
@@ -35,19 +37,19 @@ typekindmap = Dict(
 TypeBrowseDialog_Parent = dialog.Dialog
 mutable struct TypeBrowseDialog <: AbstractTypeBrowseDialog
     #= Browse a type library =#
-    OnFileOpen
-    attr
-    listview
-    memberlb
-    paramlb
-    tlb
-    typeinfo
-    typelb
+    OnFileOpen::Any
+    attr::Any
+    listview::Any
+    memberlb::Any
+    paramlb::Any
+    tlb::Any
+    typeinfo::Any
+    typelb::Any
     IDC_LISTVIEW::Int64
     IDC_MEMBERLIST::Int64
     IDC_PARAMLIST::Int64
     IDC_TYPELIST::Int64
-    typefile
+    typefile::Any
 
     TypeBrowseDialog(
         typefile = nothing,
@@ -82,11 +84,11 @@ function OnAttachedObjectDeath(self::TypeBrowseDialog)
 end
 
 function _SetupMenu(self::TypeBrowseDialog)
-    menu = CreateMenu(win32ui)
+    menu = win32ui.CreateMenu()
     flags = win32con.MF_STRING | win32con.MF_ENABLED
     AppendMenu(menu, flags, win32ui.ID_FILE_OPEN, "&Open...")
     AppendMenu(menu, flags, win32con.IDCANCEL, "&Close")
-    mainMenu = CreateMenu(win32ui)
+    mainMenu = win32ui.CreateMenu()
     AppendMenu(mainMenu, flags | win32con.MF_POPUP, GetHandle(menu), "&File")
     SetMenu(self, mainMenu)
     HookCommand(self, self.OnFileOpen, win32ui.ID_FILE_OPEN)
@@ -95,10 +97,10 @@ end
 function OnFileOpen(self::TypeBrowseDialog, id, code)
     openFlags = win32con.OFN_OVERWRITEPROMPT | win32con.OFN_FILEMUSTEXIST
     fspec = "Type Libraries (*.tlb, *.olb)|*.tlb;*.olb|OCX Files (*.ocx)|*.ocx|DLL\'s (*.dll)|*.dll|All Files (*.*)|*.*||"
-    dlg = CreateFileDialog(win32ui, 1, nothing, nothing, openFlags, fspec)
+    dlg = win32ui.CreateFileDialog(1, nothing, nothing, openFlags, fspec)
     if DoModal(dlg) == win32con.IDOK
         try
-            self.tlb = LoadTypeLib(pythoncom, GetPathName(dlg))
+            self.tlb = pythoncom.LoadTypeLib(GetPathName(dlg))
         catch exn
             if exn isa pythoncom.ole_error
                 MessageBox(self, "The file does not contain type information")
@@ -301,9 +303,9 @@ if abspath(PROGRAM_FILE) == @__FILE__
     end
     dlg = TypeBrowseDialog(fname)
     try
-        GetConsoleTitle(win32api)
+        win32api.GetConsoleTitle()
         DoModal(dlg)
     catch exn
-        CreateWindow(dlg, GetMainFrame(win32ui))
+        CreateWindow(dlg, win32ui.GetMainFrame())
     end
 end

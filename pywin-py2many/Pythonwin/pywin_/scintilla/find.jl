@@ -1,13 +1,13 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32con
 
 using win32com_.gen_py.mfc: dialog
 import afxres
 using win32com_.gen_py.framework: scriptutils
 abstract type AbstractSearchParams end
-abstract type AbstractFindReplaceDialog <: Abstractdialog.Dialog end
+abstract type AbstractFindReplaceDialog <: dialog.Dialog end
 abstract type AbstractFindDialog <: AbstractFindReplaceDialog end
 abstract type AbstractReplaceDialog <: AbstractFindReplaceDialog end
 FOUND_NOTHING = 0

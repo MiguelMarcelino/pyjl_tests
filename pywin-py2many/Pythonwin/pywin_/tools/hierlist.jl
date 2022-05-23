@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 import win32con
@@ -8,8 +8,8 @@ import win32con
 
 using win32com_.gen_py.mfc: object, window, docview, dialog
 import commctrl
-abstract type AbstractHierDialog <: Abstractdialog.Dialog end
-abstract type AbstractHierList <: Abstractobject.Object end
+abstract type AbstractHierDialog <: dialog.Dialog end
+abstract type AbstractHierList <: object.Object end
 abstract type AbstractHierListWithItems <: AbstractHierList end
 abstract type AbstractHierListItem end
 function GetItemText(item)

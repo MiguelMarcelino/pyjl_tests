@@ -7,25 +7,26 @@ import win32com_.client
 import winerror
 import win32com_.test.util
 
-abstract type AbstractError <: AbstractException end
+abstract type AbstractError <: Exception end
 abstract type AbstractPythonSemanticClass end
-abstract type AbstractTester <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTester <: win32com_.test.util.TestCase end
 mutable struct Error <: AbstractError
+
 end
 
 mutable struct PythonSemanticClass <: AbstractPythonSemanticClass
     list::Vector
-    _dispid_to_func_::Dict{Int64, String}
+    _dispid_to_func_::Dict{Int64,String}
     _public_methods_::Vector{String}
 
     PythonSemanticClass(
         list::Vector,
-        _dispid_to_func_::Dict{Int64, String} = Dict(10 => "Add", 11 => "Remove"),
+        _dispid_to_func_::Dict{Int64,String} = Dict(10 => "Add", 11 => "Remove"),
         _public_methods_::Vector{String} = ["In"],
     ) = new(list, _dispid_to_func_, _public_methods_)
 end
 function _NewEnum(self::PythonSemanticClass)
-    return NewEnum(win32com_.server.util, self.list)
+    return win32com_.server.util.NewEnum(self.list)
 end
 
 function _value_(self::PythonSemanticClass)::Vector
@@ -99,7 +100,7 @@ function SemanticTest(ob)
 end
 
 mutable struct Tester <: AbstractTester
-    ob
+    ob::Any
 end
 function setUp(self::Tester)
     debug = 0
@@ -108,8 +109,8 @@ function setUp(self::Tester)
     else
         dispatcher = nothing
     end
-    disp = wrap(win32com_.server.util, PythonSemanticClass(), dispatcher)
-    self.ob = Dispatch(win32com_.client, disp)
+    disp = win32com_.server.util.wrap(PythonSemanticClass(), dispatcher)
+    self.ob = win32com_.client.Dispatch(disp)
 end
 
 function tearDown(self::Tester)

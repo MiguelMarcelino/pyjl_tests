@@ -10,16 +10,18 @@ using OrderedCollections
 using PyCall
 pythoncom = pyimport("pythoncom")
 
+
+
 import win32com_
 
 include("build.jl")
 abstract type AbstractWritableItem end
-abstract type AbstractRecordItem <: Abstractbuild.OleItem end
-abstract type AbstractAliasItem <: Abstractbuild.OleItem end
-abstract type AbstractEnumerationItem <: Abstractbuild.OleItem end
-abstract type AbstractVTableItem <: Abstractbuild.VTableItem end
-abstract type AbstractDispatchItem <: Abstractbuild.DispatchItem end
-abstract type AbstractCoClassItem <: Abstractbuild.OleItem end
+abstract type AbstractRecordItem <: build.OleItem end
+abstract type AbstractAliasItem <: build.OleItem end
+abstract type AbstractEnumerationItem <: build.OleItem end
+abstract type AbstractVTableItem <: build.VTableItem end
+abstract type AbstractDispatchItem <: build.DispatchItem end
+abstract type AbstractCoClassItem <: build.OleItem end
 abstract type AbstractGeneratorProgress end
 abstract type AbstractGenerator end
 error = "makepy.error"
@@ -48,7 +50,7 @@ mapVTToTypeString = Dict(
 function MakeDefaultArgsForPropertyPut(argsDesc)::Tuple
     ret = []
     for desc in argsDesc[2:end]
-        default = MakeDefaultArgRepr(build, desc)
+        default = build.MakeDefaultArgRepr(desc)
         if default === nothing
             has_break = true
             break
@@ -85,8 +87,8 @@ function WriteSinkEventMap(obj, stream)
 end
 
 mutable struct WritableItem <: AbstractWritableItem
-    doc
-    order
+    doc::Any
+    order::Any
 end
 function __cmp__(self::WritableItem, other)
     #= Compare for sorting =#
@@ -109,9 +111,9 @@ function __repr__(self::WritableItem)
 end
 
 mutable struct RecordItem <: build.OleItem
-    clsid
+    clsid::Any
     bForUser::Int64
-    doc
+    doc::Any
     order::Int64
     typename::String
 
@@ -140,12 +142,12 @@ function WriteAliasesForItem(item, aliasItems, stream)
 end
 
 mutable struct AliasItem <: build.OleItem
-    aliasAttr
-    aliasDoc
-    attr
+    aliasAttr::Any
+    aliasDoc::Any
+    attr::Any
     bWritten::Int64
     bForUser::Int64
-    doc
+    doc::Any
     order::Int64
     typename::String
 
@@ -201,11 +203,11 @@ function WriteAliasItem(self::AliasItem, aliasDict, stream)
 end
 
 mutable struct EnumerationItem <: build.OleItem
-    clsid
-    hidden
+    clsid::Any
+    hidden::Any
     mapVars::Dict
     bForUser::Int64
-    doc
+    doc::Any
     order::Int64
     typename::String
 
@@ -248,7 +250,7 @@ function WriteEnumerationItems(self::EnumerationItem, stream)::Int64
                         " # This VARIANT type cannot be converted automatically"
                 end
             end
-            write(stream, "$(MakePublicAttributeName(build, name, true))")
+            write(stream, "$(build.MakePublicAttributeName(name, true))")
             num += 1
         end
     end
@@ -256,10 +258,10 @@ function WriteEnumerationItems(self::EnumerationItem, stream)::Int64
 end
 
 mutable struct VTableItem <: build.VTableItem
-    bIsDispatch
+    bIsDispatch::Any
     bWritten::Int64
-    python_name
-    vtableFuncs
+    python_name::Any
+    vtableFuncs::Any
     order::Int64
 
     VTableItem(bIsDispatch, bWritten::Int64, python_name, vtableFuncs, order::Int64 = 4) =
@@ -293,7 +295,7 @@ function WriteVTableMap(self::VTableItem, generator)
             if (item_num % 5) == 0
                 write(stream, "\n\t\t\t")
             end
-            defval = MakeDefaultArgRepr(build, arg)
+            defval = build.MakeDefaultArgRepr(arg)
             if arg[4] === nothing
                 arg3_repr = nothing
             else
@@ -316,15 +318,15 @@ function WriteVTableMap(self::VTableItem, generator)
 end
 
 mutable struct DispatchItem <: build.DispatchItem
-    bIsDispatch
-    bIsSink
+    bIsDispatch::Any
+    bIsSink::Any
     bWritten::Int64
-    clsid
-    coclass_clsid
-    mapFuncs
-    python_name
-    type_attr
-    doc
+    clsid::Any
+    coclass_clsid::Any
+    mapFuncs::Any
+    python_name::Any
+    type_attr::Any
+    doc::Any
     order::Int64
 
     DispatchItem(typeinfo, attr, doc = nothing, order::Int64 = 3) = begin
@@ -353,10 +355,10 @@ function WriteClassHeader(self::DispatchItem, generator)
     stream = generator.file
     write(stream, "$(("class " + self.python_name))(DispatchBaseClass):")
     if doc[2]
-        write(stream, "\t$(_makeDocString(build, doc[2]))")
+        write(stream, "\t$(build._makeDocString(doc[2]))")
     end
     try
-        progId = ProgIDFromCLSID(pythoncom, self.clsid)
+        progId = pythoncom.ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -379,10 +381,10 @@ function WriteEventSinkClassHeader(self::DispatchItem, generator)
     stream = generator.file
     write(stream, "$(("class " + self.python_name)):")
     if doc[2]
-        write(stream, "\t$(_makeDocString(build, doc[2]))")
+        write(stream, "\t$(build._makeDocString(doc[2]))")
     end
     try
-        progId = ProgIDFromCLSID(pythoncom, self.clsid)
+        progId = pythoncom.ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -445,10 +447,10 @@ function WriteCallbackClassBody(self::DispatchItem, generator)
         methName = MakeEventMethodName(entry.names[1])
         write(
             stream,
-            "$(("#\tdef " * methName * "(self" + BuildCallList(build, fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", true)))):",
+            "$(("#\tdef " * methName * "(self" + build.BuildCallList(fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", true)))):",
         )
         if entry.doc && entry.doc[2]
-            write(stream, "#\t\t$(_makeDocString(build, entry.doc[2]))")
+            write(stream, "#\t\t$(build._makeDocString(entry.doc[2]))")
         end
     end
     println(stream)
@@ -498,7 +500,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     "$(name) is actually a property, but must be used as a method to correctly pass the arguments",
                 )
             end
-            ret = MakeFuncMethod(self, entry, MakePublicAttributeName(build, name))
+            ret = MakeFuncMethod(self, entry, build.MakePublicAttributeName(name))
             for line in ret
                 write(stream, "$(line)")
             end
@@ -539,7 +541,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     continue
                 end
             end
-            write(stream, "$(MakePublicAttributeName(build, key))\": $(mapEntry)")
+            write(stream, "$(build.MakePublicAttributeName(key))\": $(mapEntry)")
         end
     end
     names = collect(keys(self.propMapGet))
@@ -576,7 +578,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     continue
                 end
             end
-            write(stream, "$(MakePublicAttributeName(build, key))\": $(mapEntry)")
+            write(stream, "$(build.MakePublicAttributeName(key))\": $(mapEntry)")
         end
     end
     write(stream, "\t}")
@@ -588,7 +590,7 @@ function WriteClassBody(self::DispatchItem, generator)
         if generator.bBuildHidden || !(entry.hidden)
             lkey = lower(key)
             details = entry.desc
-            defArgDesc = MakeDefaultArgRepr(build, details[3])
+            defArgDesc = build.MakeDefaultArgRepr(details[3])
             if defArgDesc === nothing
                 defArgDesc = ""
             else
@@ -596,7 +598,7 @@ function WriteClassBody(self::DispatchItem, generator)
             end
             write(
                 stream,
-                "$(MakePublicAttributeName(build, key))\" : (($(details[1]), 0),($(pythoncom.DISPATCH_PROPERTYPUT)",
+                "$(build.MakePublicAttributeName(key))\" : (($(details[1]), 0),($(pythoncom.DISPATCH_PROPERTYPUT)",
             )
         end
     end
@@ -609,7 +611,7 @@ function WriteClassBody(self::DispatchItem, generator)
             defArgDesc = MakeDefaultArgsForPropertyPut(details[3])
             write(
                 stream,
-                "$(MakePublicAttributeName(build, key))\": (($(details[1]), 0),$(details[5])",
+                "$(build.MakePublicAttributeName(key))\": (($(details[1]), 0),$(details[5])",
             )
         end
     end
@@ -691,12 +693,12 @@ end
 mutable struct CoClassItem <: build.OleItem
     bIsDispatch::Int64
     bWritten::Int64
-    clsid
-    interfaces
-    python_name
-    sources
+    clsid::Any
+    interfaces::Any
+    python_name::Any
+    sources::Any
     bForUser::Int64
-    doc
+    doc::Any
     order::Int64
     typename::String
 
@@ -737,7 +739,7 @@ function WriteClass(self::CoClassItem, generator)
         end
     end
     try
-        progId = ProgIDFromCLSID(pythoncom, self.clsid)
+        progId = pythoncom.ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -798,7 +800,7 @@ function WriteClass(self::CoClassItem, generator)
 end
 
 mutable struct GeneratorProgress <: AbstractGeneratorProgress
-    tlb_desc
+    tlb_desc::Any
 
     GeneratorProgress() = begin
         #= pass =#
@@ -841,17 +843,17 @@ function Close(self::GeneratorProgress)
 end
 
 mutable struct Generator <: AbstractGenerator
-    bBuildHidden
+    bBuildHidden::Any
     bHaveWrittenCoClassBaseClass::Int64
     bHaveWrittenDispatchBaseClass::Int64
     bHaveWrittenEventBaseClass::Int64
-    base_mod_name
-    file
+    base_mod_name::Any
+    file::Any
     generate_type::String
-    progress
-    sourceFilename
-    typelib
-    bUnicodeToString
+    progress::Any
+    sourceFilename::Any
+    typelib::Any
+    bUnicodeToString::Any
 
     Generator(
         typelib,
@@ -1021,7 +1023,7 @@ function finish_writer(self::Generator, filename, f, worked)
     temp_filename = get_temp_filename(self, filename)
     if worked
         try
-            rename(os, temp_filename, filename)
+            os.rename(temp_filename, filename)
         catch exn
             if exn isa os.error
                 try
@@ -1031,7 +1033,7 @@ function finish_writer(self::Generator, filename, f, worked)
                         #= pass =#
                     end
                 end
-                rename(os, temp_filename, filename)
+                os.rename(temp_filename, filename)
             end
         end
     else
@@ -1040,7 +1042,7 @@ function finish_writer(self::Generator, filename, f, worked)
 end
 
 function get_temp_filename(self::Generator, filename)
-    return "%s.%d.temp" % (filename, getpid(os))
+    return "%s.%d.temp" % (filename, os.getpid())
 end
 
 function generate(self::Generator, file, is_for_demand = 0)
@@ -1073,8 +1075,8 @@ function do_gen_file_header(self::Generator)
     if self.sourceFilename
         write(self.file, "$(split(os.path, self.sourceFilename)[2])\'")
     end
-    write(self.file, "$(ctime(time, pylib::time()))")
-    write(self.file, "$(_makeDocString(build, docDesc))")
+    write(self.file, "$(time.ctime(pylib::time()()))")
+    write(self.file, "$(build._makeDocString(docDesc))")
     write(self.file, "makepy_version =$(repr(makepy_version))")
     write(self.file, "$(sys.hexversion)")
     println(self.file)
@@ -1231,10 +1233,10 @@ function generate_child(self::Generator, child, dir)
             info, infotype, doc, attr = type_info_tuple
             if infotype == pythoncom.TKIND_COCLASS
                 coClassItem, child_infos = _Build_CoClass(self, type_info_tuple)
-                found = MakePublicAttributeName(build, doc[1]) == child
+                found = build.MakePublicAttributeName(doc[1]) == child
                 if !(found)
                     for (info, info_type, refType, doc, refAttr, flags) in child_infos
-                        if MakePublicAttributeName(build, doc[1]) == child
+                        if build.MakePublicAttributeName(doc[1]) == child
                             found = 1
                             has_break = true
                             break
@@ -1259,7 +1261,7 @@ function generate_child(self::Generator, child, dir)
             for type_info_tuple in infos
                 info, infotype, doc, attr = type_info_tuple
                 if infotype ∈ [pythoncom.TKIND_INTERFACE, pythoncom.TKIND_DISPATCH]
-                    if MakePublicAttributeName(build, doc[1]) == child
+                    if build.MakePublicAttributeName(doc[1]) == child
                         found = 1
                         oleItem, vtableItem = _Build_Interface(self, type_info_tuple)
                         oleItems[clsid] = oleItem

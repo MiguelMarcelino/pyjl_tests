@@ -1,6 +1,7 @@
 using importlib: reload
 using win32com_.server.register: RegisterServer, UnregisterServer
 
+
 abstract type AbstractTools end
 mutable struct Tools <: AbstractTools
     _public_methods_::Vector{String}
@@ -28,7 +29,7 @@ function echo(self::Tools, arg)
 end
 
 function sleep(self::Tools, t)
-    sleep(time, t)
+    time.sleep(t)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

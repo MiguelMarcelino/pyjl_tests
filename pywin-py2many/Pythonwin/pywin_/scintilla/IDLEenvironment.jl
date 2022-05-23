@@ -2,8 +2,8 @@ using OrderedCollections
 using Printf
 using PyCall
 using StringEncodings
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.framework.editor
 
 import string
@@ -14,8 +14,8 @@ import win32con
 using win32com_.gen_py.mfc.dialog: GetSimpleInput
 using win32com_.gen_py: default_scintilla_encoding
 wordchars = (string.ascii_uppercase + string.ascii_lowercase) + string.digits
-abstract type AbstractTextError <: AbstractException end
-abstract type AbstractEmptyRange <: AbstractException end
+abstract type AbstractTextError <: Exception end
+abstract type AbstractEmptyRange <: Exception end
 abstract type AbstractIDLEEditorWindow end
 abstract type AbstractCallTips end
 abstract type AbstractTkText end

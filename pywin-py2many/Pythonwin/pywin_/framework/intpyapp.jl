@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using win32com_.gen_py.framework: toolmenu
 using win32com_.gen_py.framework: help
 using win32com_.gen_py.debugger.debugger: PrepareControlBars
@@ -486,5 +486,5 @@ SelectAndRunHelpFile(help)
 end
 
 thisApp = InteractivePythonApp()
-abstract type AbstractMainFrame <: Abstractapp.MainFrame end
-abstract type AbstractInteractivePythonApp <: Abstractapp.CApp end
+abstract type AbstractMainFrame <: app.MainFrame end
+abstract type AbstractInteractivePythonApp <: app.CApp end

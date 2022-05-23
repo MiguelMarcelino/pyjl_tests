@@ -1,5 +1,8 @@
 using ResumableFunctions
 
+
+
+
 @resumable function permutations(n, start, size)
     p = Vector{UInt8}(0:n-1)
     count = Vector{UInt8}(n)
@@ -72,7 +75,7 @@ end
 
 function task(n, start, size)::Tuple
     alternating_flips = alternating_flips_generator(n, start, size)
-    return (sum((alternating_flips for _ in (0:size))), alternating_flips)
+    return (sum((alternating_flips for _ in (0:size))), alternating_flips())
 end
 
 function fannkuch(n)

@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 include("scriptutils.jl")
 include("help.jl")
 import _thread
@@ -23,12 +23,12 @@ import win32com_.gen_py.scintilla.document
 using win32com_.gen_py.scintilla: scintillacon
 using win32com_.gen_py: default_scintilla_encoding
 abstract type Abstractflags end
-abstract type AbstractWindowOutputDocument <: AbstractWindowOutputDocumentParent end
-abstract type AbstractWindowOutputFrame <: Abstractwindow.MDIChildWnd end
+abstract type AbstractWindowOutputDocument <: WindowOutputDocumentParent end
+abstract type AbstractWindowOutputFrame <: window.MDIChildWnd end
 abstract type AbstractWindowOutputViewImpl end
-abstract type AbstractWindowOutputViewRTF <: Abstractdocview.RichEditView end
-abstract type AbstractWindowOutputViewScintilla <: Abstractwin32com_.gen_py.scintilla.view.CScintillaView end
-abstract type AbstractWindowOutput <: Abstractdocview.DocTemplate end
+abstract type AbstractWindowOutputViewRTF <: docview.RichEditView end
+abstract type AbstractWindowOutputViewScintilla <: win32com_.gen_py.scintilla.view.CScintillaView end
+abstract type AbstractWindowOutput <: docview.DocTemplate end
 WindowOutputDocumentParent = win32com_.gen_py.scintilla.document.CScintillaDocument
 mutable struct WindowOutputDocument <: AbstractWindowOutputDocument
 

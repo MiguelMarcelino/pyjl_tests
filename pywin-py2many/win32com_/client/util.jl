@@ -6,7 +6,7 @@ programmers, or other COM modules.
 using PyCall
 pythoncom = pyimport("pythoncom")
 
-using win32com_.client: Dispatch, _get_good_object_
+using __init__: Dispatch, _get_good_object_
 abstract type AbstractEnumerator end
 abstract type AbstractEnumVARIANT <: AbstractEnumerator end
 abstract type AbstractIterator end
@@ -35,9 +35,9 @@ mutable struct Enumerator <: AbstractEnumerator
         this will force many reset-and-seek operations to find the requested index.
 
          =#
-    _oleobj_
+    _oleobj_::Any
     index::Int64
-    resultCLSID
+    resultCLSID::Any
 end
 function __getitem__(self::Enumerator, index)
     return __GetIndex(self, index)
@@ -87,7 +87,7 @@ function _make_retval_(self::Enumerator, result)
 end
 
 mutable struct EnumVARIANT <: AbstractEnumVARIANT
-    resultCLSID
+    resultCLSID::Any
 
     EnumVARIANT(enum, resultCLSID = nothing) = begin
         Enumerator(enum)
@@ -99,8 +99,8 @@ function _make_retval_(self::EnumVARIANT, result)
 end
 
 mutable struct Iterator <: AbstractIterator
-    resultCLSID
-    _iter_
+    resultCLSID::Any
+    _iter_::Any
 end
 function __iter__(self::Iterator)
     return self

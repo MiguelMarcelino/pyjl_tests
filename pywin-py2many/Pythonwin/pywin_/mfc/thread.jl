@@ -2,7 +2,7 @@ using PyCall
 win32ui = pyimport("win32ui")
 include("object.jl")
 
-abstract type AbstractWinThread <: Abstractobject.CmdTarget end
+abstract type AbstractWinThread <: object.CmdTarget end
 abstract type AbstractWinApp <: AbstractWinThread end
 mutable struct WinThread <: AbstractWinThread
 initObj

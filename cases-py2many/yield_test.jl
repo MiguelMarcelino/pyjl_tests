@@ -56,6 +56,7 @@ end
 end
 
 mutable struct TestClass <: AbstractTestClass
+
 end
 @resumable function generator_func(self::TestClass)
     num = 123
@@ -101,7 +102,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
     arr7 = []
     res = fib()
     for i = 0:5
-        push!(arr7, res)
+        push!(arr7, res())
     end
     @assert(arr7 == [0, 1, 1, 2, 3, 5])
     for i in testgen()

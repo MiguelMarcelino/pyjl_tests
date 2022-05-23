@@ -3,6 +3,8 @@ pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
 import win32com_.gen_py
 
+
+
 _frozen = (hasfield(typeof(sys), :frozen) ? getfield(sys, :frozen) : 1 == 0)
 if _frozen && !(hasfield(typeof(pythoncom), :frozen) ? getfield(pythoncom, :frozen) : 0)
     pythoncom.frozen = sys.frozen
@@ -14,7 +16,7 @@ function SetupEnvironment()
     KEY_QUERY_VALUE = 1
     try
         keyName = "SOFTWARE\\Python\\PythonCore\\%s\\PythonPath\\win32com_" % sys.winver
-        key = RegOpenKey(win32api, HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE)
+        key = win32api.RegOpenKey(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE)
     catch exn
         if exn isa (win32api.error, AttributeError)
             key = nothing
@@ -24,7 +26,7 @@ function SetupEnvironment()
         found = 0
         if key != nothing
             try
-                append(__path__, RegQueryValue(win32api, key, "Extensions"))
+                append(__path__, win32api.RegQueryValue(key, "Extensions"))
                 found = 1
             catch exn
                 if exn isa win32api.error
@@ -36,7 +38,7 @@ function SetupEnvironment()
             try
                 append(
                     __path__,
-                    GetFullPathName(win32api, __path__[1] + "\\..\\win32comext"),
+                    win32api.GetFullPathName(__path__[1] + "\\..\\win32comext"),
                 )
             catch exn
                 if exn isa win32api.error
@@ -47,7 +49,7 @@ function SetupEnvironment()
         try
             if key != nothing
                 global __build_path__
-                __build_path__ = RegQueryValue(win32api, key, "BuildPath")
+                __build_path__ = win32api.RegQueryValue(key, "BuildPath")
                 append(__path__, __build_path__)
             end
         catch exn
@@ -58,7 +60,7 @@ function SetupEnvironment()
         global __gen_path__
         if key != nothing
             try
-                __gen_path__ = RegQueryValue(win32api, key, "GenPath")
+                __gen_path__ = win32api.RegQueryValue(key, "GenPath")
             catch exn
                 if exn isa win32api.error
                     #= pass =#
@@ -93,7 +95,7 @@ if !(__gen_path__)
     end
 end
 if "win32com_.gen_py" ∉ sys.modules
-    gen_py = ModuleType(types, "win32com_.gen_py")
+    gen_py = types.ModuleType("win32com_.gen_py")
     gen_py.__path__ = [__gen_path__]
     sys.modules[gen_py.__name__+1] = gen_py
     #Delete Unsupported

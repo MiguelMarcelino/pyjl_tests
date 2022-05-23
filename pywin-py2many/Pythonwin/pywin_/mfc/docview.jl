@@ -4,7 +4,7 @@ win32ui = pyimport("win32ui")
 import win32con
 include("object.jl")
 include("window.jl")
-abstract type AbstractView <: Abstractwindow.Wnd end
+abstract type AbstractView <: window.Wnd end
 abstract type AbstractCtrlView <: AbstractView end
 abstract type AbstractEditView <: AbstractCtrlView end
 abstract type AbstractRichEditView <: AbstractCtrlView end
@@ -12,10 +12,10 @@ abstract type AbstractListView <: AbstractCtrlView end
 abstract type AbstractTreeView <: AbstractCtrlView end
 abstract type AbstractScrollView <: AbstractView end
 abstract type AbstractFormView <: AbstractView end
-abstract type AbstractDocument <: Abstractobject.CmdTarget end
-abstract type AbstractRichEditDoc <: Abstractobject.CmdTarget end
+abstract type AbstractDocument <: object.CmdTarget end
+abstract type AbstractRichEditDoc <: object.CmdTarget end
 abstract type AbstractCreateContext end
-abstract type AbstractDocTemplate <: Abstractobject.CmdTarget end
+abstract type AbstractDocTemplate <: object.CmdTarget end
 abstract type AbstractRichEditDocTemplate <: AbstractDocTemplate end
 abstract type AbstractFormTemplate <: AbstractDocTemplate end
 mutable struct View <: AbstractView

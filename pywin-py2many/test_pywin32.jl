@@ -1,5 +1,5 @@
 using Pandas
-include("win32com_/client/gencache.jl")
+import win32com_.client.gencache as gencache
 
 using pathlib: Path
 

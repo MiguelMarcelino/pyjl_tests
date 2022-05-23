@@ -11,11 +11,11 @@ using win32com_.server.util: wrap
 abstract type AbstractPyCOMTest end
 abstract type AbstractPyCOMTestMI <: AbstractPyCOMTest end
 pythoncom.__future_currency__ = true
-EnsureModule(gencache, "{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
+gencache.EnsureModule("{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
 mutable struct PyCOMTest <: AbstractPyCOMTest
-    intval
-    longval
-    ulongval
+    intval::Any
+    longval::Any
+    ulongval::Any
     _com_interfaces_::Vector{String}
     _reg_clsid_::String
     _reg_progid_::String
@@ -247,6 +247,6 @@ mutable struct PyCOMTestMI <: AbstractPyCOMTestMI
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    UseCommandLine(win32com_.server.register, PyCOMTest)
-    UseCommandLine(win32com_.server.register, PyCOMTestMI)
+    win32com_.server.register.UseCommandLine(PyCOMTest)
+    win32com_.server.register.UseCommandLine(PyCOMTestMI)
 end

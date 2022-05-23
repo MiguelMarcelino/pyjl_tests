@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 import _thread
 import sysconfig
@@ -25,12 +25,12 @@ return dlist
 end
 
 abstract type Abstractdirpath end
-abstract type AbstractTheTemplate <: Abstractdocview.RichEditDocTemplate end
-abstract type AbstractTheFrame <: Abstractwindow.MDIChildWnd end
-abstract type AbstractTheDocument <: Abstractdocview.RichEditDoc end
-abstract type AbstractTheView <: Abstractdocview.RichEditView end
-abstract type AbstractTheDialog <: Abstractdialog.Dialog end
-abstract type AbstractTheParamsDialog <: Abstractdialog.Dialog end
+abstract type AbstractTheTemplate <: docview.RichEditDocTemplate end
+abstract type AbstractTheFrame <: window.MDIChildWnd end
+abstract type AbstractTheDocument <: docview.RichEditDoc end
+abstract type AbstractTheView <: docview.RichEditView end
+abstract type AbstractTheDialog <: dialog.Dialog end
+abstract type AbstractTheParamsDialog <: dialog.Dialog end
 mutable struct dirpath <: Abstractdirpath
 dirs::Vector
 recurse::Int64

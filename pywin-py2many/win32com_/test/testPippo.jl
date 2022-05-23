@@ -5,11 +5,13 @@ using win32com_.test.util: RegisterPythonServer
 using win32com_.test: pippo_server
 import numpy
 
+
+
 using win32com_.client: Dispatch
 using win32com_.client.gencache: EnsureDispatch
 abstract type AbstractPippoTester end
 mutable struct PippoTester <: AbstractPippoTester
-    object
+    object::Any
 end
 function setUp(self::PippoTester)
     RegisterPythonServer(pippo_server.__file__, "Python.Test.Pippo")
@@ -55,8 +57,8 @@ function testNumpyArrays(self::PippoTester)
         println("Numpy test not possible because numpy module failed to import")
         return
     end
-    _testArray(self, array(numpy, [-3, -2, -1, 0, 1, 2, 3]))
-    _testArray(self, array(numpy, [-3.14, -2, -0.1, 0.0, 1.1, 2.5, 3]))
+    _testArray(self, numpy.array([-3, -2, -1, 0, 1, 2, 3]))
+    _testArray(self, numpy.array([-3.14, -2, -0.1, 0.0, 1.1, 2.5, 3]))
 end
 
 function testByteArrays(self::PippoTester)

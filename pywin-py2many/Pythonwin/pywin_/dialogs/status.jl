@@ -1,11 +1,12 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using win32com_.gen_py.mfc: dialog
 using win32com_.gen_py.mfc.thread: WinThread
 import threading
 
 import win32con
+
 
 function MakeProgressDlgTemplate(caption, staticText = "")
     style =
@@ -26,13 +27,13 @@ function MakeProgressDlgTemplate(caption, staticText = "")
 end
 
 mutable struct CStatusProgressDialog <: AbstractCStatusProgressDialog
-    initMsg
-    maxticks
-    pbar
+    initMsg::Any
+    maxticks::Any
+    pbar::Any
     pincr::Int64
     progress::Int64
-    static
-    tickincr
+    static::Any
+    tickincr::Any
     msg::String
 
     CStatusProgressDialog(title, msg = "", maxticks = 100, tickincr = 1) = begin
@@ -91,25 +92,25 @@ function Set(self::CStatusProgressDialog, pos, max = nothing)
     end
 end
 
-abstract type AbstractCStatusProgressDialog <: Abstractdialog.Dialog end
+abstract type AbstractCStatusProgressDialog <: dialog.Dialog end
 abstract type AbstractCThreadedStatusProcessDialog <: AbstractCStatusProgressDialog end
-abstract type AbstractProgressThread <: AbstractWinThread end
+abstract type AbstractProgressThread <: WinThread end
 MYWM_SETTITLE = win32con.WM_USER + 10
 MYWM_SETMSG = win32con.WM_USER + 11
 MYWM_TICK = win32con.WM_USER + 12
 MYWM_SETMAXTICKS = win32con.WM_USER + 13
 MYWM_SET = win32con.WM_USER + 14
 mutable struct CThreadedStatusProcessDialog <: AbstractCThreadedStatusProcessDialog
-    OnMaxTicks
-    OnMsg
-    OnSet
-    OnTick
-    OnTitle
-    max
-    msg
-    pos
-    threadid
-    title
+    OnMaxTicks::Any
+    OnMsg::Any
+    OnSet::Any
+    OnTick::Any
+    OnTitle::Any
+    max::Any
+    msg::Any
+    pos::Any
+    threadid::Any
+    title::Any
     maxticks::Int64
     tickincr::Int64
 
@@ -189,12 +190,12 @@ function Set(self::CThreadedStatusProcessDialog, pos, max = nothing)
 end
 
 mutable struct ProgressThread <: AbstractProgressThread
-    title
-    msg
-    maxticks
-    tickincr
-    dialog
-    createdEvent
+    title::Any
+    msg::Any
+    maxticks::Any
+    tickincr::Any
+    dialog::Any
+    createdEvent::Any
 
     ProgressThread(title, msg = "", maxticks = 100, tickincr = 1) = begin
         WinThread.__init__(self)

@@ -18,10 +18,14 @@ Example
 using OrderedCollections
 using Printf
 using PyCall
-pywintypes = pyimport("pywintypes")
 pythoncom = pyimport("pythoncom")
+pywintypes = pyimport("pywintypes")
 import win32com_.client.util
-include("util.jl")
+import util
+
+
+
+
 
 include("build.jl")
 import win32com_.ext_modules.winerror as winerror
@@ -63,7 +67,7 @@ function debug_attr_print()
 end
 
 function MakeMethod(func, inst, cls)
-    return MethodType(types, func, inst)
+    return types.MethodType(func, inst)
 end
 
 PyIDispatchType = pythoncom.TypeIIDs[pythoncom.IID_IDispatch+1]
@@ -76,11 +80,10 @@ function _GetGoodDispatch(IDispatch, clsctx = pythoncom.CLSCTX_SERVER)
     end
     if isa(IDispatch, _GoodDispatchTypes)
         try
-            IDispatch = connect(pythoncom, IDispatch)
+            IDispatch = pythoncom.connect(IDispatch)
         catch exn
             if exn isa pythoncom.ole_error
-                IDispatch = CoCreateInstance(
-                    pythoncom,
+                IDispatch = pythoncom.CoCreateInstance(
                     IDispatch,
                     nothing,
                     clsctx,
@@ -166,9 +169,9 @@ function MakeOleRepr(IDispatch, typeinfo, typecomp)
                 attr = GetTypeAttr(typeinfo)
             end
             if typecomp === nothing
-                olerepr = DispatchItem(build, typeinfo, attr, nothing, 0)
+                olerepr = build.DispatchItem(typeinfo, attr, nothing, 0)
             else
-                olerepr = LazyDispatchItem(build, attr, nothing)
+                olerepr = build.LazyDispatchItem(attr, nothing)
             end
         catch exn
             if exn isa pythoncom.ole_error
@@ -177,7 +180,7 @@ function MakeOleRepr(IDispatch, typeinfo, typecomp)
         end
     end
     if olerepr === nothing
-        olerepr = DispatchItem(build)
+        olerepr = build.DispatchItem()
     end
     return olerepr
 end
@@ -195,21 +198,21 @@ function DumbDispatch(
     if createClass === nothing
         createClass = CDispatch
     end
-    return createClass(IDispatch, DispatchItem(build), userName)
+    return createClass(IDispatch, build.DispatchItem(), userName)
 end
 
 mutable struct CDispatch <: AbstractCDispatch
-    ob
-    _olerepr_
-    _username_
-    Properties_
-    _oleobj_
-    __dict__
-    _mapCachedItems_
-    _enum_
-    _lazydata_
-    _builtMethods_
-    __class__
+    ob::Any
+    _olerepr_::Any
+    _username_::Any
+    Properties_::Any
+    _oleobj_::Any
+    __dict__::Any
+    _mapCachedItems_::Any
+    _enum_::Any
+    _lazydata_::Any
+    _builtMethods_::Any
+    __class__::Any
 
     CDispatch(
         IDispatch,
@@ -353,7 +356,7 @@ function _NewEnum(self::CDispatch)
             return nothing
         end
     end
-    return WrapEnum(win32com_.client.util, enum, nothing)
+    return win32com_.client.util.WrapEnum(enum, nothing)
 end
 
 function __getitem__(self::CDispatch, index)::Tuple
@@ -479,7 +482,7 @@ end
 
 function _make_method_(self::CDispatch, name)
     #= Make a method object - Assumes in olerepr funcmap =#
-    methodName = MakePublicAttributeName(build, name)
+    methodName = build.MakePublicAttributeName(name)
     methodCodeList =
         MakeFuncMethod(self._olerepr_, self._olerepr_.mapFuncs[name+1], methodName, 0)
     methodCode = join(methodCodeList, "\n")
@@ -496,7 +499,7 @@ function _make_method_(self::CDispatch, name)
         return newMeth
     catch exn
         debug_print()
-        current_exceptions() != [] ? current_exceptions()[end] : nothing
+        current_exceptions() != [] ? current_exceptions()[end] : nothing()
     end
     return nothing
 end
@@ -556,7 +559,7 @@ function _print_details_(self::CDispatch)
             @printf("\t%s = 0x%x - %s\n", prop, entry.dispid, repr(entry))
         end
     catch exn
-        current_exceptions() != [] ? current_exceptions()[end] : nothing
+        current_exceptions() != [] ? current_exceptions()[end] : nothing()
     end
 end
 
@@ -623,7 +626,7 @@ function _FlagAsMethod(self::CDispatch)
             should then allow this to work.
              =#
     for name in methodNames
-        details = MapEntry(build, __AttrToID__(self, name), (name,))
+        details = build.MapEntry(__AttrToID__(self, name), (name,))
         self._olerepr_.mapFuncs[name+1] = details
     end
 end
@@ -651,10 +654,10 @@ function __getattr__(self::Factory, attr)::Tuple
             end
         end
         mutable struct Factory <: AbstractFactory
-            ob
+            ob::Any
         end
         function __call__(self::Factory)::Factory
-            return Iterator(util, self.ob)
+            return util.Iterator(self.ob)
         end
 
         return Factory(enum)
@@ -690,7 +693,7 @@ function __getattr__(self::Factory, attr)::Tuple
                     end
                 end
                 if retEntry === nothing
-                    retEntry = MapEntry(build, __AttrToID__(self, attr), (attr,))
+                    retEntry = build.MapEntry(__AttrToID__(self, attr), (attr,))
                 end
             catch exn
                 if exn isa pythoncom.ole_error
@@ -768,7 +771,7 @@ function __setattr__(self::CDispatch, attr, value)
             end
         end
         try
-            entry = MapEntry(build, __AttrToID__(self, attr), (attr,))
+            entry = build.MapEntry(__AttrToID__(self, attr), (attr,))
         catch exn
             if exn isa pythoncom.com_error
                 entry = nothing

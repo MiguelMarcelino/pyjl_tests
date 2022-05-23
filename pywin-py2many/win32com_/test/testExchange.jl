@@ -4,19 +4,19 @@ pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
 import win32con
 import win32com_.client
-import CheckClean
+using util: CheckClean
 using win32com_.client: gencache, constants
+
 
 ammodule = nothing
 function GetDefaultProfileName()
     try
-        key = RegOpenKey(
-            win32api,
+        key = win32api.RegOpenKey(
             win32con.HKEY_CURRENT_USER,
             "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows Messaging Subsystem\\Profiles",
         )
         try
-            return RegQueryValueEx(win32api, key, "DefaultProfile")[1]
+            return win32api.RegQueryValueEx(key, "DefaultProfile")[1]
         finally
             Close(key)
         end
@@ -98,9 +98,9 @@ function TestUser(session)
 end
 
 function test()
-    oldcwd = getcwd(os)
+    oldcwd = os.getcwd()
     try
-        session = EnsureDispatch(gencache, "MAPI.Session")
+        session = gencache.EnsureDispatch("MAPI.Session")
         try
             Logon(session, GetDefaultProfileName())
         catch exn
@@ -113,7 +113,7 @@ function test()
         end
     catch exn
         if exn isa pythoncom.error
-            app = EnsureDispatch(gencache, "Outlook.Application")
+            app = gencache.EnsureDispatch("Outlook.Application")
             session = app.Session
         end
     end
@@ -123,7 +123,7 @@ function test()
         DumpFolders(session)
     finally
         Logoff(session)
-        chdir(os, oldcwd)
+        os.chdir(oldcwd)
     end
 end
 

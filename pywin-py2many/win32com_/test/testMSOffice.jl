@@ -16,15 +16,15 @@ error = "MSOffice test error"
 function TestWord()
     try
         println("Starting Word 8 for dynamic test")
-        word = Dispatch(win32com_.client.dynamic, "Word.Application")
+        word = win32com_.client.dynamic.Dispatch("Word.Application")
         TestWord8(word)
         word = nothing
         println("Starting Word 8 for non-lazy dynamic test")
-        dispatch = _GetGoodDispatch(win32com_.client.dynamic, "Word.Application")
+        dispatch = win32com_.client.dynamic._GetGoodDispatch("Word.Application")
         typeinfo = GetTypeInfo(dispatch)
         attr = GetTypeAttr(typeinfo)
         olerepr = DispatchItem(win32com_.client.build, typeinfo, attr, nothing, 0)
-        word = CDispatch(win32com_.client.dynamic, dispatch, olerepr)
+        word = win32com_.client.dynamic.CDispatch(dispatch, olerepr)
         dispatch = nothing
         typeinfo = nothing
         attr = nothing
@@ -39,19 +39,19 @@ function TestWord()
         let e = exn
             if e isa Exception
                 println("Word dynamic tests failed$(e)")
-                current_exceptions() != [] ? current_exceptions()[end] : nothing
+                current_exceptions() != [] ? current_exceptions()[end] : nothing()
             end
         end
     end
     println("Starting MSWord for generated test")
     try
-        word = EnsureDispatch(gencache, "Word.Application.8")
+        word = gencache.EnsureDispatch("Word.Application.8")
         TestWord8(word)
     catch exn
         let e = exn
             if e isa Exception
                 println("Word generated tests failed$(e)")
-                current_exceptions() != [] ? current_exceptions()[end] : nothing
+                current_exceptions() != [] ? current_exceptions()[end] : nothing()
             end
         end
     end
@@ -84,7 +84,7 @@ function TestWord8(word)
     end
     Close(doc, 0)
     Quit(word)
-    Sleep(win32api, 1000)
+    win32api.Sleep(1000)
 end
 
 function TestWord8OldStyle()
@@ -140,7 +140,7 @@ function TextExcel(xl)
     Cells(xl, 5, 1).Value = "Excel time"
     Cells(xl, 5, 2).Formula = "=Now()"
     Cells(xl, 6, 1).Value = "Python time"
-    Cells(xl, 6, 2).Value = MakeTime(pythoncom, pylib::time())
+    Cells(xl, 6, 2).Value = pythoncom.MakeTime(pylib::time()())
     Cells(xl, 6, 2).NumberFormat = "d/mm/yy h:mm"
     AutoFit(None.EntireColumn)
     Close(Workbooks(xl, 1), 0)
@@ -151,20 +151,20 @@ function TestAll()
     TestWord()
     try
         println("Starting Excel for Dynamic test...")
-        xl = Dispatch(win32com_.client.dynamic, "Excel.Application")
+        xl = win32com_.client.dynamic.Dispatch("Excel.Application")
         TextExcel(xl)
     catch exn
         let e = exn
             if e isa Exception
                 worked = false
                 println("Excel tests failed$(e)")
-                current_exceptions() != [] ? current_exceptions()[end] : nothing
+                current_exceptions() != [] ? current_exceptions()[end] : nothing()
             end
         end
     end
     try
         println("Starting Excel 8 for generated excel8.py test...")
-        mod = EnsureModule(gencache, "{00020813-0000-0000-C000-000000000046}", 0, 1, 2, 1)
+        mod = gencache.EnsureModule("{00020813-0000-0000-C000-000000000046}", 0, 1, 2, 1)
         xl = Dispatch(win32com_.client, "Excel.Application")
         TextExcel(xl)
     catch exn
@@ -174,12 +174,12 @@ function TestAll()
         let e = exn
             if e isa Exception
                 println("Generated Excel tests failed$(e)")
-                current_exceptions() != [] ? current_exceptions()[end] : nothing
+                current_exceptions() != [] ? current_exceptions()[end] : nothing()
             end
         end
     end
     try
-        mod = EnsureModule(gencache, "{00020813-0000-0000-C000-000000000046}", 9, 1, 0)
+        mod = gencache.EnsureModule("{00020813-0000-0000-C000-000000000046}", 9, 1, 0)
         xl = Dispatch(win32com_.client, "Excel.Application.5")
         println("Starting Excel 95 for makepy test...")
         TextExcel(xl)
@@ -190,7 +190,7 @@ function TestAll()
         let e = exn
             if e isa Exception
                 println("Excel 95 tests failed$(e)")
-                current_exceptions() != [] ? current_exceptions()[end] : nothing
+                current_exceptions() != [] ? current_exceptions()[end] : nothing()
             end
         end
     end
@@ -199,5 +199,5 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     TestAll()
     CheckClean()
-    CoUninitialize(pythoncom)
+    pythoncom.CoUninitialize()
 end

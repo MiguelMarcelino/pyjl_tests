@@ -4,7 +4,7 @@ win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
 
 import win32com_.client
-include("win32com_/client/gencache.jl")
+import win32com_.client.gencache
 import win32con
 import string
 

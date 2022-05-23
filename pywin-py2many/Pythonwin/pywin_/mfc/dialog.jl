@@ -5,11 +5,11 @@ win32ui = pyimport("win32ui")
 
 import win32con
 using win32com_.gen_py.mfc: window
-abstract type AbstractDialog <: Abstractwindow.Wnd end
+abstract type AbstractDialog <: window.Wnd end
 abstract type AbstractPrintDialog <: AbstractDialog end
 abstract type AbstractPropertyPage <: AbstractDialog end
-abstract type AbstractPropertySheet <: Abstractwindow.Wnd end
-abstract type AbstractDlgSimpleInput <: AbstractDlgBaseClass end
+abstract type AbstractPropertySheet <: window.Wnd end
+abstract type AbstractDlgSimpleInput <: DlgBaseClass end
 function dllFromDll(dllid)
 #= given a 'dll' (maybe a dll, filename, etc), return a DLL object =#
 if dllid === nothing

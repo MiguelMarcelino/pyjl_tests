@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 
@@ -208,7 +208,7 @@ function GetHLIType(self::HLIFrame)::String
 return "Stack Frame"
 end
 
-abstract type AbstractHLIPythonObject <: Abstracthierlist.HierListItem end
+abstract type AbstractHLIPythonObject <: hierlist.HierListItem end
 abstract type AbstractHLIDocString <: AbstractHLIPythonObject end
 abstract type AbstractHLIModule <: AbstractHLIPythonObject end
 abstract type AbstractHLIFrame <: AbstractHLIPythonObject end
@@ -224,11 +224,11 @@ abstract type AbstractHLIList <: AbstractHLISeq end
 abstract type AbstractHLITuple <: AbstractHLISeq end
 abstract type AbstractHLIDict <: AbstractHLIPythonObject end
 abstract type AbstractHLIString <: AbstractHLIPythonObject end
-abstract type AbstractDialogShowObject <: Abstractdialog.Dialog end
-abstract type Abstractdynamic_browser <: Abstractdialog.Dialog end
-abstract type AbstractBrowserTemplate <: Abstractdocview.DocTemplate end
-abstract type AbstractBrowserDocument <: Abstractdocview.Document end
-abstract type AbstractBrowserView <: Abstractdocview.TreeView end
+abstract type AbstractDialogShowObject <: dialog.Dialog end
+abstract type Abstractdynamic_browser <: dialog.Dialog end
+abstract type AbstractBrowserTemplate <: docview.DocTemplate end
+abstract type AbstractBrowserDocument <: docview.Document end
+abstract type AbstractBrowserView <: docview.TreeView end
 mutable struct HLITraceback <: AbstractHLITraceback
 
 end
@@ -473,10 +473,10 @@ import commctrl
 mutable struct dynamic_browser <: Abstractdynamic_browser
 hier_list
 cs
-dt::Vector{Union{Vector{Union{Any, Tuple{Int64}, String, Tuple{Union{Int64, String}}}}, Vector{Union{Any, Tuple{Int64}, String}}}}
+dt::Vector{Union{Vector{Union{Tuple{Int64}, String, Any, Tuple{Union{String, Int64}}}}, Vector{Union{Tuple{Int64}, String, Any}}}}
 style
 
-            dynamic_browser(hli_root, cs = (((win32con.WS_CHILD | win32con.WS_VISIBLE) | commctrl.TVS_HASLINES) | commctrl.TVS_LINESATROOT) | commctrl.TVS_HASBUTTONS, dt::Vector{Union{Vector{Union{Any, Tuple{Int64}, String, Tuple{Union{Int64, String}}}}, Vector{Union{Any, Tuple{Int64}, String}}}} = [["Python Object Browser", (0, 0, 200, 200), style, nothing, (8, "MS Sans Serif")], ["SysTreeView32", nothing, win32ui.IDC_LIST1, (0, 0, 200, 200), cs]], style = win32con.WS_OVERLAPPEDWINDOW | win32con.WS_VISIBLE) = begin
+            dynamic_browser(hli_root, cs = (((win32con.WS_CHILD | win32con.WS_VISIBLE) | commctrl.TVS_HASLINES) | commctrl.TVS_LINESATROOT) | commctrl.TVS_HASBUTTONS, dt::Vector{Union{Vector{Union{Tuple{Int64}, String, Any, Tuple{Union{String, Int64}}}}, Vector{Union{Tuple{Int64}, String, Any}}}} = [["Python Object Browser", (0, 0, 200, 200), style, nothing, (8, "MS Sans Serif")], ["SysTreeView32", nothing, win32ui.IDC_LIST1, (0, 0, 200, 200), cs]], style = win32con.WS_OVERLAPPEDWINDOW | win32con.WS_VISIBLE) = begin
                 dialog.Dialog.__init__(self, dt)
 HookMessage(on_size, win32con.WM_SIZE)
                 new(hli_root, cs , dt, style )

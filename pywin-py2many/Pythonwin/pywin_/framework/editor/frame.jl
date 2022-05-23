@@ -5,7 +5,7 @@ import win32com_.gen_py.framework.window
 import win32con
 import afxres
 include("ModuleBrowser.jl")
-abstract type AbstractEditorFrame <: Abstractwin32com_.gen_py.framework.window.MDIChildWnd end
+abstract type AbstractEditorFrame <: win32com_.gen_py.framework.window.MDIChildWnd end
 mutable struct EditorFrame <: AbstractEditorFrame
 sub_splitter
 end

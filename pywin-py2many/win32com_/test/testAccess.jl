@@ -1,11 +1,12 @@
 using Printf
 using PyCall
-win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
+win32api = pyimport("win32api")
 include("daodump.jl")
-import CheckClean
+using util: CheckClean
 
 using win32com_.client: gencache, constants, Dispatch
+
 
 function CreateTestAccessDatabase(dbname = nothing)
     if dbname === nothing
@@ -83,7 +84,7 @@ function DoDumpAccessInfo(dbname)
         @printf("Opening database %s\n", dbname)
         OpenCurrentDatabase(a, dbname)
         db = CurrentDb(a)
-        DumpDB(daodump, db, 1)
+        daodump.DumpDB(db, 1)
         forms = a.Forms
         @printf("There are %d forms open.\n", length(forms))
         reports = a.Reports
@@ -103,13 +104,13 @@ function DoDumpAccessInfo(dbname)
 end
 
 function GenerateSupport()
-    EnsureModule(gencache, "{00025E01-0000-0000-C000-000000000046}", 0, 4, 0)
-    EnsureDispatch(gencache, "Access.Application")
+    gencache.EnsureModule("{00025E01-0000-0000-C000-000000000046}", 0, 4, 0)
+    gencache.EnsureDispatch("Access.Application")
 end
 
 function DumpAccessInfo(dbname)
-    amod = GetModuleForProgID(gencache, "Access.Application")
-    dmod = GetModuleForProgID(gencache, "DAO.DBEngine.35")
+    amod = gencache.GetModuleForProgID("Access.Application")
+    dmod = gencache.GetModuleForProgID("DAO.DBEngine.35")
     if amod === nothing && dmod === nothing
         DoDumpAccessInfo(dbname)
         GenerateSupport()

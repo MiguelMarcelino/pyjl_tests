@@ -11,7 +11,7 @@ if exn isa ImportError
 new_type = type_
 end
 end
-abstract type AbstractControl <: Abstractwindow.Wnd end
+abstract type AbstractControl <: window.Wnd end
 mutable struct Control <: AbstractControl
 #= An ActiveX control base class.  A new class must be derived from both
     this class and the Events class.  See the demos for more details.

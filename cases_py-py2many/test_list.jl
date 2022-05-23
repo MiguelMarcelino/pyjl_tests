@@ -1,4 +1,3 @@
-using Test
 
 
 
@@ -16,22 +15,22 @@ type2test
                         new(type2test)
 end
 function test_basic(self::ListTest)
-@test (collect([]) == [])
+assertEqual(self, collect([]), [])
 l0_3 = [0, 1, 2, 3]
 l0_3_bis = collect(l0_3)
-@test (l0_3 == l0_3_bis)
-@test l0_3 != l0_3_bis
-@test (collect(()) == [])
-@test (collect((0, 1, 2, 3)) == [0, 1, 2, 3])
-@test (collect("") == [])
-@test (collect("spam") == ["s", "p", "a", "m"])
-@test (collect((x for x in 0:9 if x % 2 )) == [1, 3, 5, 7, 9])
+assertEqual(self, l0_3, l0_3_bis)
+assertTrue(self, l0_3 != l0_3_bis)
+assertEqual(self, collect(()), [])
+assertEqual(self, collect((0, 1, 2, 3)), [0, 1, 2, 3])
+assertEqual(self, collect(""), [])
+assertEqual(self, collect("spam"), ["s", "p", "a", "m"])
+assertEqual(self, collect((x for x in 0:9 if x % 2 )), [1, 3, 5, 7, 9])
 if sys.maxsize == 2147483647
-@test_throws MemoryError list(0:sys.maxsize ÷ 2)
+assertRaises(self, MemoryError, list, 0:sys.maxsize ÷ 2)
 end
 x = []
 append!(x, (-(y) for y in x))
-@test (x == [])
+assertEqual(self, x, [])
 end
 
 function test_keyword_args(self::ListTest)
@@ -42,19 +41,19 @@ end
 
 function test_truth(self::ListTest)
 test_truth(super())
-@test !([])
-@test [42]
+assertTrue(self, !([]))
+assertTrue(self, [42])
 end
 
 function test_identity(self::ListTest)
-@test [] != []
+assertTrue(self, [] != [])
 end
 
 function test_len(self::ListTest)
 test_len(super())
-@test (length([]) == 0)
-@test (length([0]) == 1)
-@test (length([0, 1, 2]) == 3)
+assertEqual(self, length([]), 0)
+assertEqual(self, length([0]), 1)
+assertEqual(self, length([0, 1, 2]), 3)
 end
 
 function test_overflow(self::ListTest)
@@ -68,15 +67,15 @@ function imul(a, b)
 a *= b
 end
 
-@test_throws (MemoryError, OverflowError) mul(lst, n)
-@test_throws (MemoryError, OverflowError) imul(lst, n)
+assertRaises(self, (MemoryError, OverflowError), mul, lst, n)
+assertRaises(self, (MemoryError, OverflowError), imul, lst, n)
 end
 
 function test_repr_large(self::ListTest)
 function check(n)
 l = [0]*n
 s = repr(l)
-@test (s == ("[" + join(["0"]*n, ", ")) * "]")
+assertEqual(self, s, ("[" + join(["0"]*n, ", ")) * "]")
 end
 
 check(10)
@@ -91,27 +90,27 @@ itorig = (x for x in orig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == data)
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), data)
 next(itorig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == data[2:end])
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), data[2:end])
 for i in 1:length(orig) - 1
 next(itorig)
 end
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == data[length(orig) + 1:end])
-@test_throws StopIteration next(itorig)
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), data[length(orig) + 1:end])
+assertRaises(self, StopIteration, next, itorig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (collect(it) == [])
+assertEqual(self, collect(it), [])
 end
 end
 
@@ -123,34 +122,34 @@ itorig = reversed(orig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == data[end:-1:length(orig)])
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), data[end:-1:length(orig)])
 next(itorig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == data[end:-1:length(orig) - -1])
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), data[end:-1:length(orig) - -1])
 for i in 1:length(orig) - 1
 next(itorig)
 end
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (type_(it) == type_(itorig))
-@test (collect(it) == [])
-@test_throws StopIteration next(itorig)
+assertEqual(self, type_(it), type_(itorig))
+assertEqual(self, collect(it), [])
+assertRaises(self, StopIteration, next, itorig)
 d = dumps(pickle, (itorig, orig), proto)
 it, a = loads(pickle, d)
 a[begin:end] = data
-@test (collect(it) == [])
+assertEqual(self, collect(it), [])
 end
 end
 
 function test_step_overflow(self::ListTest)
 a = [0, 1, 2, 3, 4]
 a[end:sys.maxsize:2] = [0]
-@test (a[end:sys.maxsize:4] == [3])
+assertEqual(self, a[end:sys.maxsize:4], [3])
 end
 
 function test_no_comdat_folding(self::L)
@@ -168,7 +167,7 @@ mutable struct X <: AbstractX
 
 end
 function __eq__(self::X, other)
-clear(list2)
+empty!(list2)
 return NotImplemented
 end
 
@@ -176,7 +175,7 @@ mutable struct Y <: AbstractY
 
 end
 function __eq__(self::Y, other)
-clear(list1)
+empty!(list1)
 return NotImplemented
 end
 
@@ -184,7 +183,7 @@ mutable struct Z <: AbstractZ
 
 end
 function __eq__(self::Z, other)
-clear(list3)
+empty!(list3)
 return NotImplemented
 end
 
@@ -199,8 +198,8 @@ end
 function test_preallocation(self::ListTest)
 iterable = repeat([0],10)
 iter_size = getsizeof(sys, iterable)
-@test (iter_size == getsizeof(sys, collect(repeat([0],10))))
-@test (iter_size == getsizeof(sys, collect(0:9)))
+assertEqual(self, iter_size, getsizeof(sys, collect(repeat([0],10))))
+assertEqual(self, iter_size, getsizeof(sys, collect(0:9)))
 end
 
 function test_count_index_remove_crashes(self::L)
@@ -208,7 +207,7 @@ mutable struct X <: AbstractX
 
 end
 function __eq__(self::X, other)
-clear(lst)
+empty!(lst)
 return NotImplemented
 end
 
@@ -236,8 +235,5 @@ lst = [X(), X()]
 X() ∈ lst
 end
 
-function main()
-
+if abspath(PROGRAM_FILE) == @__FILE__
 end
-
-main()

@@ -13,8 +13,8 @@ IdToBarNames = Dict(
     win32ui.IDC_DBG_WATCH => ("Watch", 1),
 )
 mutable struct DebuggerCommandHandler <: AbstractDebuggerCommandHandler
-    OnDebuggerBar
-    OnUpdateDebuggerBar
+    OnDebuggerBar::Any
+    OnUpdateDebuggerBar::Any
 end
 function HookCommands(self::DebuggerCommandHandler)
     commands = (

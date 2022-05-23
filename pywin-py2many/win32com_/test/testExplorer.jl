@@ -3,6 +3,7 @@ pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
 using win32com_.client: gencache
 
+
 import win32com_.client.dynamic
 using win32com_.client: Dispatch
 
@@ -10,11 +11,13 @@ import win32con
 import winerror
 import glob
 
+
 using win32com_.test.util: CheckClean
 abstract type AbstractExplorerEvents end
 bVisibleEventFired = 0
 HRESULTS_IN_AUTOMATION = [-2125463506, winerror.MK_E_UNAVAILABLE]
 mutable struct ExplorerEvents <: AbstractExplorerEvents
+
 end
 function OnVisible(self::ExplorerEvents, visible)
     global bVisibleEventFired
@@ -68,11 +71,11 @@ function TestObjectFromWindow()
     msg = RegisterWindowMessage(win32gui, "WM_HTML_GETOBJECT")
     rc, result =
         SendMessageTimeout(win32gui, hwnd, msg, 0, 0, win32con.SMTO_ABORTIFHUNG, 1000)
-    ob = ObjectFromLresult(pythoncom, result, pythoncom.IID_IDispatch, 0)
+    ob = pythoncom.ObjectFromLresult(result, pythoncom.IID_IDispatch, 0)
     doc = Dispatch(ob)
     for color in split("red green blue orange white")
         doc.bgColor = color
-        sleep(time, 0.2)
+        time.sleep(0.2)
     end
 end
 
@@ -81,10 +84,10 @@ function TestExplorer(iexplore)
         iexplore.Visible = -1
     end
     filename = join
-    Navigate(iexplore, GetFullPathName(win32api, filename))
-    Sleep(win32api, 1000)
+    Navigate(iexplore, win32api.GetFullPathName(filename))
+    win32api.Sleep(1000)
     TestObjectFromWindow()
-    Sleep(win32api, 3000)
+    win32api.Sleep(3000)
     try
         Quit(iexplore)
     catch exn
@@ -98,8 +101,7 @@ function TestAll()
     try
         try
             try
-                iexplore =
-                    Dispatch(win32com_.client.dynamic, "InternetExplorer.Application")
+                iexplore = win32com_.client.dynamic.Dispatch("InternetExplorer.Application")
             catch exn
                 let exc = exn
                     if exc isa pythoncom.com_error
@@ -112,11 +114,11 @@ function TestAll()
                 end
             end
             TestExplorer(iexplore)
-            Sleep(win32api, 1000)
+            win32api.Sleep(1000)
             iexplore = nothing
             TestExplorerEvents()
-            sleep(time, 2)
-            EnsureModule(gencache, "{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 0, 1, 1)
+            time.sleep(2)
+            gencache.EnsureModule("{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 0, 1, 1)
             iexplore = Dispatch(win32com_.client, "InternetExplorer.Application")
             TestExplorer(iexplore)
         catch exn

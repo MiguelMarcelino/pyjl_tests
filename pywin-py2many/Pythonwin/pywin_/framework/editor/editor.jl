@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import linecache
 import win32com_.gen_py.framework.scriptutils
 
@@ -16,9 +16,9 @@ using win32com_.gen_py.framework.editor: GetEditorOption, SetEditorOption, GetEd
 patImport = symcomp(regex, "import \\(<name>.*\\)")
 patIndent = compile(regex, "^\\([ \t]*[~ \t]\\)")
 ID_LOCATE_FILE = 57856
-abstract type AbstractEditorDocument <: AbstractParentEditorDocument end
-abstract type AbstractEditorView <: AbstractParentEditorView end
-abstract type AbstractEditorTemplate <: AbstractEditorTemplateBase end
+abstract type AbstractEditorDocument <: ParentEditorDocument end
+abstract type AbstractEditorView <: ParentEditorView end
+abstract type AbstractEditorTemplate <: EditorTemplateBase end
 ID_GOTO_LINE = 925697
 MSG_CHECK_EXTERNAL_FILE = win32con.WM_USER + 1999
 MODIFYING_VK_KEYS = [win32con.VK_BACK, win32con.VK_TAB, win32con.VK_RETURN, win32con.VK_SPACE, win32con.VK_DELETE]

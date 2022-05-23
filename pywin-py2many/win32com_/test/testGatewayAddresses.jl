@@ -3,7 +3,7 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 using win32com_.server.util: wrap
 
-import CheckClean
+using util: CheckClean
 abstract type AbstractDummy end
 abstract type AbstractDummy2 end
 abstract type AbstractDeletgatedDummy end

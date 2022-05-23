@@ -35,6 +35,7 @@ import shutil
 import zipfile
 import getopt
 
+
 import glob
 include("CLSIDToClass.jl")
 using importlib: reload
@@ -72,7 +73,7 @@ function _SaveDicts()
     end
     f = readline(join)
     try
-        p = Pickler(pickle, f)
+        p = pickle.Pickler(f)
         dump(p, pickleVersion)
         dump(p, clsidToTypelib)
     finally
@@ -100,12 +101,12 @@ function _LoadDicts()
                 return
             end
         end
-        f = BytesIO(io, data)
+        f = io.BytesIO(data)
     else
         f = readline(join)
     end
     try
-        p = Unpickler(pickle, f)
+        p = pickle.Unpickler(f)
         version = load(p)
         global clsidToTypelib
         clsidToTypelib = load(p)
@@ -133,7 +134,7 @@ function GetGeneratePath()
          =#
     @assert(!(is_readonly))
     try
-        makedirs(os, win32com_.__gen_path__)
+        os.makedirs(win32com_.__gen_path__)
     catch exn
         if exn isa os.error
             #= pass =#
@@ -141,7 +142,7 @@ function GetGeneratePath()
     end
     try
         fname = join
-        stat(os, fname)
+        os.stat(fname)
     catch exn
         if exn isa os.error
             f = readline(fname)
@@ -170,7 +171,7 @@ function GetClassForProgID(progid)
         Params
         progid -- A COM ProgramID or IID (eg, "Word.Application")
          =#
-    clsid = IID(pywintypes, progid)
+    clsid = pywintypes.IID(progid)
     return GetClassForCLSID(clsid)
 end
 
@@ -185,15 +186,15 @@ function GetClassForCLSID(clsid)
         clsid -- A COM CLSID (or string repr of one)
          =#
     clsid = string(clsid)
-    if HasClass(CLSIDToClass, clsid)
-        return GetClass(CLSIDToClass, clsid)
+    if CLSIDToClass.HasClass(clsid)
+        return CLSIDToClass.GetClass(clsid)
     end
     mod = GetModuleForCLSID(clsid)
     if mod === nothing
         return nothing
     end
     try
-        return GetClass(CLSIDToClass, clsid)
+        return CLSIDToClass.GetClass(clsid)
     catch exn
         if exn isa KeyError
             return nothing
@@ -213,7 +214,7 @@ function GetModuleForProgID(progid)
         progid -- A COM ProgramID or IID (eg, "Word.Application")
          =#
     try
-        iid = IID(pywintypes, progid)
+        iid = pywintypes.IID(progid)
     catch exn
         if exn isa pywintypes.com_error
             return nothing
@@ -263,7 +264,7 @@ function GetModuleForCLSID(clsid)
                     if info ∈ demandGeneratedTypeLibraries
                         info = demandGeneratedTypeLibraries[info]
                     end
-                    GenerateChildFromTypeLibSpec(makepy, sub_mod, info)
+                    makepy.GenerateChildFromTypeLibSpec(sub_mod, info)
                 end
             end
             mod = sys.modules[sub_mod_name+1]
@@ -317,8 +318,7 @@ function MakeModuleForTypelib(
         progressInstance -- Instance to use as progress indicator, or None to
                             use the GUI progress bar.
          =#
-    GenerateFromTypeLibSpec(
-        makepy,
+    makepy.GenerateFromTypeLibSpec(
         (typelibCLSID, lcid, major, minor),
         progressInstance,
         bForDemand,
@@ -347,8 +347,7 @@ function MakeModuleForTypelibInterface(
                             use the GUI progress bar.
          =#
     try
-        GenerateFromTypeLibSpec(
-            makepy,
+        makepy.GenerateFromTypeLibSpec(
             typelib_ob,
             progressInstance,
             bForDemandDefault,
@@ -452,6 +451,7 @@ function EnsureModule(
         is no way to totally snuff out all instances of the old module in Python, and thus we will regenerate the file more than necessary,
         unless makepy/genpy is modified accordingly.
 
+
         Returns the Python module.  No exceptions are caught during the generate process.
 
         Params
@@ -474,7 +474,7 @@ function EnsureModule(
                 module_ = nothing
                 try
                     tlbAttr = GetLibAttr(
-                        LoadRegTypeLib(pythoncom, typelibCLSID, major, minor, lcid),
+                        pythoncom.LoadRegTypeLib(typelibCLSID, major, minor, lcid),
                     )
                     if tlbAttr[2] != lcid || tlbAttr[5] != minor
                         try
@@ -501,7 +501,7 @@ function EnsureModule(
             @assert(!(is_readonly))
             try
                 typLibPath =
-                    QueryPathOfRegTypeLib(pythoncom, typelibCLSID, major, minor, lcid)
+                    pythoncom.QueryPathOfRegTypeLib(typelibCLSID, major, minor, lcid)
                 if typLibPath[end] == "\000"
                     typLibPath = typLibPath[begin:-1]
                 end
@@ -511,7 +511,7 @@ function EnsureModule(
                 )
                 if !(suf)
                     try
-                        typLibPath = encode(typLibPath, getfilesystemencoding(sys))
+                        typLibPath = encode(typLibPath, sys.getfilesystemencoding())
                     catch exn
                         if exn isa AttributeError
                             typLibPath = string(typLibPath)
@@ -519,7 +519,7 @@ function EnsureModule(
                     end
                 end
                 tlbAttributes =
-                    GetLibAttr(LoadRegTypeLib(pythoncom, typelibCLSID, major, minor, lcid))
+                    GetLibAttr(pythoncom.LoadRegTypeLib(typelibCLSID, major, minor, lcid))
             catch exn
                 if exn isa pythoncom.com_error
                     bValidateFile = 0
@@ -555,7 +555,7 @@ function EnsureModule(
                     end
                 end
                 if isdir(os.path, filePathPrefix)
-                    rmtree(shutil, filePathPrefix)
+                    shutil.rmtree(filePathPrefix)
                 end
                 minor = tlbAttributes[5]
                 module_ = nothing
@@ -571,13 +571,13 @@ function EnsureModule(
                 filePathPyc = filePathPrefix + ".pyc"
                 fModTimeSet = 0
                 try
-                    pyModTime = stat(os, filePath)[9]
+                    pyModTime = os.stat(filePath)[9]
                     fModTimeSet = 1
                 catch exn
                     let e = exn
                         if e isa os.error
                             try
-                                pyModTime = stat(os, filePathPyc)[9]
+                                pyModTime = os.stat(filePathPyc)[9]
                                 fModTimeSet = 1
                             catch exn
                                 let e = exn
@@ -589,7 +589,7 @@ function EnsureModule(
                         end
                     end
                 end
-                typLibModTime = stat(os, typLibPath)[9]
+                typLibModTime = os.stat(typLibPath)[9]
                 if fModTimeSet && typLibModTime > pyModTime
                     bReloadNeeded = 1
                     module_ = nothing
@@ -638,7 +638,7 @@ end
 
 function EnsureDispatch(prog_id, bForDemand = 1)
     #= Given a COM prog_id, return an object that is using makepy support, building if necessary =#
-    disp = Dispatch(win32com_.client, prog_id)
+    disp = win32com_.client.Dispatch(prog_id)
     if !get(disp.__dict__, "CLSID")
         try
             ti = GetTypeInfo(disp._oleobj_)
@@ -649,7 +649,7 @@ function EnsureDispatch(prog_id, bForDemand = 1)
             GetModuleForCLSID(disp_clsid)
             disp_class = GetClassForCLSID(disp_clsid)
             if disp_class
-                disp_class = GetClass(CLSIDToClass, string(disp_clsid))
+                disp_class = CLSIDToClass.GetClass(string(disp_clsid))
                 disp = disp_class(disp._oleobj_)
             end
         catch exn
@@ -707,7 +707,7 @@ function GetGeneratedInfos()::Union[Union[Union[list, List], list], List]
     if zip_pos >= 0
         zip_file = win32com_.__gen_path__[begin:zip_pos+4]
         zip_path = replace(win32com_.__gen_path__[zip_pos+6:end], "\\", "/")
-        zf = ZipFile(zipfile, zip_file)
+        zf = zipfile.ZipFile(zip_file)
         infos = Dict()
         for n in namelist(zf)
             if !startswith(n, zip_path)
@@ -719,7 +719,7 @@ function GetGeneratedInfos()::Union[Union[Union[list, List], list], List]
                 lcid = Int(lcid)
                 major = Int(major)
                 minor = Int(minor)
-                iid = IID(pywintypes, ("{" + iid) * "}")
+                iid = pywintypes.IID(("{" + iid) * "}")
             catch exn
                 if exn isa ValueError
                     continue
@@ -733,7 +733,7 @@ function GetGeneratedInfos()::Union[Union[Union[list, List], list], List]
         close(zf)
         return collect(keys(infos))
     else
-        files = glob(glob, win32com_.__gen_path__ + "\\*")
+        files = glob.glob(win32com_.__gen_path__ + "\\*")
         ret = []
         for file in files
             if !isdir(os.path, file) && !(splitext(os.path, file)[2] == ".py")
@@ -742,7 +742,7 @@ function GetGeneratedInfos()::Union[Union[Union[list, List], list], List]
             name = splitext(os.path, split(os.path, file)[2])[1]
             try
                 iid, lcid, major, minor = split(name, "x")
-                iid = IID(pywintypes, ("{" + iid) * "}")
+                iid = pywintypes.IID(("{" + iid) * "}")
                 lcid = Int(lcid)
                 major = Int(major)
                 minor = Int(minor)
@@ -785,8 +785,8 @@ function Rebuild(verbose = 1)
             @printf(
                 "Could not add module %s - %s: %s\n",
                 info,
-                exc_info(sys)[1],
-                exc_info(sys)[2]
+                sys.exc_info()[1],
+                sys.exc_info()[2]
             )
         end
     end
@@ -817,7 +817,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     try
-        opts, args = getopt(getopt, append!([PROGRAM_FILE], ARGS)[2:end], "qrd")
+        opts, args = getopt.getopt(append!([PROGRAM_FILE], ARGS)[2:end], "qrd")
     catch exn
         let message = exn
             if message isa getopt.error

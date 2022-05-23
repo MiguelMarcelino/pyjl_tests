@@ -30,7 +30,7 @@ include("keycodes.jl")
 PRINTDLGORD = 1538
 IDC_PRINT_MAG_EDIT = 1010
 EM_FORMATRANGE = win32con.WM_USER + 57
-abstract type AbstractCScintillaView <: Abstractdocview.CtrlView end
+abstract type AbstractCScintillaView <: docview.CtrlView end
 wordbreaks = (("._" + string.ascii_uppercase) + string.ascii_lowercase) + string.digits
 patImport = compile(re, "import (?P<name>.*)")
 _event_commands = ["win32ui.ID_FILE_LOCATE", "win32ui.ID_FILE_CHECK", "afxres.ID_FILE_CLOSE", "afxres.ID_FILE_NEW", "afxres.ID_FILE_OPEN", "afxres.ID_FILE_SAVE", "afxres.ID_FILE_SAVE_AS", "win32ui.ID_FILE_SAVE_ALL", "afxres.ID_EDIT_UNDO", "afxres.ID_EDIT_REDO", "afxres.ID_EDIT_CUT", "afxres.ID_EDIT_COPY", "afxres.ID_EDIT_PASTE", "afxres.ID_EDIT_SELECT_ALL", "afxres.ID_EDIT_FIND", "afxres.ID_EDIT_REPEAT", "afxres.ID_EDIT_REPLACE", "win32ui.ID_VIEW_WHITESPACE", "win32ui.ID_VIEW_FIXED_FONT", "win32ui.ID_VIEW_BROWSE", "win32ui.ID_VIEW_INTERACTIVE", "afxres.ID_WINDOW_ARRANGE", "afxres.ID_WINDOW_CASCADE", "afxres.ID_WINDOW_NEW", "afxres.ID_WINDOW_SPLIT", "afxres.ID_WINDOW_TILE_HORZ", "afxres.ID_WINDOW_TILE_VERT", "afxres.ID_APP_EXIT", "afxres.ID_APP_ABOUT"]

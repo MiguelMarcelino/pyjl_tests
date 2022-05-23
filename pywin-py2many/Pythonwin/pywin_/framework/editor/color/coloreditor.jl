@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.debugger
 import win32com_.gen_py.framework.interact
 using win32com_.gen_py.scintilla: configui
@@ -18,10 +18,10 @@ MARKER_CURRENT = 2
 using win32com_.gen_py.debugger: dbgcon
 using win32com_.gen_py.scintilla.document: CScintillaDocument
 using win32com_.gen_py.framework.editor.document: EditorDocumentBase
-abstract type AbstractSyntEditDocument <: AbstractEditorDocumentBase end
-abstract type AbstractSyntEditView <: AbstractSyntEditViewParent end
-abstract type AbstractSplitterFrame <: AbstractEditorFrame end
-abstract type AbstractSyntEditTemplate <: AbstractEditorTemplateBase end
+abstract type AbstractSyntEditDocument <: EditorDocumentBase end
+abstract type AbstractSyntEditView <: SyntEditViewParent end
+abstract type AbstractSplitterFrame <: EditorFrame end
+abstract type AbstractSyntEditTemplate <: EditorTemplateBase end
 using win32com_.gen_py.scintilla: scintillacon
 import win32com_.gen_py.scintilla.view
 mutable struct SyntEditDocument <: AbstractSyntEditDocument

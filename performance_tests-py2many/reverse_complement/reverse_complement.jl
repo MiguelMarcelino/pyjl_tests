@@ -50,22 +50,20 @@ end
 
 function generate_sequences(lines)
     Channel() do ch_generate_sequences
-        Channel() do ch_generate_sequences
-            heading = nothing
-            sequence = Vector{UInt8}()
-            for line in lines
-                if line[1] == COMMENT
-                    if heading
-                        put!(ch_generate_sequences, (heading, sequence))
-                        sequence = Vector{UInt8}()
-                    end
-                    heading = line
-                else
-                    sequence += line
+        heading = nothing
+        sequence = Vector{UInt8}()
+        for line in lines
+            if line[1] == COMMENT
+                if heading
+                    put!(ch_generate_sequences, (heading, sequence))
+                    sequence = Vector{UInt8}()
                 end
+                heading = line
+            else
+                sequence += line
             end
-            put!(ch_generate_sequences, (heading, sequence))
         end
+        put!(ch_generate_sequences, (heading, sequence))
     end
 end
 

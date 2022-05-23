@@ -3,14 +3,15 @@ using Printf
 import tempfile
 
 import win32com_.test.util
-abstract type AbstractXSLT <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractXSLT <: win32com_.test.util.TestCase end
 expected_output = "The jscript test worked.\nThe Python test worked"
 mutable struct XSLT <: AbstractXSLT
+
 end
 function testAll(self::XSLT)
-    output_name = mktemp(tempfile, "-pycom-test")
+    output_name = tempfile.mktemp("-pycom-test")
     cmd = "cscript //nologo testxslt.js doesnt_matter.xml testxslt.xsl " + output_name
-    ExecuteShellCommand(win32com_.test.util, cmd, self)
+    win32com_.test.util.ExecuteShellCommand(cmd, self)
     try
         f = open(output_name)
         try

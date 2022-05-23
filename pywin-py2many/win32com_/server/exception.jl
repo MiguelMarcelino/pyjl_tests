@@ -29,14 +29,14 @@ mutable struct COMException <: AbstractCOMException
         By using this class, you automatically provide rich error information to the
         server.
          =#
-    description
-    helpcontext
-    helpfile
-    scode
-    source
-    desc
-    helpContext
-    hresult
+    description::Any
+    helpcontext::Any
+    helpfile::Any
+    scode::Any
+    source::Any
+    desc::Any
+    helpContext::Any
+    hresult::Any
 
     COMException(
         description = nothing,
@@ -68,7 +68,7 @@ end
 Exception = COMException
 function IsCOMException(t = nothing)::Bool
     if t === nothing
-        t = exc_info(sys)[1]
+        t = sys.exc_info()[1]
     end
     try
         return t <: pythoncom.com_error
@@ -81,7 +81,7 @@ end
 
 function IsCOMServerException(t = nothing)::Int64
     if t === nothing
-        t = exc_info(sys)[1]
+        t = sys.exc_info()[1]
     end
     try
         return t <: COMException

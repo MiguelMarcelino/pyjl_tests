@@ -1,7 +1,7 @@
 using OrderedCollections
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.mfc.docview
 
 import win32con
@@ -11,14 +11,14 @@ using win32com_.gen_py.tools: hierlist, browser
 import win32com_.gen_py.framework.scriptutils
 import afxres
 import pyclbr
-abstract type AbstractHierListCLBRModule <: Abstracthierlist.HierListItem end
-abstract type AbstractHierListCLBRItem <: Abstracthierlist.HierListItem end
+abstract type AbstractHierListCLBRModule <: hierlist.HierListItem end
+abstract type AbstractHierListCLBRItem <: hierlist.HierListItem end
 abstract type AbstractHierListCLBRClass <: AbstractHierListCLBRItem end
 abstract type AbstractHierListCLBRFunction <: AbstractHierListCLBRItem end
 abstract type AbstractHierListCLBRMethod <: AbstractHierListCLBRItem end
-abstract type AbstractHierListCLBRErrorItem <: Abstracthierlist.HierListItem end
+abstract type AbstractHierListCLBRErrorItem <: hierlist.HierListItem end
 abstract type AbstractHierListCLBRErrorRoot <: AbstractHierListCLBRErrorItem end
-abstract type AbstractBrowserView <: Abstractwin32com_.gen_py.mfc.docview.TreeView end
+abstract type AbstractBrowserView <: win32com_.gen_py.mfc.docview.TreeView end
 mutable struct HierListCLBRModule <: AbstractHierListCLBRModule
 modName
 clbrdata

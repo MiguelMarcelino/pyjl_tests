@@ -3,6 +3,7 @@ using Test
 pythoncom = pyimport("pythoncom")
 using win32com_.test: util
 
+
 import win32con
 import winerror
 import win32clipboard
@@ -19,10 +20,10 @@ function WrapCOMObject(ob, iid = nothing)
 end
 
 mutable struct TestDataObject <: AbstractTestDataObject
-    bytesval
+    bytesval::Any
     supported_fe::Vector
     _com_interfaces_::Vector
-    _public_methods_
+    _public_methods_::Any
 
     TestDataObject(
         bytesval,
@@ -54,10 +55,10 @@ function GetData(self::TestDataObject, fe)
     cf, target, aspect, index, tymed = fe
     if aspect & pythoncom.DVASPECT_CONTENT && tymed == pythoncom.TYMED_HGLOBAL
         if cf == win32con.CF_TEXT
-            ret_stg = STGMEDIUM(pythoncom)
+            ret_stg = pythoncom.STGMEDIUM()
             set(ret_stg, pythoncom.TYMED_HGLOBAL, self.bytesval)
         elseif cf == win32con.CF_UNICODETEXT
-            ret_stg = STGMEDIUM(pythoncom)
+            ret_stg = pythoncom.STGMEDIUM()
             set(ret_stg, pythoncom.TYMED_HGLOBAL, decode(self.bytesval, "latin1"))
         end
     end
@@ -110,14 +111,15 @@ function EnumDAdvise(self::TestDataObject)
 end
 
 mutable struct ClipboardTester <: AbstractClipboardTester
+
 end
 function setUp(self::ClipboardTester)
-    OleInitialize(pythoncom)
+    pythoncom.OleInitialize()
 end
 
 function tearDown(self::ClipboardTester)
     try
-        OleFlushClipboard(pythoncom)
+        pythoncom.OleFlushClipboard()
     catch exn
         if exn isa pythoncom.com_error
             #= pass =#
@@ -128,29 +130,29 @@ end
 function testIsCurrentClipboard(self::ClipboardTester)
     do_ = TestDataObject(b"Hello from Python")
     do_ = WrapCOMObject(do_)
-    OleSetClipboard(pythoncom, do_)
-    @test OleIsCurrentClipboard(pythoncom, do_)
+    pythoncom.OleSetClipboard(do_)
+    @test pythoncom.OleIsCurrentClipboard(do_)
 end
 
 function testComToWin32(self::ClipboardTester)
     do_ = TestDataObject(b"Hello from Python")
     do_ = WrapCOMObject(do_)
-    OleSetClipboard(pythoncom, do_)
-    OpenClipboard(win32clipboard)
-    got = GetClipboardData(win32clipboard, win32con.CF_TEXT)
+    pythoncom.OleSetClipboard(do_)
+    win32clipboard.OpenClipboard()
+    got = win32clipboard.GetClipboardData(win32con.CF_TEXT)
     expected = b"Hello from Python"
     @test (got == expected)
-    got = GetClipboardData(win32clipboard, win32con.CF_UNICODETEXT)
+    got = win32clipboard.GetClipboardData(win32con.CF_UNICODETEXT)
     @test (got == "Hello from Python")
-    CloseClipboard(win32clipboard)
+    win32clipboard.CloseClipboard()
 end
 
 function testWin32ToCom(self::ClipboardTester)
     val = b"Hello again!"
-    OpenClipboard(win32clipboard)
-    SetClipboardData(win32clipboard, win32con.CF_TEXT, val)
-    CloseClipboard(win32clipboard)
-    do_ = OleGetClipboard(pythoncom)
+    win32clipboard.OpenClipboard()
+    win32clipboard.SetClipboardData(win32con.CF_TEXT, val)
+    win32clipboard.CloseClipboard()
+    do_ = pythoncom.OleGetClipboard()
     cf =
         (win32con.CF_TEXT, nothing, pythoncom.DVASPECT_CONTENT, -1, pythoncom.TYMED_HGLOBAL)
     stg = GetData(do_, cf)
@@ -161,25 +163,25 @@ end
 function testDataObjectFlush(self::ClipboardTester)
     do_ = TestDataObject(b"Hello from Python")
     do_ = WrapCOMObject(do_)
-    OleSetClipboard(pythoncom, do_)
+    pythoncom.OleSetClipboard(do_)
     @test (num_do_objects == 1)
     do_ = nothing
-    OleFlushClipboard(pythoncom)
+    pythoncom.OleFlushClipboard()
     @test (num_do_objects == 0)
 end
 
 function testDataObjectReset(self::ClipboardTester)
     do_ = TestDataObject(b"Hello from Python")
     do_ = WrapCOMObject(do_)
-    OleSetClipboard(pythoncom, do_)
+    pythoncom.OleSetClipboard(do_)
     do_ = nothing
     @test (num_do_objects == 1)
-    OleSetClipboard(pythoncom, nothing)
+    pythoncom.OleSetClipboard(nothing)
     @test (num_do_objects == 0)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    testmain(util)
+    util.testmain()
     clipboard_tester = ClipboardTester()
     setUp(clipboard_tester)
     tearDown(clipboard_tester)

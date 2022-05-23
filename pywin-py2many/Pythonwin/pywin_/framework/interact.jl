@@ -1,11 +1,12 @@
 using PyCall
 using StringEncodings
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using win32com_.gen_py.docking.DockingBar: DockingBar
 
 import code
 import string
+
 
 import win32clipboard
 import win32con
@@ -20,13 +21,13 @@ import win32com_.gen_py.framework.app
 ID_EDIT_COPY_CODE = 925698
 ID_EDIT_EXEC_CLIPBOARD = 8195
 trace = win32com_.gen_py.scintilla.formatter.trace
-abstract type AbstractInteractiveFormatter <: AbstractFormatterParent end
-abstract type AbstractPythonwinInteractiveInterpreter <: Abstractcode.InteractiveInterpreter end
+abstract type AbstractInteractiveFormatter <: FormatterParent end
+abstract type AbstractPythonwinInteractiveInterpreter <: code.InteractiveInterpreter end
 abstract type AbstractInteractiveCore end
 abstract type AbstractInteractiveView <: AbstractInteractiveCore end
-abstract type AbstractCInteractivePython <: Abstractwinout.WindowOutput end
-abstract type AbstractInteractiveFrame <: Abstractwinout.WindowOutputFrame end
-abstract type AbstractDockedInteractiveView <: AbstractDockedInteractiveViewParent end
+abstract type AbstractCInteractivePython <: winout.WindowOutput end
+abstract type AbstractInteractiveFrame <: winout.WindowOutputFrame end
+abstract type AbstractDockedInteractiveView <: DockedInteractiveViewParent end
 abstract type AbstractCDockedInteractivePython <: AbstractCInteractivePython end
 include("winout.jl")
 
@@ -91,7 +92,7 @@ INTERACTIVE_STYLES = [
 FormatterParent = win32com_.gen_py.scintilla.formatter.PythonSourceFormatter
 mutable struct InteractiveFormatter <: AbstractInteractiveFormatter
     bannerDisplayed::Bool
-    style_buffer
+    style_buffer::Any
 
     InteractiveFormatter(scintilla) = begin
         FormatterParent.__init__(self, scintilla)
@@ -260,8 +261,8 @@ function Colorize(self::InteractiveFormatter, start = 0, end_ = -1)
 end
 
 mutable struct PythonwinInteractiveInterpreter <: AbstractPythonwinInteractiveInterpreter
-    globals
-    locals
+    globals::Any
+    locals::Any
 
     PythonwinInteractiveInterpreter(locals = nothing, globals = nothing) = begin
         if locals === nothing
@@ -291,14 +292,14 @@ function runcode(self::PythonwinInteractiveInterpreter, code)
 end
 
 mutable struct InteractiveCore <: AbstractInteractiveCore
-    banner
-    oldStdOut
-    oldStdErr
+    banner::Any
+    oldStdOut::Any
+    oldStdErr::Any
     interp::AbstractPythonwinInteractiveInterpreter
-    history
-    OnSelectBlock
-    OnEditCopyCode
-    OnEditExecClipboard
+    history::Any
+    OnSelectBlock::Any
+    OnEditCopyCode::Any
+    OnEditExecClipboard::Any
 end
 function Init(self::InteractiveCore)
     self.oldStdOut = nothing
@@ -709,7 +710,7 @@ function WindowBackEvent(self::InteractiveCore, event)
 end
 
 mutable struct InteractiveView <: AbstractInteractiveView
-    encoding
+    encoding::Any
 
     InteractiveView(doc) = begin
         InteractiveCore()
@@ -734,8 +735,8 @@ end
 
 mutable struct CInteractivePython <: AbstractCInteractivePython
     IsFinalDestroy::Int64
-    makeDoc
-    makeFrame
+    makeDoc::Any
+    makeFrame::Any
 
     CInteractivePython(makeDoc = nothing, makeFrame = nothing) = begin
         winout.WindowOutput.__init__(
@@ -766,7 +767,7 @@ function Close(self::CInteractivePython)
 end
 
 mutable struct InteractiveFrame <: AbstractInteractiveFrame
-    lastActive
+    lastActive::Any
 
     InteractiveFrame() = begin
         winout.WindowOutputFrame.__init__(self)
@@ -782,8 +783,8 @@ end
 ID_DOCKED_INTERACTIVE_CONTROLBAR = 59394
 DockedInteractiveViewParent = InteractiveView
 mutable struct DockedInteractiveView <: AbstractDockedInteractiveView
-    OnSetFocus
-    OnKillFocus
+    OnSetFocus::Any
+    OnKillFocus::Any
 end
 function HookHandlers(self::DockedInteractiveView)
     HookHandlers(DockedInteractiveViewParent)
@@ -839,10 +840,10 @@ end
 
 mutable struct CDockedInteractivePython <: AbstractCDockedInteractivePython
     bFirstCreated::Int64
-    dockbar
+    dockbar::Any
     bCreating::Int64
-    currentView
-    title
+    currentView::Any
+    title::Any
 
     CDockedInteractivePython(dockbar) = begin
         CInteractivePython()

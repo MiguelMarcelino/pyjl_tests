@@ -1,5 +1,5 @@
 
-abstract type AbstractColors <: Abstractstr end
+abstract type AbstractColors <: str end
 @enum Colors::String begin
     RED = "red"
     GREEN = "green"

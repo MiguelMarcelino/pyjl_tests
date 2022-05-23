@@ -15,8 +15,8 @@ function RegisterClassFactories(clsids, flags = nothing, clsctx = nothing)::Vect
     ret = []
     for clsid in clsids
         if clsid[1] ∉ ["-", "/"]
-            factory = MakePyFactory(pythoncom, clsid)
-            regId = CoRegisterClassObject(pythoncom, clsid, factory, clsctx, flags)
+            factory = pythoncom.MakePyFactory(clsid)
+            regId = pythoncom.CoRegisterClassObject(clsid, factory, clsctx, flags)
             push!(ret, (factory, regId))
         end
     end
@@ -25,6 +25,6 @@ end
 
 function RevokeClassFactories(infos)
     for (factory, revokeId) in infos
-        CoRevokeClassObject(pythoncom, revokeId)
+        pythoncom.CoRevokeClassObject(revokeId)
     end
 end

@@ -1,18 +1,18 @@
 using PyCall
-win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
+win32api = pyimport("win32api")
 using win32com_: storagecon
 
 import win32com_.test.util
 
-abstract type AbstractTestEnum <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestEnum <: win32com_.test.util.TestCase end
 mutable struct TestEnum <: AbstractTestEnum
+
 end
 function testit(self::TestEnum)
-    fname, tmp = GetTempFileName(win32api, GetTempPath(win32api), "stg")
+    fname, tmp = win32api.GetTempFileName(win32api.GetTempPath(), "stg")
     m = storagecon.STGM_READWRITE | storagecon.STGM_SHARE_EXCLUSIVE
-    pss = StgOpenStorageEx(
-        pythoncom,
+    pss = pythoncom.StgOpenStorageEx(
         fname,
         m,
         storagecon.STGFMT_FILE,
@@ -48,8 +48,7 @@ function testit(self::TestEnum)
     )
     pssum = nothing
     pss = nothing
-    pssread = StgOpenStorageEx(
-        pythoncom,
+    pssread = pythoncom.StgOpenStorageEx(
         fname,
         storagecon.STGM_READ | storagecon.STGM_SHARE_EXCLUSIVE,
         storagecon.STGFMT_FILE,

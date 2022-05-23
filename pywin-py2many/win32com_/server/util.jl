@@ -31,7 +31,7 @@ function wrap(ob, iid = nothing, usePolicy = nothing, useDispatcher = nothing)
     else
         ob = useDispatcher(usePolicy, ob)
     end
-    ob = WrapObject(pythoncom, ob)
+    ob = pythoncom.WrapObject(ob)
     if iid != nothing
         ob = QueryInterface(ob, iid)
     end
@@ -44,7 +44,7 @@ function unwrap(ob)
         Given an interface which wraps up a Gateway, return the object behind
         the gateway.
          =#
-    ob = UnwrapObject(pythoncom, ob)
+    ob = pythoncom.UnwrapObject(ob)
     if hasfield(typeof(ob), :policy)
         ob = ob.policy
     end
@@ -61,11 +61,11 @@ mutable struct ListEnumerator <: AbstractListEnumerator
         See also the @NewEnum@ function, which can be used to turn the
         instance into an actual COM server.
          =#
-    _iid_
-    _list_
-    index
+    _iid_::Any
+    _list_::Any
+    index::Any
     _public_methods_::Vector{String}
-    iid
+    iid::Any
 
     ListEnumerator(
         _iid_,
@@ -116,7 +116,7 @@ mutable struct ListEnumeratorGateway <: AbstractListEnumeratorGateway
 
         See also the @ListEnumerator@ class and the @NewEnum@ function.
          =#
-    _wrap
+    _wrap::Any
 end
 function Next(self::ListEnumeratorGateway, count)
     result = self._list_[self.index+1:self.index+count]
@@ -149,8 +149,8 @@ end
 mutable struct Collection <: AbstractCollection
     #= A collection of VARIANT values. =#
     _public_methods_::Vector{String}
-    data
-    _value_
+    data::Any
+    _value_::Any
     readOnly::Int64
 
     Collection(data = nothing, readOnly = 0, _value_ = Item) = begin
@@ -225,16 +225,15 @@ function NewCollection(seq, cls = Collection)
         Optionally, a custom COM server for enumeration can be passed
         (the default is @Collection@).
          =#
-    return WrapObject(
-        pythoncom,
-        DefaultPolicy(policy, cls(seq)),
+    return pythoncom.WrapObject(
+        policy.DefaultPolicy(cls(seq)),
         pythoncom.IID_IDispatch,
         pythoncom.IID_IDispatch,
     )
 end
 
 mutable struct FileStream <: AbstractFileStream
-    file
+    file::Any
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
 

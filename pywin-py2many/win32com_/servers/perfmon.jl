@@ -36,16 +36,16 @@ mutable struct PerfMonQuery <: AbstractPerfMonQuery
 end
 function Query(self::PerfMonQuery, object, counter, instance = nothing, machine = nothing)
     try
-        return GetPerformanceAttributes(win32pdhutil, object, counter, instance, machine)
+        return win32pdhutil.GetPerformanceAttributes(object, counter, instance, machine)
     catch exn
         let exc = exn
             if exc isa win32pdhutil.error
-                throw(Exception(exception, exc.strerror))
+                throw(exception.Exception(exc.strerror))
             end
         end
         let desc = exn
             if desc isa TypeError
-                throw(Exception(exception, desc, winerror.DISP_E_TYPEMISMATCH))
+                throw(exception.Exception(desc, winerror.DISP_E_TYPEMISMATCH))
             end
         end
     end
@@ -53,5 +53,5 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     println("Registering COM server...")
-    UseCommandLine(register, PerfMonQuery)
+    register.UseCommandLine(PerfMonQuery)
 end

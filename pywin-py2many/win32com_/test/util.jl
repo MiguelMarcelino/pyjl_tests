@@ -5,9 +5,11 @@ pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
 using win32com_.shell.shell: IsUserAnAdmin
 
+
 import tempfile
 
 import gc
+
 
 import winerror
 
@@ -17,14 +19,14 @@ import winreg
 import io as StringIO
 import pywin32_testutil
 using pywin32_testutil: TestLoader, TestResult, TestRunner, LeakTestCase
-abstract type AbstractFailed <: AbstractException end
+abstract type AbstractFailed <: Exception end
 abstract type AbstractCaptureWriter end
-abstract type AbstractLogHandler <: Abstractlogging.Handler end
+abstract type AbstractLogHandler <: logging.Handler end
 abstract type Abstract_CapturingFunctionTestCase end
 abstract type AbstractShellTestCase end
 function CheckClean()
     try
-        exc_clear(sys)
+        sys.exc_clear()
     catch exn
         if exn isa AttributeError
             #= pass =#
@@ -49,7 +51,7 @@ function RegisterPythonServer(filename, progids = nothing, verbose = 0)
         has_break = false
         for progid in progids
             try
-                clsid = IID(pywintypes, progid)
+                clsid = pywintypes.IID(progid)
             catch exn
                 if exn isa pythoncom.com_error
                     break
@@ -57,8 +59,8 @@ function RegisterPythonServer(filename, progids = nothing, verbose = 0)
             end
             try
                 HKCR = winreg.HKEY_CLASSES_ROOT
-                hk = OpenKey(winreg, HKCR, "CLSID\\%s" % clsid)
-                dll = QueryValue(winreg, hk, "InprocServer32")
+                hk = winreg.OpenKey(HKCR, "CLSID\\%s" % clsid)
+                dll = winreg.QueryValue(hk, "InprocServer32")
             catch exn
                 if exn isa WindowsError
                     break
@@ -94,13 +96,13 @@ function RegisterPythonServer(filename, progids = nothing, verbose = 0)
         if why_not
             msg += "\n(registration check failed as %s)" % why_not
         end
-        throw(com_error(pythoncom, winerror.CO_E_CLASSSTRING, msg, nothing, -1))
+        throw(pythoncom.com_error(winerror.CO_E_CLASSSTRING, msg, nothing, -1))
     end
-    cmd = "%s \"%s\" --unattended > nul 2>&1" % (GetModuleFileName(win32api, 0), filename)
+    cmd = "%s \"%s\" --unattended > nul 2>&1" % (win32api.GetModuleFileName(0), filename)
     if verbose
         println("Registering engine$(filename)")
     end
-    rc = system(os, cmd)
+    rc = os.system(cmd)
     if rc
         println("Registration command was:")
         println(cmd)
@@ -109,12 +111,13 @@ function RegisterPythonServer(filename, progids = nothing, verbose = 0)
 end
 
 function ExecuteShellCommand(cmd, testcase, expected_output = nothing, tracebacks_ok = 0)
-    output_name = mktemp(tempfile, "win32com_test")
+    output_name = tempfile.mktemp("win32com_test")
     cmd = cmd + (" > \"%s\" 2>&1" % output_name)
-    rc = system(os, cmd)
+    rc = os.system(cmd)
     output = strip(read(readline(output_name)))
-    remove(os, output_name)
+    os.remove(output_name)
     mutable struct Failed <: AbstractFailed
+
     end
 
     try
@@ -158,8 +161,8 @@ function assertRaisesCOM_HRESULT(testcase, hresult, func)
 end
 
 mutable struct CaptureWriter <: AbstractCaptureWriter
-    old_err
-    old_out
+    old_err::Any
+    old_out::Any
     captured::Vector
 
     CaptureWriter() = begin
@@ -220,7 +223,7 @@ function setup_test_logger()::Tuple
         (hasfield(typeof(win32com_), :logger) ? getfield(win32com_, :logger) : nothing)
     global _win32com_logger
     if _win32com_logger === nothing
-        _win32com_logger = Logger(logging, "test")
+        _win32com_logger = logging.Logger("test")
         handler = LogHandler()
         addHandler(_win32com_logger, handler)
     end
@@ -247,6 +250,7 @@ function CapturingFunctionTestCase()
 end
 
 mutable struct _CapturingFunctionTestCase <: Abstract_CapturingFunctionTestCase
+
 end
 function __call__(self::_CapturingFunctionTestCase, result = nothing)
     if result === nothing
@@ -278,8 +282,8 @@ function checkOutput(self::_CapturingFunctionTestCase, output, result)
 end
 
 mutable struct ShellTestCase <: AbstractShellTestCase
-    __cmd
-    __eo
+    __cmd::Any
+    __eo::Any
 
     ShellTestCase(cmd, expected_output) = begin
         unittest.TestCase.__init__(self)
@@ -301,6 +305,6 @@ function __str__(self::ShellTestCase)::String
 end
 
 function testmain()
-    testmain()
+    pywin32_testutil.testmain(args..., kw)
     CheckClean()
 end

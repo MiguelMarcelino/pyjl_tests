@@ -3,9 +3,10 @@
 Please see policy.py for a discussion on dispatchers and policies
  =#
 using PyCall
-win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
+win32api = pyimport("win32api")
 import win32traceutil
+
 
 using win32com_.server.exception: IsCOMServerException
 using win32com_.util: IIDToInterfaceName
@@ -20,13 +21,13 @@ mutable struct DispatcherBase <: AbstractDispatcherBase
         that exactly where the output of print goes may not be useful!  A derived class may
         provide additional semantics for this.
          =#
-    policy
-    logger
+    policy::Any
+    logger::Any
 end
 function _CreateInstance_(self::DispatcherBase, clsid, reqIID)
     try
         _CreateInstance_(self.policy, clsid, reqIID)
-        return WrapObject(pythoncom, self, reqIID)
+        return pythoncom.WrapObject(self, reqIID)
     catch exn
         return _HandleException_(self)
     end
@@ -153,7 +154,7 @@ function _HandleException_(self::DispatcherBase)
         if self.logger != nothing
             exception(self.logger, "pythoncom server error")
         else
-            current_exceptions() != [] ? current_exceptions()[end] : nothing
+            current_exceptions() != [] ? current_exceptions()[end] : nothing()
         end
     end
     error()
@@ -178,10 +179,10 @@ abstract type AbstractDispatcherOutputDebugString <: AbstractDispatcherTrace end
 abstract type AbstractDispatcherWin32dbg <: AbstractDispatcherBase end
 mutable struct DispatcherTrace <: AbstractDispatcherTrace
     #= A dispatcher, which causes a 'print' line for each COM function called. =#
-    policy
+    policy::Any
 end
 function _QueryInterface_(self::DispatcherTrace, iid)
-    rc = _QueryInterface_(DispatcherBase, self)
+    rc = DispatcherBase._QueryInterface_(self, iid)
     if !(rc)
         _trace_(
             self,
@@ -194,27 +195,27 @@ end
 
 function _GetIDsOfNames_(self::DispatcherTrace, names, lcid)
     _trace_(self, "in _GetIDsOfNames_ with \'%s\' and \'%d\'\n" % (names, lcid))
-    return _GetIDsOfNames_(DispatcherBase, self, names)
+    return DispatcherBase._GetIDsOfNames_(self, names, lcid)
 end
 
 function _GetTypeInfo_(self::DispatcherTrace, index, lcid)
     _trace_(self, "in _GetTypeInfo_ with index=%d, lcid=%d\n" % (index, lcid))
-    return _GetTypeInfo_(DispatcherBase, self, index)
+    return DispatcherBase._GetTypeInfo_(self, index, lcid)
 end
 
 function _GetTypeInfoCount_(self::DispatcherTrace)
     _trace_(self, "in _GetTypeInfoCount_\n")
-    return _GetTypeInfoCount_(DispatcherBase)
+    return DispatcherBase._GetTypeInfoCount_(self)
 end
 
 function _Invoke_(self::DispatcherTrace, dispid, lcid, wFlags, args)
     _trace_(self, "in _Invoke_ with", dispid, lcid, wFlags, args)
-    return _Invoke_(DispatcherBase, self, dispid, lcid, wFlags)
+    return DispatcherBase._Invoke_(self, dispid, lcid, wFlags, args)
 end
 
 function _GetDispID_(self::DispatcherTrace, name, fdex)
     _trace_(self, "in _GetDispID_ with", name, fdex)
-    return _GetDispID_(DispatcherBase, self, name)
+    return DispatcherBase._GetDispID_(self, name, fdex)
 end
 
 function _InvokeEx_(
@@ -231,41 +232,50 @@ function _InvokeEx_(
         "in %r._InvokeEx_-%s%r [%x,%s,%r]" %
         (self.policy._obj_, dispid, args, wFlags, lcid, serviceProvider),
     )
-    return _InvokeEx_(DispatcherBase, self, dispid, lcid, wFlags, args, kwargs)
+    return DispatcherBase._InvokeEx_(
+        self,
+        dispid,
+        lcid,
+        wFlags,
+        args,
+        kwargs,
+        serviceProvider,
+    )
 end
 
 function _DeleteMemberByName_(self::DispatcherTrace, name, fdex)
     _trace_(self, "in _DeleteMemberByName_ with", name, fdex)
-    return _DeleteMemberByName_(DispatcherBase, self, name)
+    return DispatcherBase._DeleteMemberByName_(self, name, fdex)
 end
 
 function _DeleteMemberByDispID_(self::DispatcherTrace, id)
     _trace_(self, "in _DeleteMemberByDispID_ with", id)
-    return _DeleteMemberByDispID_(DispatcherBase, self)
+    return DispatcherBase._DeleteMemberByDispID_(self, id)
 end
 
 function _GetMemberProperties_(self::DispatcherTrace, id, fdex)
     _trace_(self, "in _GetMemberProperties_ with", id, fdex)
-    return _GetMemberProperties_(DispatcherBase, self, id)
+    return DispatcherBase._GetMemberProperties_(self, id, fdex)
 end
 
 function _GetMemberName_(self::DispatcherTrace, dispid)
     _trace_(self, "in _GetMemberName_ with", dispid)
-    return _GetMemberName_(DispatcherBase, self)
+    return DispatcherBase._GetMemberName_(self, dispid)
 end
 
 function _GetNextDispID_(self::DispatcherTrace, fdex, flags)
     _trace_(self, "in _GetNextDispID_ with", fdex, flags)
-    return _GetNextDispID_(DispatcherBase, self, fdex)
+    return DispatcherBase._GetNextDispID_(self, fdex, flags)
 end
 
 function _GetNameSpaceParent_(self::DispatcherTrace)
     _trace_(self, "in _GetNameSpaceParent_")
-    return _GetNameSpaceParent_(DispatcherBase)
+    return DispatcherBase._GetNameSpaceParent_(self)
 end
 
 mutable struct DispatcherWin32trace <: AbstractDispatcherWin32trace
     #= A tracing dispatcher that sends its output to the win32trace remote collector. =#
+
 
     DispatcherWin32trace(policyClass, object) = begin
         DispatcherTrace(policyClass, object)
@@ -282,9 +292,9 @@ mutable struct DispatcherOutputDebugString <: AbstractDispatcherOutputDebugStrin
 end
 function _trace_(self::DispatcherOutputDebugString)
     for arg in args[begin:-1]
-        OutputDebugString(win32api, string(arg) * " ")
+        win32api.OutputDebugString(string(arg) * " ")
     end
-    OutputDebugString(win32api, string(args[end]) * "\n")
+    win32api.OutputDebugString(string(args[end]) * "\n")
 end
 
 mutable struct DispatcherWin32dbg <: AbstractDispatcherWin32dbg
@@ -295,6 +305,7 @@ mutable struct DispatcherWin32dbg <: AbstractDispatcherWin32dbg
 
         Requires Pythonwin.
          =#
+
 
     DispatcherWin32dbg(policyClass, ob) = begin
         win32com_.gen_py.debugger.brk()
@@ -324,7 +335,7 @@ function _HandleException_(self::DispatcherWin32dbg)
         try
             post_mortem(win32com_.gen_py.debugger, tb, typ, val)
         catch exn
-            current_exceptions() != [] ? current_exceptions()[end] : nothing
+            current_exceptions() != [] ? current_exceptions()[end] : nothing()
         end
     end
     #Delete Unsupported

@@ -31,20 +31,22 @@ the dictionary's keys. This allows for the following type of VB code:
     next
  =#
 using PyCall
-pywintypes = pyimport("pywintypes")
 pythoncom = pyimport("pythoncom")
+pywintypes = pyimport("pywintypes")
 using win32com_.server.register: UseCommandLine
 
 using win32com_.server: util, policy
 using win32com_.server.exception: COMException
 import winerror
 
+
+
 using winerror: S_OK
-abstract type AbstractDictionaryPolicy <: Abstractpolicy.BasicWrapPolicy end
+abstract type AbstractDictionaryPolicy <: policy.BasicWrapPolicy end
 mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
-    _obj_
+    _obj_::Any
     _com_interfaces_::Vector
-    _name_to_dispid_::Dict{String, Any}
+    _name_to_dispid_::Dict{String,Any}
     _reg_clsid_::String
     _reg_desc_::String
     _reg_policy_spec_::String
@@ -54,7 +56,7 @@ mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
     DictionaryPolicy(
         _obj_,
         _com_interfaces_::Vector = [],
-        _name_to_dispid_::Dict{String, Any} = Dict(
+        _name_to_dispid_::Dict{String,Any} = Dict(
             "item" => pythoncom.DISPID_VALUE,
             "_newenum" => pythoncom.DISPID_NEWENUM,
             "count" => 1,
@@ -77,7 +79,7 @@ mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
 end
 function _CreateInstance_(self::DictionaryPolicy, clsid, reqIID)
     _wrap_(self, Dict())
-    return WrapObject(pythoncom, self, reqIID)
+    return pythoncom.WrapObject(self, reqIID)
 end
 
 function _wrap_(self::DictionaryPolicy, ob)
@@ -142,7 +144,7 @@ function _invokeex_(
         return length(self._obj_)
     end
     if dispid == pythoncom.DISPID_NEWENUM
-        return NewEnum(util, collect(keys(self._obj_)))
+        return util.NewEnum(collect(keys(self._obj_)))
     end
     throw(COMException(winerror.DISP_E_MEMBERNOTFOUND))
 end

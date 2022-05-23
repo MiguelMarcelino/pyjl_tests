@@ -11,7 +11,7 @@ import string
 
 import codecs
 
-abstract type AbstractCScintillaDocument <: AbstractParentScintillaDocument end
+abstract type AbstractCScintillaDocument <: ParentScintillaDocument end
 abstract type AbstractViewNotifyDelegate end
 abstract type AbstractDocumentNotifyDelegate end
 crlf_bytes = encode("\r\n", "ascii")

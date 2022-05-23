@@ -1,13 +1,13 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 import win32con
 using win32com_.gen_py.mfc: object
 using dde: *
 
-abstract type AbstractDDESystemTopic <: Abstractobject.Object end
-abstract type AbstractDDEServer <: Abstractobject.Object end
+abstract type AbstractDDESystemTopic <: object.Object end
+abstract type AbstractDDEServer <: object.Object end
 mutable struct DDESystemTopic <: AbstractDDESystemTopic
 app
 

@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 include("configui.jl")
 import string
 
@@ -9,7 +9,7 @@ using win32com_.gen_py.mfc: docview
 import win32com_.gen_py.framework.window
 
 include("frame.jl")
-abstract type AbstractEditorTemplateBase <: AbstractParentEditorTemplate end
+abstract type AbstractEditorTemplateBase <: ParentEditorTemplate end
 ParentEditorTemplate = docview.DocTemplate
 mutable struct EditorTemplateBase <: AbstractEditorTemplateBase
 makeDoc

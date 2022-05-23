@@ -8,9 +8,9 @@ using pywin32_testutil: str2bytes
 abstract type AbstractPersists end
 abstract type AbstractStream end
 abstract type AbstractBadStream <: AbstractStream end
-abstract type AbstractStreamTest <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractStreamTest <: win32com_.test.util.TestCase end
 mutable struct Persists <: AbstractPersists
-    data
+    data::Any
     dirty::Int64
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
@@ -57,7 +57,7 @@ function InitNew(self::Persists)
 end
 
 mutable struct Stream <: AbstractStream
-    data
+    data::Any
     index::Int64
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
@@ -110,6 +110,7 @@ function Read(self::BadStream, amount)::Int64
 end
 
 mutable struct StreamTest <: AbstractStreamTest
+
 end
 function _readWrite(self::StreamTest, data, write_stream, read_stream = nothing)
     if read_stream === nothing
@@ -131,8 +132,8 @@ function testit(self::StreamTest)
     Load(p, s)
     Save(p, s, 0)
     assertEqual(self, s.data, mydata)
-    s2 = wrap(win32com_.server.util, s, pythoncom.IID_IStream)
-    p2 = wrap(win32com_.server.util, p, pythoncom.IID_IPersistStreamInit)
+    s2 = win32com_.server.util.wrap(s, pythoncom.IID_IStream)
+    p2 = win32com_.server.util.wrap(p, pythoncom.IID_IPersistStreamInit)
     _readWrite(self, mydata, s, s)
     _readWrite(self, mydata, s, s2)
     _readWrite(self, mydata, s2, s)
@@ -146,16 +147,16 @@ end
 
 function testseek(self::StreamTest)
     s = Stream(str2bytes("yo"))
-    s = wrap(win32com_.server.util, s, pythoncom.IID_IStream)
+    s = win32com_.server.util.wrap(s, pythoncom.IID_IStream)
     Seek(s, 4294967296, pythoncom.STREAM_SEEK_SET)
 end
 
 function testerrors(self::StreamTest)
-    records, old_log = setup_test_logger(win32com_.test.util)
+    records, old_log = win32com_.test.util.setup_test_logger()
     badstream = BadStream("Check for buffer overflow")
-    badstream2 = wrap(win32com_.server.util, badstream, pythoncom.IID_IStream)
+    badstream2 = win32com_.server.util.wrap(badstream, pythoncom.IID_IStream)
     assertRaises(self, pythoncom.com_error, badstream2.Read, 10)
-    restore_test_logger(win32com_.test.util, old_log)
+    win32com_.test.util.restore_test_logger(old_log)
     assertEqual(self, length(records), 1)
     assertTrue(self, startswith(None.msg, "pythoncom error"))
 end

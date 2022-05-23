@@ -1,6 +1,7 @@
 using Distributed
 using ResumableFunctions
 
+
 reverse_translation = Dict(
     b"A" => b"T",
     b"B" => b"V",
@@ -50,24 +51,22 @@ end
 
 function read_sequences(file)
     Channel() do ch_read_sequences
-        Channel() do ch_read_sequences
-            for line in file
-                if line[1] == Int(codepoint('>'))
-                    header = line
-                    sequence = Vector{UInt8}()
-                    for line in file
-                        if line[1] == Int(codepoint('>'))
-                            put!(ch_read_sequences, (header, sequence))
-                            header = line
-                            sequence = Vector{UInt8}()
-                        else
-                            sequence += line
-                        end
+        for line in file
+            if line[1] == Int(codepoint('>'))
+                header = line
+                sequence = Vector{UInt8}()
+                for line in file
+                    if line[1] == Int(codepoint('>'))
+                        put!(ch_read_sequences, (header, sequence))
+                        header = line
+                        sequence = Vector{UInt8}()
+                    else
+                        sequence += line
                     end
-                    put!(ch_read_sequences, (header, sequence))
-                    has_break = true
-                    break
                 end
+                put!(ch_read_sequences, (header, sequence))
+                has_break = true
+                break
             end
         end
     end

@@ -3,6 +3,8 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
 
+
+
 import glob
 
 import win32com_.test.util
@@ -11,13 +13,13 @@ using win32com_.client: makepy, selecttlb, gencache
 import winerror
 function TestBuildAll(verbose = 1)::Int64
     num = 0
-    tlbInfos = EnumTlbs(selecttlb)
+    tlbInfos = selecttlb.EnumTlbs()
     for info in tlbInfos
         if verbose
             @printf("%s (%s)\n", info.desc, info.dll)
         end
         try
-            GenerateFromTypeLibSpec(makepy, info)
+            makepy.GenerateFromTypeLibSpec(info)
             num += 1
         catch exn
             let details = exn
@@ -34,13 +36,13 @@ function TestBuildAll(verbose = 1)::Int64
                 throw(KeyboardInterrupt)
             end
             println("Failed:$(info.desc)")
-            current_exceptions() != [] ? current_exceptions()[end] : nothing
+            current_exceptions() != [] ? current_exceptions()[end] : nothing()
         end
         if makepy.bForDemandDefault
             tinfo = (info.clsid, info.lcid, info.major, info.minor)
-            mod = EnsureModule(gencache, info.clsid, info.lcid, info.major, info.minor)
+            mod = gencache.EnsureModule(info.clsid, info.lcid, info.major, info.minor)
             for name in keys(mod.NamesToIIDMap)
-                GenerateChildFromTypeLibSpec(makepy, name, tinfo)
+                makepy.GenerateChildFromTypeLibSpec(name, tinfo)
             end
         end
     end
@@ -50,7 +52,7 @@ end
 function TestAll(verbose = 0)
     num = TestBuildAll(verbose)
     println("Generated and imported$(num)modules")
-    CheckClean(win32com_.test.util)
+    win32com_.test.util.CheckClean()
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

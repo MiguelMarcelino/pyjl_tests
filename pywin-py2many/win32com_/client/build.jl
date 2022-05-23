@@ -11,15 +11,17 @@ dynamically, or possibly even generate .html documentation for objects.
  =#
 using PyCall
 using StringEncodings
+pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
-pythoncom = pyimport("pythoncom")
 
 import win32com_.ext_modules.string as string
 
+
+
 using win32com_.ext_modules.keyword: iskeyword
 import win32com_.ext_modules.winerror as winerror
-abstract type AbstractNotSupportedException <: AbstractException end
+abstract type AbstractNotSupportedException <: Exception end
 abstract type AbstractMapEntry end
 abstract type AbstractOleItem end
 abstract type AbstractDispatchItem <: AbstractOleItem end
@@ -34,6 +36,7 @@ end
 
 error = "PythonCOM.Client.Build error"
 mutable struct NotSupportedException <: AbstractNotSupportedException
+
 end
 
 DropIndirection = "DropIndirection"
@@ -70,15 +73,15 @@ for v in NoTranslateTypes
 end
 mutable struct MapEntry <: AbstractMapEntry
     #= Simple holder for named attibutes - items in a map. =#
-    desc
-    dispid
-    doc
-    hidden
-    names
-    resultCLSID
-    resultDocumentation
+    desc::Any
+    dispid::Any
+    doc::Any
+    hidden::Any
+    names::Any
+    resultCLSID::Any
+    resultDocumentation::Any
     wasProperty::Int64
-    resultDoc
+    resultDoc::Any
 
     MapEntry(
         desc_or_id,
@@ -129,10 +132,10 @@ mutable struct OleItem <: AbstractOleItem
     bIsDispatch::Int64
     bIsSink::Int64
     bWritten::Int64
-    clsid
-    co_class
-    doc
-    python_name
+    clsid::Any
+    co_class::Any
+    doc::Any
+    python_name::Any
     typename::String
 
     OleItem(doc = nothing, typename::String = "OleItem") = begin
@@ -147,17 +150,17 @@ end
 
 mutable struct DispatchItem <: AbstractDispatchItem
     bIsDispatch::Bool
-    clsid
-    defaultDispatchName
+    clsid::Any
+    defaultDispatchName::Any
     hidden::Int64
     mapFuncs::Dict
     propMap::Dict
     propMapGet::Dict
     propMapPut::Dict
-    attr
+    attr::Any
     bForUser::Int64
-    doc
-    typeinfo
+    doc::Any
+    typeinfo::Any
     typename::String
 
     DispatchItem(
@@ -520,7 +523,7 @@ mutable struct VTableItem <: AbstractVTableItem
     vtableFuncs::Vector
 end
 function Build(self::VTableItem, typeinfo, attr, bForUser = 1)
-    Build(DispatchItem, self, typeinfo, attr)
+    DispatchItem.Build(self, typeinfo, attr, bForUser)
     @assert(typeinfo != nothing)
     meth_list = append!(
         append!(collect(values(self.mapFuncs)), collect(values(self.propMapGet))),
@@ -534,7 +537,7 @@ function Build(self::VTableItem, typeinfo, attr, bForUser = 1)
 end
 
 mutable struct LazyDispatchItem <: AbstractLazyDispatchItem
-    clsid
+    clsid::Any
     typename::String
 
     LazyDispatchItem(attr, doc, typename::String = "LazyDispatchItem") = begin

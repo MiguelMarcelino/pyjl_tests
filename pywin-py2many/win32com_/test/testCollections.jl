@@ -1,26 +1,27 @@
 using PyCall
-pywintypes = pyimport("pywintypes")
 pythoncom = pyimport("pythoncom")
+pywintypes = pyimport("pywintypes")
 
 import win32com_.server.util
 import win32com_.test.util
 import win32com_.client
 
+
+
 import winerror
 L = pywintypes.Unicode
-abstract type AbstractTestCase <: Abstractwin32com_.test.util.TestCase end
+abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 
 error = "collection test error"
 function MakeEmptyEnum()
-    o = wrap(win32com_.server.util, Collection(win32com_.server.util))
-    return Dispatch(win32com_.client, o)
+    o = win32com_.server.util.wrap(win32com_.server.util.Collection())
+    return win32com_.client.Dispatch(o)
 end
 
 function MakeTestEnum()
-    sub =
-        wrap(win32com_.server.util, Collection(win32com_.server.util, ["Sub1", 2, "Sub3"]))
-    o = wrap(win32com_.server.util, Collection(win32com_.server.util, [1, "Two", 3, sub]))
-    return Dispatch(win32com_.client, o)
+    sub = win32com_.server.util.wrap(win32com_.server.util.Collection(["Sub1", 2, "Sub3"]))
+    o = win32com_.server.util.wrap(win32com_.server.util.Collection([1, "Two", 3, sub]))
+    return win32com_.client.Dispatch(o)
 end
 
 function TestEnumAgainst(o, check)
@@ -172,6 +173,7 @@ function TestEnum(quiet = nothing)
 end
 
 mutable struct TestCase <: AbstractTestCase
+
 end
 function testEnum(self::TestCase)
     TestEnum()

@@ -4,8 +4,8 @@ Various utilities for running/importing a script
 using Printf
 using PyCall
 using StringEncodings
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.debugger
 using win32com_.gen_py.framework: interact
 using importlib: reload
@@ -23,7 +23,7 @@ import string
 import linecache
 import bdb
 using cmdline: ParseArgs
-abstract type AbstractDlgRunScript <: Abstractdialog.Dialog end
+abstract type AbstractDlgRunScript <: dialog.Dialog end
 RS_DEBUGGER_NONE = 0
 RS_DEBUGGER_STEP = 1
 RS_DEBUGGER_GO = 2

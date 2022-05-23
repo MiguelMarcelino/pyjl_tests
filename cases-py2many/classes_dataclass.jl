@@ -10,9 +10,11 @@ function __repr__(self::AbstractPacket)::String
     return AbstractPacket(self.val)
 end
 
+
 function __eq__(self::AbstractPacket, other::AbstractPacket)::Bool
     return __key(self) == __key(other)
 end
+
 
 function __lt__(self::AbstractPacket, other::AbstractPacket)::Bool
     return __key(self) < __key(other)
@@ -30,6 +32,7 @@ function __ge__(self::AbstractPacket, other::AbstractPacket)::Bool
     return __key(self) >= __key(other)
 end
 
+
 function __key(self::AbstractPacket)
     (self.val)
 end
@@ -43,9 +46,11 @@ function __repr__(self::AbstractRegister)::String
     return AbstractRegister(self.PACKET, self.VALUE)
 end
 
+
 function __eq__(self::AbstractRegister, other::AbstractRegister)::Bool
     return __key(self) == __key(other)
 end
+
 
 function __lt__(self::AbstractRegister, other::AbstractRegister)::Bool
     return __key(self) < __key(other)
@@ -63,6 +68,7 @@ function __ge__(self::AbstractRegister, other::AbstractRegister)::Bool
     return __key(self) >= __key(other)
 end
 
+
 function __key(self::AbstractRegister)
     (__key(self.PACKET), self.VALUE)
 end
@@ -76,9 +82,11 @@ function __repr__(self::AbstractValueHolder)::String
     return AbstractValueHolder(self.val, self.strVal)
 end
 
+
 function __eq__(self::AbstractValueHolder, other::AbstractValueHolder)::Bool
     return __key(self) == __key(other)
 end
+
 
 function __lt__(self::AbstractValueHolder, other::AbstractValueHolder)::Bool
     return __key(self) < __key(other)
@@ -95,6 +103,7 @@ end
 function __ge__(self::AbstractValueHolder, other::AbstractValueHolder)::Bool
     return __key(self) >= __key(other)
 end
+
 
 function __key(self::AbstractValueHolder)
     (self.val, self.strVal)

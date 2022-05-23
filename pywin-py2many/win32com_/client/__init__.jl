@@ -1,12 +1,13 @@
 using PyCall
-pywintypes = pyimport("pywintypes")
 pythoncom = pyimport("pythoncom")
+pywintypes = pyimport("pywintypes")
 
 import gencache
 import win32com_.ext_modules.winerror as winerror
 
 include("dynamic.jl")
 include("gencache.jl")
+
 
 _PyIDispatchType = pythoncom.TypeIIDs[pythoncom.IID_IDispatch+1]
 function __WrapDispatch(
@@ -36,7 +37,7 @@ function __WrapDispatch(
         end
     end
     if resultCLSID != nothing
-        klass = GetClassForCLSID(gencache, resultCLSID)
+        klass = gencache.GetClassForCLSID(resultCLSID)
         if klass != nothing
             return klass(dispatch)
         end
@@ -44,15 +45,15 @@ function __WrapDispatch(
     if WrapperClass === nothing
         WrapperClass = CDispatch
     end
-    return Dispatch(dynamic, dispatch, userName, WrapperClass, typeinfo)
+    return dynamic.Dispatch(dispatch, userName, WrapperClass, typeinfo, clsctx)
 end
 
-abstract type AbstractCDispatch <: Abstractdynamic.CDispatch end
+abstract type AbstractCDispatch <: dynamic.CDispatch end
 abstract type AbstractConstants end
 abstract type AbstractEventsProxy end
 abstract type AbstractDispatchBaseClass end
 abstract type AbstractCoClassBaseClass end
-abstract type AbstractVARIANT <: Abstractobject end
+abstract type AbstractVARIANT <: object end
 function GetObject(Pathname = nothing, Class = nothing, clsctx = nothing)
     #= 
         Mimic VB's GetObject() function.
@@ -86,8 +87,8 @@ function GetActiveObject(Class, clsctx = pythoncom.CLSCTX_ALL)
     #= 
         Python friendly version of GetObject's ProgID/CLSID functionality.
          =#
-    resultCLSID = IID(pywintypes, Class)
-    dispatch = GetActiveObject(pythoncom, resultCLSID)
+    resultCLSID = pywintypes.IID(Class)
+    dispatch = pythoncom.GetActiveObject(resultCLSID)
     dispatch = QueryInterface(dispatch, pythoncom.IID_IDispatch)
     return __WrapDispatch(dispatch, Class)
 end
@@ -96,7 +97,7 @@ function Moniker(Pathname, clsctx = pythoncom.CLSCTX_ALL)
     #= 
         Python friendly version of GetObject's moniker functionality.
          =#
-    moniker, i, bindCtx = MkParseDisplayName(pythoncom, Pathname)
+    moniker, i, bindCtx = pythoncom.MkParseDisplayName(Pathname)
     dispatch = BindToObject(moniker, bindCtx, nothing, pythoncom.IID_IDispatch)
     return __WrapDispatch(dispatch, Pathname)
 end
@@ -111,7 +112,7 @@ function Dispatch(
 )
     #= Creates a Dispatch based COM object. =#
     @assert(UnicodeToString === nothing)
-    dispatch, userName = _GetGoodDispatchAndUserName(dynamic, dispatch, userName, clsctx)
+    dispatch, userName = dynamic._GetGoodDispatchAndUserName(dispatch, userName, clsctx)
     return __WrapDispatch(dispatch, userName, resultCLSID, typeinfo)
 end
 
@@ -140,8 +141,7 @@ function DispatchEx(
     if userName === nothing
         userName = clsid
     end
-    dispatch = CoCreateInstanceEx(
-        pythoncom,
+    dispatch = pythoncom.CoCreateInstanceEx(
         clsid,
         nothing,
         clsctx,
@@ -179,8 +179,7 @@ function CastTo(ob, target, typelib = nothing)
     #= 'Cast' a COM object to another interface =#
     mod = nothing
     if typelib != nothing
-        mod = MakeModuleForTypelib(
-            gencache,
+        mod = gencache.MakeModuleForTypelib(
             typelib.clsid,
             typelib.lcid,
             parse(Int, typelib.major),
@@ -196,15 +195,14 @@ function CastTo(ob, target, typelib = nothing)
         end
     elseif hasfield(typeof(target), :index)
         if "CLSID" ∉ ob.__class__.__dict__
-            ob = EnsureDispatch(gencache, ob)
+            ob = gencache.EnsureDispatch(ob)
         end
         if "CLSID" ∉ ob.__class__.__dict__
             throw(ValueError("Must be a makepy-able object for this to work"))
         end
         clsid = ob.CLSID
-        mod = GetModuleForCLSID(gencache, clsid)
-        mod = GetModuleForTypelib(
-            gencache,
+        mod = gencache.GetModuleForCLSID(clsid)
+        mod = gencache.GetModuleForTypelib(
             mod.CLSID,
             mod.LCID,
             mod.MajorVersion,
@@ -219,7 +217,7 @@ function CastTo(ob, target, typelib = nothing)
                 ),
             )
         end
-        mod = GetModuleForCLSID(gencache, target_clsid)
+        mod = gencache.GetModuleForCLSID(target_clsid)
     end
     if mod != nothing
         target_class = getfield(mod, :target)
@@ -257,7 +255,7 @@ function _event_setattr_(self::VARIANT, attr, val)
 end
 
 mutable struct EventsProxy <: AbstractEventsProxy
-    _obj_
+    _obj_::Any
 end
 function __del__(self::EventsProxy)
     try
@@ -323,8 +321,8 @@ function DispatchWithEvents(clsid, user_event_class)::EventsProxy
             disp_clsid = GetTypeAttr(ti)[1]
             tlb, index = GetContainingTypeLib(ti)
             tla = GetLibAttr(tlb)
-            EnsureModule(gencache, tla[1], tla[2], tla[4], tla[5], 0)
-            disp_class = GetClassForProgID(gencache, string(disp_clsid))
+            gencache.EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
+            disp_class = gencache.GetClassForProgID(string(disp_clsid))
         catch exn
             if exn isa pythoncom.com_error
                 throw(
@@ -392,8 +390,8 @@ function WithEvents(disp, user_event_class)
             disp_clsid = GetTypeAttr(ti)[1]
             tlb, index = GetContainingTypeLib(ti)
             tla = GetLibAttr(tlb)
-            EnsureModule(gencache, tla[1], tla[2], tla[4], tla[5], 0)
-            disp_class = GetClassForProgID(gencache, string(disp_clsid))
+            gencache.EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
+            disp_class = gencache.GetClassForProgID(string(disp_clsid))
         catch exn
             if exn isa pythoncom.com_error
                 throw(
@@ -466,14 +464,14 @@ function getevents(clsid)
         Visibility changed:  1
         >>>
          =#
-    clsid = string(IID(pywintypes, clsid))
-    klass = GetClassForCLSID(gencache, clsid)
+    clsid = string(pywintypes.IID(clsid))
+    klass = gencache.GetClassForCLSID(clsid)
     try
         return klass.default_source
     catch exn
         if exn isa AttributeError
             try
-                return GetClassForCLSID(gencache, klass.coclass_clsid).default_source
+                return gencache.GetClassForCLSID(klass.coclass_clsid).default_source
             catch exn
                 if exn isa AttributeError
                     return nothing
@@ -494,10 +492,9 @@ function Record(name, object)
           point.y = 0
           app.MoveTo(point)
          =#
-    object = EnsureDispatch(gencache, object)
+    object = gencache.EnsureDispatch(object)
     module_ = sys.modules[object.__class__.__module__+1]
-    package = GetModuleForTypelib(
-        gencache,
+    package = gencache.GetModuleForTypelib(
         module_.CLSID,
         module_.LCID,
         module_.MajorVersion,
@@ -515,8 +512,7 @@ function Record(name, object)
             )
         end
     end
-    return GetRecordFromGuids(
-        pythoncom,
+    return pythoncom.GetRecordFromGuids(
         module_.CLSID,
         module_.MajorVersion,
         module_.MinorVersion,
@@ -526,11 +522,11 @@ function Record(name, object)
 end
 
 mutable struct DispatchBaseClass <: AbstractDispatchBaseClass
-    Properties_
-    __class__
-    __dict__
-    _oleobj_
-    oobj
+    Properties_::Any
+    __class__::Any
+    __dict__::Any
+    _oleobj_::Any
+    oobj::Any
 
     DispatchBaseClass(oobj = nothing) = begin
         if oobj === nothing
@@ -678,9 +674,9 @@ function _get_good_object_(obj, obUserName = nothing, resultCLSID = nothing)::Tu
 end
 
 mutable struct CoClassBaseClass <: AbstractCoClassBaseClass
-    __class__
-    __dict__
-    oobj
+    __class__::Any
+    __dict__::Any
+    oobj::Any
 
     CoClassBaseClass(oobj = nothing) = begin
         if oobj === nothing
@@ -751,9 +747,9 @@ function __maybe__nonzero__(self::CoClassBaseClass)
 end
 
 mutable struct VARIANT <: AbstractVARIANT
-    _value
-    varianttype
-    value
+    _value::Any
+    varianttype::Any
+    value::Any
 
     VARIANT(_value, varianttype, value = property(_get_value, _set_value, _del_value)) =
         new(_value, varianttype, value)

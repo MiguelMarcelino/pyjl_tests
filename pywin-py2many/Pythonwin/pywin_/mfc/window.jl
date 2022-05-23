@@ -3,7 +3,7 @@ win32ui = pyimport("win32ui")
 include("object.jl")
 
 import win32con
-abstract type AbstractWnd <: Abstractobject.CmdTarget end
+abstract type AbstractWnd <: object.CmdTarget end
 abstract type AbstractFrameWnd <: AbstractWnd end
 abstract type AbstractMDIChildWnd <: AbstractFrameWnd end
 abstract type AbstractMDIFrameWnd <: AbstractFrameWnd end

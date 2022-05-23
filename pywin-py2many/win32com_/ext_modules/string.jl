@@ -51,14 +51,16 @@ function capwords(s, sep = nothing)
     return join((capitalize(x) for x in split(s, sep)), sep || " ")
 end
 
+
+
 _sentinel_dict = Dict()
 mutable struct Template <: AbstractTemplate
     #= A string class for supporting $-substitutions. =#
-    pattern
-    template
-    braceidpattern
+    pattern::Any
+    template::Any
+    braceidpattern::Any
     delimiter::String
-    flags
+    flags::Any
     idpattern::String
 
     Template(
@@ -148,8 +150,9 @@ function safe_substitute()
     return sub(self.pattern, convert, self.template)
 end
 
-__init_subclass__(Template)
+Template.__init_subclass__()
 mutable struct Formatter <: AbstractFormatter
+
 end
 function format()
     return vformat(self, format_string, args, kwargs)
@@ -241,11 +244,11 @@ function convert_field(self::Formatter, value, conversion)::String
 end
 
 function parse(self::Formatter, format_string)
-    return formatter_parser(_string, format_string)
+    return _string.formatter_parser(format_string)
 end
 
 function get_field(self::Formatter, field_name, args, kwargs)::Tuple
-    first, rest = formatter_field_name_split(_string, field_name)
+    first, rest = _string.formatter_field_name_split(field_name)
     obj = get_value(self, first, args, kwargs)
     for (is_attr, i) in rest
         if is_attr

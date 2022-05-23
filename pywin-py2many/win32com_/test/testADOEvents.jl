@@ -3,9 +3,12 @@ pythoncom = pyimport("pythoncom")
 include("testAccess.jl")
 using win32com_.client: Dispatch, DispatchWithEvents, constants
 
+
+
 abstract type AbstractADOEvents end
 finished = 0
 mutable struct ADOEvents <: AbstractADOEvents
+
 end
 function OnWillConnect(self::ADOEvents, str, user, pw, opt, sts, cn)
     #= pass =#
@@ -76,9 +79,9 @@ function TestConnection(dbname)
     user = "system"
     pw = "manager"
     Open(c, dsn, user, pw, constants.adAsyncConnect)
-    end_time = clock(time) + 10
-    while clock(time) < end_time
-        PumpWaitingMessages(pythoncom)
+    end_time = time.clock() + 10
+    while time.clock() < end_time
+        pythoncom.PumpWaitingMessages()
     end
     if !(finished) != 0
         println("XXX - Failed to connect!")
@@ -87,14 +90,14 @@ end
 
 function Test()
     try
-        GenerateSupport(testAccess)
+        testAccess.GenerateSupport()
     catch exn
         if exn isa pythoncom.com_error
             println("*** Can not import the MSAccess type libraries - tests skipped")
             return
         end
     end
-    dbname = CreateTestAccessDatabase(testAccess)
+    dbname = testAccess.CreateTestAccessDatabase()
     try
         TestConnection(dbname)
     finally

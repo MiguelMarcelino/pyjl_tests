@@ -88,7 +88,7 @@ name
                         new(my_annotations, bases, d, name)
 end
 function __annotations__(self::C)
-if !hasattr(self, "my_annotations")
+if !hasfield(typeof(self), :my_annotations)
 self.my_annotations = Dict()
 end
 if !isa(self.my_annotations, dict)
@@ -105,7 +105,8 @@ self.my_annotations = value
 end
 
 function __annotations__(self::C)
-if hasfield(self, "my_annotations"): getfield(self, "my_annotations" ? false === nothing
+if (hasfield(typeof(self), :my_annotations) ? 
+                getfield(self, :my_annotations) : false) === nothing
 throw(AttributeError("__annotations__"))
 end
 self.my_annotations = nothing

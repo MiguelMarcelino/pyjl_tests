@@ -1,7 +1,7 @@
 using Printf
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 import win32com_.gen_py.debugger
 using win32com_.gen_py.mfc: docview, object
 using win32com_.gen_py.framework.editor: GetEditorOption
@@ -15,8 +15,8 @@ import shutil
 BAK_NONE = 0
 BAK_DOT_BAK = 1
 BAK_DOT_BAK_TEMP_DIR = 2
-abstract type AbstractEditorDocumentBase <: AbstractParentEditorDocument end
-abstract type AbstractFileWatchingThread <: Abstractwin32com_.gen_py.mfc.thread.WinThread end
+abstract type AbstractEditorDocumentBase <: ParentEditorDocument end
+abstract type AbstractFileWatchingThread <: win32com_.gen_py.mfc.thread.WinThread end
 BAK_DOT_BAK_BAK_DIR = 3
 MSG_CHECK_EXTERNAL_FILE = win32con.WM_USER + 1999
 import win32com_.gen_py.scintilla.document

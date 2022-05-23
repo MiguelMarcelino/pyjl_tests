@@ -20,7 +20,7 @@ IConnectionPoint_methods = [
     "GetConnectionInterface",
 ]
 mutable struct ConnectableServer <: AbstractConnectableServer
-    _connect_interfaces_
+    _connect_interfaces_::Any
     connections::Dict
     cookieNo::Int64
     _com_interfaces_::Vector
@@ -49,7 +49,7 @@ function GetConnectionInterface(self::ConnectableServer)
 end
 
 function GetConnectionPointContainer(self::ConnectableServer)
-    return wrap(win32com_.server.util, self)
+    return win32com_.server.util.wrap(self)
 end
 
 function Advise(self::ConnectableServer, pUnk)::Int64
@@ -82,7 +82,7 @@ end
 
 function FindConnectionPoint(self::ConnectableServer, iid)
     if iid ∈ self._connect_interfaces_
-        return wrap(win32com_.server.util, self)
+        return win32com_.server.util.wrap(self)
     end
 end
 

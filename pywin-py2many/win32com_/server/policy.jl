@@ -78,6 +78,8 @@ __author__ = "Greg Stein and Mark Hammond"
 
 import winerror
 
+
+
 import win32con
 
 S_OK = 0
@@ -107,7 +109,7 @@ function CreateInstance(clsid, reqIID)
          =#
     try
         addnPaths = split(
-            RegQueryValue(win32api, win32con.HKEY_CLASSES_ROOT, regAddnPath % clsid),
+            win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regAddnPath % clsid),
             ";",
         )
         for newPath in addnPaths
@@ -121,7 +123,7 @@ function CreateInstance(clsid, reqIID)
         end
     end
     try
-        policy = RegQueryValue(win32api, win32con.HKEY_CLASSES_ROOT, regPolicy % clsid)
+        policy = win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regPolicy % clsid)
         policy = resolve_func(policy)
     catch exn
         if exn isa win32api.error
@@ -130,7 +132,7 @@ function CreateInstance(clsid, reqIID)
     end
     try
         dispatcher =
-            RegQueryValue(win32api, win32con.HKEY_CLASSES_ROOT, regDispatcher % clsid)
+            win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regDispatcher % clsid)
         if dispatcher
             dispatcher = resolve_func(dispatcher)
         end
@@ -182,11 +184,11 @@ mutable struct BasicWrapPolicy <: AbstractBasicWrapPolicy
         _getnextdispid_- uses self._name_to_dispid_ to enumerate the DISPIDs
          =#
     _name_to_dispid_::Dict
-    _query_interface_
-    _invoke_
-    _invokeex_
-    _getidsofnames_
-    _getdispid_
+    _query_interface_::Any
+    _invoke_::Any
+    _invokeex_::Any
+    _getidsofnames_::Any
+    _getdispid_::Any
     _com_interfaces_::Vector
 
     BasicWrapPolicy(object) = begin
@@ -203,7 +205,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
             in the registry (using @DefaultPolicy@)
              =#
     try
-        classSpec = RegQueryValue(win32api, win32con.HKEY_CLASSES_ROOT, regSpec % clsid)
+        classSpec = win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regSpec % clsid)
     catch exn
         if exn isa win32api.error
             throw(
@@ -217,7 +219,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
     myob = call_func(classSpec)
     _wrap_(self, myob)
     try
-        return WrapObject(pythoncom, self, reqIID)
+        return pythoncom.WrapObject(self, reqIID)
     catch exn
         let xxx_todo_changeme = exn
             if xxx_todo_changeme isa pythoncom.com_error
@@ -225,7 +227,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
                 desc =
                     "The object \'%r\' was created, but does not support the interface \'%s\'(%s): %s" %
                     (myob, IIDToInterfaceName(reqIID), reqIID, desc)
-                throw(com_error(pythoncom, hr, desc, exc, arg))
+                throw(pythoncom.com_error(hr, desc, exc, arg))
             end
         end
     end
@@ -262,7 +264,7 @@ function _wrap_(self::BasicWrapPolicy, object)
                 if i[1] != "{"
                     i = pythoncom.InterfaceNames[i+1]
                 else
-                    i = MakeIID(pythoncom, i)
+                    i = pythoncom.MakeIID(i)
                 end
             end
             append(self._com_interfaces_, i)
@@ -468,12 +470,12 @@ mutable struct MappedWrapPolicy <: AbstractMappedWrapPolicy
           these dictionaries will change as the object is used.
 
          =#
-    _dispid_to_func_
-    _dispid_to_get_
-    _dispid_to_put_
+    _dispid_to_func_::Any
+    _dispid_to_get_::Any
+    _dispid_to_put_::Any
 end
 function _wrap_(self::MappedWrapPolicy, object)
-    _wrap_(BasicWrapPolicy, self)
+    BasicWrapPolicy._wrap_(self, object)
     ob = self._obj_
     if hasfield(typeof(ob), :_dispid_to_func_)
         self._dispid_to_func_ = ob._dispid_to_func_
@@ -537,11 +539,11 @@ mutable struct DesignatedWrapPolicy <: AbstractDesignatedWrapPolicy
          _Evaluate -- Dunno what this means, except the host has called Invoke with dispid==DISPID_EVALUATE!
                       See the COM documentation for details.
          =#
-    _typeinfos_
-    _obj_
-    _dispid_to_func_
-    _dispid_to_get_
-    _dispid_to_put_
+    _typeinfos_::Any
+    _obj_::Any
+    _dispid_to_func_::Any
+    _dispid_to_get_::Any
+    _dispid_to_put_::Any
 end
 function _wrap_(self::DesignatedWrapPolicy, ob)
     tlb_guid =
@@ -559,8 +561,7 @@ function _wrap_(self::DesignatedWrapPolicy, ob)
                 getfield(ob, :_com_interfaces_) : []
             ) if type_(i) != pywintypes.IIDType && !startswith(i, "{")
         ]
-        universal_data = RegisterInterfaces(
-            universal,
+        universal_data = universal.RegisterInterfaces(
             tlb_guid,
             tlb_lcid,
             tlb_major,
@@ -570,7 +571,7 @@ function _wrap_(self::DesignatedWrapPolicy, ob)
     else
         universal_data = []
     end
-    _wrap_(MappedWrapPolicy, self)
+    MappedWrapPolicy._wrap_(self, ob)
     if !hasfield(typeof(ob), :_public_methods_) && !hasfield(typeof(ob), :_typelib_guid_)
         throw(
             error(
@@ -656,7 +657,7 @@ function _build_typeinfos_(self::DesignatedWrapPolicy)::Vector
         hasfield(typeof(self._obj_), :_typelib_version_) ?
         getfield(self._obj_, :_typelib_version_) : (1, 0)
     )
-    tlb = LoadRegTypeLib(pythoncom, tlb_guid, tlb_major, tlb_minor)
+    tlb = pythoncom.LoadRegTypeLib(tlb_guid, tlb_major, tlb_minor)
     typecomp = GetTypeComp(tlb)
     for iname in self._obj_._com_interfaces_
         try
@@ -785,11 +786,11 @@ function _transform_args_(
     for arg in args
         arg_type = type_(arg)
         if arg_type == IDispatchType
-            arg = Dispatch(win32com_.client, arg)
+            arg = win32com_.client.Dispatch(arg)
         elseif arg_type == IUnknownType
             try
                 arg =
-                    Dispatch(win32com_.client, QueryInterface(arg, pythoncom.IID_IDispatch))
+                    win32com_.client.Dispatch(QueryInterface(arg, pythoncom.IID_IDispatch))
             catch exn
                 if exn isa pythoncom.error
                     #= pass =#
@@ -812,7 +813,15 @@ function _invokeex_(
 )
     args, kwArgs =
         _transform_args_(self, args, kwArgs, dispid, lcid, wFlags, serviceProvider)
-    return _invokeex_(DesignatedWrapPolicy, self, dispid, lcid, wFlags, args, kwArgs)
+    return DesignatedWrapPolicy._invokeex_(
+        self,
+        dispid,
+        lcid,
+        wFlags,
+        args,
+        kwArgs,
+        serviceProvider,
+    )
 end
 
 mutable struct DynamicPolicy <: AbstractDynamicPolicy
@@ -834,12 +843,12 @@ mutable struct DynamicPolicy <: AbstractDynamicPolicy
          =#
     _next_dynamic_::Int64
     _min_dynamic_::Int64
-    _dyn_dispid_to_name_::Dict{Any, String}
-    _obj_
-    _name_to_dispid_
+    _dyn_dispid_to_name_::Dict{Any,String}
+    _obj_::Any
+    _name_to_dispid_::Any
 end
 function _wrap_(self::DynamicPolicy, object)
-    _wrap_(BasicWrapPolicy, self)
+    BasicWrapPolicy._wrap_(self, object)
     if !hasfield(typeof(self._obj_), :_dynamic_)
         throw(error("Object does not support Dynamic COM Policy"))
     end

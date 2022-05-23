@@ -6,6 +6,7 @@ import win32com_
 import win32com_.client.makepy
 import win32com_.test
 
+
 genList = [("msword8", "{00020905-0000-0000-C000-000000000046}", 1033, 8, 0)]
 genDir = "Generated4Test"
 function GetGenPath()
@@ -15,16 +16,16 @@ end
 function GenerateFromRegistered(fname)
     genPath = GetGenPath()
     try
-        stat(os, genPath)
+        os.stat(genPath)
     catch exn
         if exn isa os.error
-            mkdir(os, genPath)
+            os.mkdir(genPath)
         end
     end
     close(readline(join))
     print("$(fname): generating -")
     f = readline(join)
-    GenerateFromTypeLibSpec(win32com_.client.makepy, loadArgs, f, 1, 1)
+    win32com_.client.makepy.GenerateFromTypeLibSpec(loadArgs, f, 1, 1)
     close(f)
     print("compiling -")
     fullModName = "win32com_.test.%s.%s" % (genDir, fname)
@@ -94,7 +95,7 @@ function CleanAll()
         end
     end
     try
-        rmdir(os, genPath)
+        os.rmdir(genPath)
     catch exn
         let details = exn
             if details isa os.error

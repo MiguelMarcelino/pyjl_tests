@@ -3,6 +3,7 @@ abstract type AbstractPerson end
 abstract type AbstractStudent <: AbstractPerson end
 abstract type AbstractStudent2 <: AbstractPerson end
 mutable struct Foo <: AbstractFoo
+
 end
 function bar(self::Foo)::Int64
     return baz(self)

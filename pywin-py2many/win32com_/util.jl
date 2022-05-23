@@ -3,8 +3,8 @@
   This module contains a collection of general purpose utility functions.
  =#
 using PyCall
-win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
+win32api = pyimport("win32api")
 
 import win32con
 function IIDToInterfaceName(iid)::String
@@ -25,8 +25,7 @@ function IIDToInterfaceName(iid)::String
         if exn isa KeyError
             try
                 try
-                    return RegQueryValue(
-                        win32api,
+                    return win32api.RegQueryValue(
                         win32con.HKEY_CLASSES_ROOT,
                         "Interface\\%s" % iid,
                     )
