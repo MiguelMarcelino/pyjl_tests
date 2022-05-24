@@ -1,12 +1,11 @@
 using Printf
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 import win32con
 import win32com_.client
 using util: CheckClean
 using win32com_.client: gencache, constants
-
 
 ammodule = nothing
 function GetDefaultProfileName()

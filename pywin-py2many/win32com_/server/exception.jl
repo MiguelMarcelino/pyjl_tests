@@ -15,7 +15,7 @@
 using PyCall
 pythoncom = pyimport("pythoncom")
 
-abstract type AbstractCOMException end
+abstract type AbstractCOMException <: pythoncom.com_error end
 mutable struct COMException <: AbstractCOMException
     #= An Exception object that is understood by the framework.
 
@@ -29,14 +29,14 @@ mutable struct COMException <: AbstractCOMException
         By using this class, you automatically provide rich error information to the
         server.
          =#
-    description::Any
-    helpcontext::Any
-    helpfile::Any
-    scode::Any
-    source::Any
-    desc::Any
-    helpContext::Any
-    hresult::Any
+    description
+    helpcontext
+    helpfile
+    scode
+    source
+    desc
+    helpContext
+    hresult
 
     COMException(
         description = nothing,

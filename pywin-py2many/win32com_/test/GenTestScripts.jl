@@ -1,11 +1,10 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 
 import win32com_
 import win32com_.client.makepy
 import win32com_.test
-
 
 genList = [("msword8", "{00020905-0000-0000-C000-000000000046}", 1033, 8, 0)]
 genDir = "Generated4Test"

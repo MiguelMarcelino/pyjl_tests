@@ -21,11 +21,7 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
 import win32com_.client.util
-import util
-
-
-
-
+include("util.jl")
 
 include("build.jl")
 import win32com_.ext_modules.winerror as winerror
@@ -202,17 +198,17 @@ function DumbDispatch(
 end
 
 mutable struct CDispatch <: AbstractCDispatch
-    ob::Any
-    _olerepr_::Any
-    _username_::Any
-    Properties_::Any
-    _oleobj_::Any
-    __dict__::Any
-    _mapCachedItems_::Any
-    _enum_::Any
-    _lazydata_::Any
-    _builtMethods_::Any
-    __class__::Any
+    ob
+    _olerepr_
+    _username_
+    Properties_
+    _oleobj_
+    __dict__
+    _mapCachedItems_
+    _enum_
+    _lazydata_
+    _builtMethods_
+    __class__
 
     CDispatch(
         IDispatch,
@@ -654,7 +650,7 @@ function __getattr__(self::Factory, attr)::Tuple
             end
         end
         mutable struct Factory <: AbstractFactory
-            ob::Any
+            ob
         end
         function __call__(self::Factory)::Factory
             return util.Iterator(self.ob)

@@ -1,17 +1,13 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
+pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
 import win32com_.servers.dictionary
 using win32com_.test.util: RegisterPythonServer
 
-
-
 import win32com_.server.util
 import win32com_.test.util
 import win32com_.client
-
-
 
 import winerror
 import win32timezone
@@ -120,7 +116,6 @@ function TestDict(quiet = nothing)
 end
 
 mutable struct TestCase <: AbstractTestCase
-
 end
 function testDict(self::TestCase)
     TestDict()

@@ -8,7 +8,6 @@ import win32com_.ext_modules.winerror as winerror
 include("dynamic.jl")
 include("gencache.jl")
 
-
 _PyIDispatchType = pythoncom.TypeIIDs[pythoncom.IID_IDispatch+1]
 function __WrapDispatch(
     dispatch,
@@ -255,7 +254,7 @@ function _event_setattr_(self::VARIANT, attr, val)
 end
 
 mutable struct EventsProxy <: AbstractEventsProxy
-    _obj_::Any
+    _obj_
 end
 function __del__(self::EventsProxy)
     try
@@ -522,11 +521,11 @@ function Record(name, object)
 end
 
 mutable struct DispatchBaseClass <: AbstractDispatchBaseClass
-    Properties_::Any
-    __class__::Any
-    __dict__::Any
-    _oleobj_::Any
-    oobj::Any
+    Properties_
+    __class__
+    __dict__
+    _oleobj_
+    oobj
 
     DispatchBaseClass(oobj = nothing) = begin
         if oobj === nothing
@@ -674,9 +673,9 @@ function _get_good_object_(obj, obUserName = nothing, resultCLSID = nothing)::Tu
 end
 
 mutable struct CoClassBaseClass <: AbstractCoClassBaseClass
-    __class__::Any
-    __dict__::Any
-    oobj::Any
+    __class__
+    __dict__
+    oobj
 
     CoClassBaseClass(oobj = nothing) = begin
         if oobj === nothing
@@ -747,9 +746,9 @@ function __maybe__nonzero__(self::CoClassBaseClass)
 end
 
 mutable struct VARIANT <: AbstractVARIANT
-    _value::Any
-    varianttype::Any
-    value::Any
+    _value
+    varianttype
+    value
 
     VARIANT(_value, varianttype, value = property(_get_value, _set_value, _del_value)) =
         new(_value, varianttype, value)

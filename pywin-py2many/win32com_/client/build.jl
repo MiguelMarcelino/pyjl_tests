@@ -11,13 +11,11 @@ dynamically, or possibly even generate .html documentation for objects.
  =#
 using PyCall
 using StringEncodings
-pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
+pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
 
 import win32com_.ext_modules.string as string
-
-
 
 using win32com_.ext_modules.keyword: iskeyword
 import win32com_.ext_modules.winerror as winerror
@@ -36,7 +34,6 @@ end
 
 error = "PythonCOM.Client.Build error"
 mutable struct NotSupportedException <: AbstractNotSupportedException
-
 end
 
 DropIndirection = "DropIndirection"
@@ -73,15 +70,15 @@ for v in NoTranslateTypes
 end
 mutable struct MapEntry <: AbstractMapEntry
     #= Simple holder for named attibutes - items in a map. =#
-    desc::Any
-    dispid::Any
-    doc::Any
-    hidden::Any
-    names::Any
-    resultCLSID::Any
-    resultDocumentation::Any
+    desc
+    dispid
+    doc
+    hidden
+    names
+    resultCLSID
+    resultDocumentation
     wasProperty::Int64
-    resultDoc::Any
+    resultDoc
 
     MapEntry(
         desc_or_id,
@@ -132,10 +129,10 @@ mutable struct OleItem <: AbstractOleItem
     bIsDispatch::Int64
     bIsSink::Int64
     bWritten::Int64
-    clsid::Any
-    co_class::Any
-    doc::Any
-    python_name::Any
+    clsid
+    co_class
+    doc
+    python_name
     typename::String
 
     OleItem(doc = nothing, typename::String = "OleItem") = begin
@@ -150,17 +147,17 @@ end
 
 mutable struct DispatchItem <: AbstractDispatchItem
     bIsDispatch::Bool
-    clsid::Any
-    defaultDispatchName::Any
+    clsid
+    defaultDispatchName
     hidden::Int64
     mapFuncs::Dict
     propMap::Dict
     propMapGet::Dict
     propMapPut::Dict
-    attr::Any
+    attr
     bForUser::Int64
-    doc::Any
-    typeinfo::Any
+    doc
+    typeinfo
     typename::String
 
     DispatchItem(
@@ -537,7 +534,7 @@ function Build(self::VTableItem, typeinfo, attr, bForUser = 1)
 end
 
 mutable struct LazyDispatchItem <: AbstractLazyDispatchItem
-    clsid::Any
+    clsid
     typename::String
 
     LazyDispatchItem(attr, doc, typename::String = "LazyDispatchItem") = begin

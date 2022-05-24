@@ -1,7 +1,7 @@
 using PyCall
+win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
-win32api = pyimport("win32api")
 import win32com_.test.Generated4Test.msword8
 
 import xl5en32

@@ -1,13 +1,12 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 using win32com_: storagecon
 
 import win32com_.test.util
 
 abstract type AbstractTestEnum <: win32com_.test.util.TestCase end
 mutable struct TestEnum <: AbstractTestEnum
-
 end
 function testit(self::TestEnum)
     fname, tmp = win32api.GetTempFileName(win32api.GetTempPath(), "stg")

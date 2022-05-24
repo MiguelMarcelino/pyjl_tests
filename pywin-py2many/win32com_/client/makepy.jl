@@ -1,12 +1,10 @@
 #= Generate a .py file from an OLE TypeLibrary file.
 
-
  This module is concerned only with the actual writing of
  a .py file.  It draws on the @build@ module, which builds
  the knowledge of a COM interface.
 
  =#
-using Getopt
 using Printf
 using PyCall
 pythoncom = pyimport("pythoncom")
@@ -87,7 +85,7 @@ end
 
 mutable struct SimpleProgress <: AbstractSimpleProgress
     #= A simple progress class prints its output to stderr =#
-    verboseLevel::Any
+    verboseLevel
 end
 function Close(self::SimpleProgress)
     #= pass =#
@@ -124,7 +122,7 @@ function LogWarning(self::SimpleProgress, desc)
 end
 
 mutable struct GUIProgress <: AbstractGUIProgress
-    dialog::Any
+    dialog
 
     GUIProgress(verboseLevel) = begin
         SimpleProgress(verboseLevel)

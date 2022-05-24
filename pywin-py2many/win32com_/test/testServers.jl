@@ -14,7 +14,6 @@ function TestConnections()
 end
 
 mutable struct InterpCase <: AbstractInterpCase
-
 end
 function setUp(self::InterpCase)
     RegisterPythonServer(interp.__file__, "Python.Interpreter")
@@ -50,7 +49,6 @@ function testAny(self::InterpCase)
 end
 
 mutable struct ConnectionsTestCase <: AbstractConnectionsTestCase
-
 end
 function testConnections(self::ConnectionsTestCase)
     TestConnections()

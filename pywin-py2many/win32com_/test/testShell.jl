@@ -1,10 +1,8 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
+pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
 import tempfile
-
-
 
 import copy
 
@@ -18,7 +16,6 @@ catch exn
 end
 import win32con
 
-
 using win32com_.shell: shell
 using win32com_.shell.shellcon: *
 using win32com_.storagecon: *
@@ -29,7 +26,6 @@ abstract type AbstractFILEGROUPDESCRIPTORTester <: win32com_.test.util.TestCase 
 abstract type AbstractFileOperationTester <: win32com_.test.util.TestCase end
 using pywin32_testutil: str2bytes
 mutable struct ShellTester <: AbstractShellTester
-
 end
 function testShellLink(self::ShellTester)
     desktop = string(shell.SHGetSpecialFolderPath(0, CSIDL_DESKTOP))
@@ -83,7 +79,6 @@ function testShellFolder(self::ShellTester)
 end
 
 mutable struct PIDLTester <: AbstractPIDLTester
-
 end
 function _rtPIDL(self::PIDLTester, pidl)
     pidl_str = shell.PIDLAsString(pidl)
@@ -127,7 +122,6 @@ function testBadShortPIDL(self::PIDLTester)
 end
 
 mutable struct FILEGROUPDESCRIPTORTester <: AbstractFILEGROUPDESCRIPTORTester
-
 end
 function _getTestTimes(self::FILEGROUPDESCRIPTORTester)::Tuple
     if pywintypes.TimeType <: datetime.datetime
@@ -241,9 +235,9 @@ function testUnicode(self::FILEGROUPDESCRIPTORTester)
 end
 
 mutable struct FileOperationTester <: AbstractFileOperationTester
-    src_name::Any
-    dest_name::Any
-    test_data::Any
+    src_name
+    dest_name
+    test_data
 end
 function setUp(self::FileOperationTester)
     self.src_name = join

@@ -1,9 +1,7 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 import win32com_.gen_py
-
-
 
 _frozen = (hasfield(typeof(sys), :frozen) ? getfield(sys, :frozen) : 1 == 0)
 if _frozen && !(hasfield(typeof(pythoncom), :frozen) ? getfield(pythoncom, :frozen) : 0)

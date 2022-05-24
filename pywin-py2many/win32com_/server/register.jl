@@ -8,8 +8,8 @@ construct the necessary Python object, and dispatch COM events.
  =#
 using Printf
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 import win32com_.server
 using win32com_.shell.shell: ShellExecuteEx
 using win32com_.shell: shellcon
@@ -17,7 +17,6 @@ import win32process
 import win32event
 import winxpgui
 import tempfile
-
 
 import win32con
 
@@ -440,7 +439,7 @@ function RegisterClasses()
             end
             spec = (moduleName + ".") + cls.__name__
             if !(pythoncom.frozen)
-                scriptDir = split(os.path, append!([PROGRAM_FILE], ARGS)[1])[1]
+                scriptDir = splitdir(append!([PROGRAM_FILE], ARGS)[1])[1]
                 if !(scriptDir)
                     scriptDir = "."
                 end
@@ -552,7 +551,7 @@ function ReExecuteElevated(flags)
     tempbase = tempfile.mktemp("pycomserverreg")
     outfile = tempbase + ".out"
     batfile = tempbase + ".bat"
-    current_exe = lower(split(os.path, sys.executable)[2])
+    current_exe = lower(splitdir(sys.executable)[2])
     exe_to_run = nothing
     if current_exe == "pythonwin.exe"
         exe_to_run = join

@@ -10,8 +10,6 @@ using OrderedCollections
 using PyCall
 pythoncom = pyimport("pythoncom")
 
-
-
 import win32com_
 
 include("build.jl")
@@ -87,8 +85,8 @@ function WriteSinkEventMap(obj, stream)
 end
 
 mutable struct WritableItem <: AbstractWritableItem
-    doc::Any
-    order::Any
+    doc
+    order
 end
 function __cmp__(self::WritableItem, other)
     #= Compare for sorting =#
@@ -111,9 +109,9 @@ function __repr__(self::WritableItem)
 end
 
 mutable struct RecordItem <: build.OleItem
-    clsid::Any
+    clsid
     bForUser::Int64
-    doc::Any
+    doc
     order::Int64
     typename::String
 
@@ -142,12 +140,12 @@ function WriteAliasesForItem(item, aliasItems, stream)
 end
 
 mutable struct AliasItem <: build.OleItem
-    aliasAttr::Any
-    aliasDoc::Any
-    attr::Any
+    aliasAttr
+    aliasDoc
+    attr
     bWritten::Int64
     bForUser::Int64
-    doc::Any
+    doc
     order::Int64
     typename::String
 
@@ -203,11 +201,11 @@ function WriteAliasItem(self::AliasItem, aliasDict, stream)
 end
 
 mutable struct EnumerationItem <: build.OleItem
-    clsid::Any
-    hidden::Any
+    clsid
+    hidden
     mapVars::Dict
     bForUser::Int64
-    doc::Any
+    doc
     order::Int64
     typename::String
 
@@ -258,10 +256,10 @@ function WriteEnumerationItems(self::EnumerationItem, stream)::Int64
 end
 
 mutable struct VTableItem <: build.VTableItem
-    bIsDispatch::Any
+    bIsDispatch
     bWritten::Int64
-    python_name::Any
-    vtableFuncs::Any
+    python_name
+    vtableFuncs
     order::Int64
 
     VTableItem(bIsDispatch, bWritten::Int64, python_name, vtableFuncs, order::Int64 = 4) =
@@ -318,15 +316,15 @@ function WriteVTableMap(self::VTableItem, generator)
 end
 
 mutable struct DispatchItem <: build.DispatchItem
-    bIsDispatch::Any
-    bIsSink::Any
+    bIsDispatch
+    bIsSink
     bWritten::Int64
-    clsid::Any
-    coclass_clsid::Any
-    mapFuncs::Any
-    python_name::Any
-    type_attr::Any
-    doc::Any
+    clsid
+    coclass_clsid
+    mapFuncs
+    python_name
+    type_attr
+    doc
     order::Int64
 
     DispatchItem(typeinfo, attr, doc = nothing, order::Int64 = 3) = begin
@@ -693,12 +691,12 @@ end
 mutable struct CoClassItem <: build.OleItem
     bIsDispatch::Int64
     bWritten::Int64
-    clsid::Any
-    interfaces::Any
-    python_name::Any
-    sources::Any
+    clsid
+    interfaces
+    python_name
+    sources
     bForUser::Int64
-    doc::Any
+    doc
     order::Int64
     typename::String
 
@@ -800,7 +798,7 @@ function WriteClass(self::CoClassItem, generator)
 end
 
 mutable struct GeneratorProgress <: AbstractGeneratorProgress
-    tlb_desc::Any
+    tlb_desc
 
     GeneratorProgress() = begin
         #= pass =#
@@ -843,17 +841,17 @@ function Close(self::GeneratorProgress)
 end
 
 mutable struct Generator <: AbstractGenerator
-    bBuildHidden::Any
+    bBuildHidden
     bHaveWrittenCoClassBaseClass::Int64
     bHaveWrittenDispatchBaseClass::Int64
     bHaveWrittenEventBaseClass::Int64
-    base_mod_name::Any
-    file::Any
+    base_mod_name
+    file
     generate_type::String
-    progress::Any
-    sourceFilename::Any
-    typelib::Any
-    bUnicodeToString::Any
+    progress
+    sourceFilename
+    typelib
+    bUnicodeToString
 
     Generator(
         typelib,
@@ -1073,7 +1071,7 @@ function do_gen_file_header(self::Generator)
     write(self.file, "$(makepy_version)")
     write(self.file, "$(replace(sys.version, "\n", "-"))")
     if self.sourceFilename
-        write(self.file, "$(split(os.path, self.sourceFilename)[2])\'")
+        write(self.file, "$(splitdir(self.sourceFilename)[2])\'")
     end
     write(self.file, "$(time.ctime(pylib::time()()))")
     write(self.file, "$(build._makeDocString(docDesc))")

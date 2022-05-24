@@ -51,16 +51,14 @@ function capwords(s, sep = nothing)
     return join((capitalize(x) for x in split(s, sep)), sep || " ")
 end
 
-
-
 _sentinel_dict = Dict()
 mutable struct Template <: AbstractTemplate
     #= A string class for supporting $-substitutions. =#
-    pattern::Any
-    template::Any
-    braceidpattern::Any
+    pattern
+    template
+    braceidpattern
     delimiter::String
-    flags::Any
+    flags
     idpattern::String
 
     Template(
@@ -152,7 +150,6 @@ end
 
 Template.__init_subclass__()
 mutable struct Formatter <: AbstractFormatter
-
 end
 function format()
     return vformat(self, format_string, args, kwargs)

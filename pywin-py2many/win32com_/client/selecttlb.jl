@@ -1,8 +1,8 @@
 #= Utilities for selecting and enumerating the Type Libraries installed on the system
  =#
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 import win32com.gen_py.dialogs.list
 
 import win32com_.ext_modules.win32con as win32con
@@ -10,12 +10,12 @@ abstract type AbstractTypelibSpec end
 mutable struct TypelibSpec <: AbstractTypelibSpec
     clsid::String
     lcid::Int64
-    major::Any
-    minor::Any
-    dll::Any
-    desc::Any
-    ver_desc::Any
-    flags::Any
+    major
+    minor
+    dll
+    desc
+    ver_desc
+    flags
 end
 function __getitem__(self::TypelibSpec, item)
     if item == 0

@@ -35,9 +35,9 @@ mutable struct Enumerator <: AbstractEnumerator
         this will force many reset-and-seek operations to find the requested index.
 
          =#
-    _oleobj_::Any
+    _oleobj_
     index::Int64
-    resultCLSID::Any
+    resultCLSID
 end
 function __getitem__(self::Enumerator, index)
     return __GetIndex(self, index)
@@ -87,7 +87,7 @@ function _make_retval_(self::Enumerator, result)
 end
 
 mutable struct EnumVARIANT <: AbstractEnumVARIANT
-    resultCLSID::Any
+    resultCLSID
 
     EnumVARIANT(enum, resultCLSID = nothing) = begin
         Enumerator(enum)
@@ -99,8 +99,8 @@ function _make_retval_(self::EnumVARIANT, result)
 end
 
 mutable struct Iterator <: AbstractIterator
-    resultCLSID::Any
-    _iter_::Any
+    resultCLSID
+    _iter_
 end
 function __iter__(self::Iterator)
     return self

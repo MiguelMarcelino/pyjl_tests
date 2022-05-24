@@ -20,12 +20,10 @@ Hacks, to do, etc
   Currently just uses a pickled dictionary, but should used some sort of indexed file.
   Maybe an OLE2 compound file, or a bsddb file?
  =#
-using Getopt
 using OrderedCollections
 using Printf
 using PyCall
 using StringEncodings
-using ZipFile
 pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
 import io as io
@@ -34,7 +32,6 @@ include("genpy.jl")
 import shutil
 import zipfile
 import getopt
-
 
 import glob
 include("CLSIDToClass.jl")
@@ -101,7 +98,7 @@ function _LoadDicts()
                 return
             end
         end
-        f = io.BytesIO(data)
+        f = IOBuffer(data)
     else
         f = readline(join)
     end
@@ -451,7 +448,6 @@ function EnsureModule(
         is no way to totally snuff out all instances of the old module in Python, and thus we will regenerate the file more than necessary,
         unless makepy/genpy is modified accordingly.
 
-
         Returns the Python module.  No exceptions are caught during the generate process.
 
         Params
@@ -739,7 +735,7 @@ function GetGeneratedInfos()::Union[Union[Union[list, List], list], List]
             if !isdir(os.path, file) && !(splitext(os.path, file)[2] == ".py")
                 continue
             end
-            name = splitext(os.path, split(os.path, file)[2])[1]
+            name = splitext(os.path, splitdir(file)[2])[1]
             try
                 iid, lcid, major, minor = split(name, "x")
                 iid = pywintypes.IID(("{" + iid) * "}")

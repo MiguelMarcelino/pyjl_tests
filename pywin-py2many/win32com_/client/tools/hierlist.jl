@@ -1,10 +1,8 @@
 using PyCall
-win32ui = pyimport("win32ui")
 win32api = pyimport("win32api")
-
+win32ui = pyimport("win32ui")
 
 import win32con
-
 
 using win32com_.gen_py.mfc: object, window, docview, dialog
 import commctrl
@@ -26,12 +24,12 @@ function GetItemText(item)
 end
 
 mutable struct HierDialog <: AbstractHierDialog
-    dlgID::Any
-    hierList::Any
-    title::Any
-    bitmapID::Any
-    childListBoxID::Any
-    dll::Any
+    dlgID
+    hierList
+    title
+    bitmapID
+    childListBoxID
+    dll
 
     HierDialog(
         title,
@@ -52,18 +50,18 @@ function OnInitDialog(self::HierDialog)
 end
 
 mutable struct HierList <: AbstractHierList
-    listControl::Any
-    bitmapID::Any
-    root::Any
-    listBoxId::Any
+    listControl
+    bitmapID
+    root
+    listBoxId
     itemHandleMap::Dict
     filledItemHandlesMap::Dict
-    bitmapMask::Any
-    imageList::Any
-    notify_parent::Any
-    OnTreeItemExpanding::Any
-    OnTreeItemSelChanged::Any
-    OnTreeItemDoubleClick::Any
+    bitmapMask
+    imageList
+    notify_parent
+    OnTreeItemExpanding
+    OnTreeItemSelChanged
+    OnTreeItemDoubleClick
 end
 function __getattr__(self::HierList, attr)
     try
@@ -322,9 +320,9 @@ function TakeDefaultAction(self::HierList, item)
 end
 
 mutable struct HierListWithItems <: AbstractHierListWithItems
-    bitmapID::Any
-    bitmapMask::Any
-    listBoxID::Any
+    bitmapID
+    bitmapMask
+    listBoxID
 
     HierListWithItems(
         root,
@@ -389,8 +387,6 @@ function TakeDefaultAction(self::HierListWithItems, item)
 end
 
 mutable struct HierListItem <: AbstractHierListItem
-
-
     HierListItem() = begin
         #= pass =#
         new()

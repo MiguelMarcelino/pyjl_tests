@@ -68,17 +68,15 @@ Error Handling
  =#
 using OrderedCollections
 using PyCall
+win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
-win32api = pyimport("win32api")
 using win32com_.util: IIDToInterfaceName
 using win32com_: universal
 import win32com_.client
 __author__ = "Greg Stein and Mark Hammond"
 
 import winerror
-
-
 
 import win32con
 
@@ -184,11 +182,11 @@ mutable struct BasicWrapPolicy <: AbstractBasicWrapPolicy
         _getnextdispid_- uses self._name_to_dispid_ to enumerate the DISPIDs
          =#
     _name_to_dispid_::Dict
-    _query_interface_::Any
-    _invoke_::Any
-    _invokeex_::Any
-    _getidsofnames_::Any
-    _getdispid_::Any
+    _query_interface_
+    _invoke_
+    _invokeex_
+    _getidsofnames_
+    _getdispid_
     _com_interfaces_::Vector
 
     BasicWrapPolicy(object) = begin
@@ -470,9 +468,9 @@ mutable struct MappedWrapPolicy <: AbstractMappedWrapPolicy
           these dictionaries will change as the object is used.
 
          =#
-    _dispid_to_func_::Any
-    _dispid_to_get_::Any
-    _dispid_to_put_::Any
+    _dispid_to_func_
+    _dispid_to_get_
+    _dispid_to_put_
 end
 function _wrap_(self::MappedWrapPolicy, object)
     BasicWrapPolicy._wrap_(self, object)
@@ -539,11 +537,11 @@ mutable struct DesignatedWrapPolicy <: AbstractDesignatedWrapPolicy
          _Evaluate -- Dunno what this means, except the host has called Invoke with dispid==DISPID_EVALUATE!
                       See the COM documentation for details.
          =#
-    _typeinfos_::Any
-    _obj_::Any
-    _dispid_to_func_::Any
-    _dispid_to_get_::Any
-    _dispid_to_put_::Any
+    _typeinfos_
+    _obj_
+    _dispid_to_func_
+    _dispid_to_get_
+    _dispid_to_put_
 end
 function _wrap_(self::DesignatedWrapPolicy, ob)
     tlb_guid =
@@ -843,9 +841,9 @@ mutable struct DynamicPolicy <: AbstractDynamicPolicy
          =#
     _next_dynamic_::Int64
     _min_dynamic_::Int64
-    _dyn_dispid_to_name_::Dict{Any,String}
-    _obj_::Any
-    _name_to_dispid_::Any
+    _dyn_dispid_to_name_::Dict{Any, String}
+    _obj_
+    _name_to_dispid_
 end
 function _wrap_(self::DynamicPolicy, object)
     BasicWrapPolicy._wrap_(self, object)

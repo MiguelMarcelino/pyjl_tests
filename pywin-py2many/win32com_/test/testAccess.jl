@@ -1,12 +1,11 @@
 using Printf
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 include("daodump.jl")
 using util: CheckClean
 
 using win32com_.client: gencache, constants, Dispatch
-
 
 function CreateTestAccessDatabase(dbname = nothing)
     if dbname === nothing

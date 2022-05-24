@@ -22,18 +22,17 @@ this is a pain in the but!
  =#
 using Printf
 using PyCall
-pythoncom = pyimport("pythoncom")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
 import threading
 import win32com_.client
 import win32event
-
 
 using testServers: InterpCase
 abstract type AbstractThreadInterpCase <: InterpCase end
 freeThreaded = 1
 mutable struct ThreadInterpCase <: AbstractThreadInterpCase
-    BeginThreadsSimpleMarshal::Any
+    BeginThreadsSimpleMarshal
 end
 function _testInterpInThread(self::ThreadInterpCase, stopEvent, interp)
     try

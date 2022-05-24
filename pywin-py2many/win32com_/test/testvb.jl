@@ -2,7 +2,6 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 import copy
 
-
 import winerror
 import win32com_.client
 import win32com_.client.dynamic

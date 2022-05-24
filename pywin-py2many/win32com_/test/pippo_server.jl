@@ -4,7 +4,6 @@ pythoncom = pyimport("pythoncom")
 using distutils.dep_util: newer
 import win32com_.server.register
 
-
 import win32com_
 import winerror
 using win32com_.server.util: wrap

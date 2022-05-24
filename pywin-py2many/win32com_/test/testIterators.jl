@@ -1,7 +1,6 @@
 using PyCall
 pythoncom = pyimport("pythoncom")
 
-
 using win32com_.client.gencache: EnsureDispatch
 using win32com_.client: Dispatch
 import win32com_.server.util
@@ -12,7 +11,7 @@ abstract type AbstractVBTestCase <: Abstract_BaseTestCase end
 abstract type AbstractSomeObject end
 abstract type AbstractWrappedPythonCOMServerTestCase <: Abstract_BaseTestCase end
 mutable struct _BaseTestCase <: Abstract_BaseTestCase
-    expected_data::Any
+    expected_data
 end
 function test_enumvariant_vb(self::_BaseTestCase)
     ob, iter = iter_factory(self)
@@ -84,9 +83,9 @@ function test_nonenum_wrapper(self::_BaseTestCase)
 end
 
 mutable struct VBTestCase <: AbstractVBTestCase
-    object::Any
-    expected_data::Vector{Union{String,Int64}}
-    iter_factory::Any
+    object
+    expected_data::Vector{Union{Int64, String}}
+    iter_factory
 end
 function setUp(self::VBTestCase)
     function factory()::Tuple
@@ -109,7 +108,7 @@ function tearDown(self::VBTestCase)
 end
 
 mutable struct SomeObject <: AbstractSomeObject
-    data::Any
+    data
     _public_methods_::Vector{String}
 
     SomeObject(data, _public_methods_::Vector{String} = ["GetCollection"]) =
@@ -120,9 +119,9 @@ function GetCollection(self::SomeObject)
 end
 
 mutable struct WrappedPythonCOMServerTestCase <: AbstractWrappedPythonCOMServerTestCase
-    expected_data::Vector{Union{String,Int64}}
-    object::Any
-    iter_factory::Any
+    expected_data::Vector{Union{Int64, String}}
+    object
+    iter_factory
 end
 function setUp(self::WrappedPythonCOMServerTestCase)
     function factory()::Tuple

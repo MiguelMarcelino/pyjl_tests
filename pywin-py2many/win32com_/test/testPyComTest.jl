@@ -1,9 +1,9 @@
 using OrderedCollections
 using PyCall
-pythoncom = pyimport("pythoncom")
 datetime = pyimport("datetime")
-pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
+pythoncom = pyimport("pythoncom")
+pywintypes = pyimport("pywintypes")
 import win32com_.client.dynamic
 using win32com_.client.gencache: EnsureDispatch
 using win32com_.client.CLSIDToClass: GetClass
@@ -11,8 +11,6 @@ import random
 import _thread
 
 sys.coinit_flags = 0
-
-
 
 import winerror
 import win32com_
@@ -751,7 +749,6 @@ function TestQueryInterface(long_lived_server = 0, iterations = 5)
 end
 
 mutable struct Tester <: AbstractTester
-
 end
 function testVTableInProc(self::Tester)
     for i = 0:2

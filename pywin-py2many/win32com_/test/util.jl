@@ -1,15 +1,13 @@
 using Printf
 using PyCall
+win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
-win32api = pyimport("win32api")
 using win32com_.shell.shell: IsUserAnAdmin
-
 
 import tempfile
 
 import gc
-
 
 import winerror
 
@@ -117,7 +115,6 @@ function ExecuteShellCommand(cmd, testcase, expected_output = nothing, traceback
     output = strip(read(readline(output_name)))
     os.remove(output_name)
     mutable struct Failed <: AbstractFailed
-
     end
 
     try
@@ -161,8 +158,8 @@ function assertRaisesCOM_HRESULT(testcase, hresult, func)
 end
 
 mutable struct CaptureWriter <: AbstractCaptureWriter
-    old_err::Any
-    old_out::Any
+    old_err
+    old_out
     captured::Vector
 
     CaptureWriter() = begin
@@ -250,7 +247,6 @@ function CapturingFunctionTestCase()
 end
 
 mutable struct _CapturingFunctionTestCase <: Abstract_CapturingFunctionTestCase
-
 end
 function __call__(self::_CapturingFunctionTestCase, result = nothing)
     if result === nothing
@@ -282,8 +278,8 @@ function checkOutput(self::_CapturingFunctionTestCase, output, result)
 end
 
 mutable struct ShellTestCase <: AbstractShellTestCase
-    __cmd::Any
-    __eo::Any
+    __cmd
+    __eo
 
     ShellTestCase(cmd, expected_output) = begin
         unittest.TestCase.__init__(self)

@@ -7,12 +7,12 @@ import win32com_.server.util
 abstract type AbstractSimpleConnection end
 mutable struct SimpleConnection <: AbstractSimpleConnection
     #= A simple, single connection object =#
-    cookie::Any
-    cp::Any
-    debug::Any
-    coInstance::Any
-    eventCLSID::Any
-    eventInstance::Any
+    cookie
+    cp
+    debug
+    coInstance
+    eventCLSID
+    eventInstance
 
     SimpleConnection(
         coInstance = nothing,

@@ -11,17 +11,16 @@ abstract type AbstractError <: Exception end
 abstract type AbstractPythonSemanticClass end
 abstract type AbstractTester <: win32com_.test.util.TestCase end
 mutable struct Error <: AbstractError
-
 end
 
 mutable struct PythonSemanticClass <: AbstractPythonSemanticClass
     list::Vector
-    _dispid_to_func_::Dict{Int64,String}
+    _dispid_to_func_::Dict{Int64, String}
     _public_methods_::Vector{String}
 
     PythonSemanticClass(
         list::Vector,
-        _dispid_to_func_::Dict{Int64,String} = Dict(10 => "Add", 11 => "Remove"),
+        _dispid_to_func_::Dict{Int64, String} = Dict(10 => "Add", 11 => "Remove"),
         _public_methods_::Vector{String} = ["In"],
     ) = new(list, _dispid_to_func_, _public_methods_)
 end
@@ -100,7 +99,7 @@ function SemanticTest(ob)
 end
 
 mutable struct Tester <: AbstractTester
-    ob::Any
+    ob
 end
 function setUp(self::Tester)
     debug = 0

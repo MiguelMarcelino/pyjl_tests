@@ -61,11 +61,11 @@ mutable struct ListEnumerator <: AbstractListEnumerator
         See also the @NewEnum@ function, which can be used to turn the
         instance into an actual COM server.
          =#
-    _iid_::Any
-    _list_::Any
-    index::Any
+    _iid_
+    _list_
+    index
     _public_methods_::Vector{String}
-    iid::Any
+    iid
 
     ListEnumerator(
         _iid_,
@@ -116,7 +116,7 @@ mutable struct ListEnumeratorGateway <: AbstractListEnumeratorGateway
 
         See also the @ListEnumerator@ class and the @NewEnum@ function.
          =#
-    _wrap::Any
+    _wrap
 end
 function Next(self::ListEnumeratorGateway, count)
     result = self._list_[self.index+1:self.index+count]
@@ -149,8 +149,8 @@ end
 mutable struct Collection <: AbstractCollection
     #= A collection of VARIANT values. =#
     _public_methods_::Vector{String}
-    data::Any
-    _value_::Any
+    data
+    _value_
     readOnly::Int64
 
     Collection(data = nothing, readOnly = 0, _value_ = Item) = begin
@@ -233,7 +233,7 @@ function NewCollection(seq, cls = Collection)
 end
 
 mutable struct FileStream <: AbstractFileStream
-    file::Any
+    file
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
 

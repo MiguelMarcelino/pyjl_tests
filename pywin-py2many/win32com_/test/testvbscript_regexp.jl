@@ -4,7 +4,6 @@ using win32com_.client.dynamic: DumbDispatch
 import win32com_.test.util
 abstract type AbstractRegexTest <: win32com_.test.util.TestCase end
 mutable struct RegexTest <: AbstractRegexTest
-
 end
 function _CheckMatches(self::RegexTest, match, expected)
     found = []

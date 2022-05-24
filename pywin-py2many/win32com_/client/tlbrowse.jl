@@ -1,14 +1,11 @@
 using PyCall
+win32api = pyimport("win32api")
 pythoncom = pyimport("pythoncom")
 win32ui = pyimport("win32ui")
-win32api = pyimport("win32api")
-
-
-
-import commctrl
 
 using win32com_.gen_py.mfc: dialog
 import win32com_.ext_modules.win32con as win32con
+using tools: commctrl
 abstract type AbstractTLBrowserException <: Exception end
 abstract type AbstractTypeBrowseDialog <: TypeBrowseDialog_Parent end
 mutable struct TLBrowserException <: AbstractTLBrowserException
@@ -37,19 +34,19 @@ typekindmap = Dict(
 TypeBrowseDialog_Parent = dialog.Dialog
 mutable struct TypeBrowseDialog <: AbstractTypeBrowseDialog
     #= Browse a type library =#
-    OnFileOpen::Any
-    attr::Any
-    listview::Any
-    memberlb::Any
-    paramlb::Any
-    tlb::Any
-    typeinfo::Any
-    typelb::Any
+    OnFileOpen
+    attr
+    listview
+    memberlb
+    paramlb
+    tlb
+    typeinfo
+    typelb
     IDC_LISTVIEW::Int64
     IDC_MEMBERLIST::Int64
     IDC_PARAMLIST::Int64
     IDC_TYPELIST::Int64
-    typefile::Any
+    typefile
 
     TypeBrowseDialog(
         typefile = nothing,

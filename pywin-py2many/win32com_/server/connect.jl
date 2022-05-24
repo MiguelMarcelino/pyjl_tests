@@ -20,7 +20,7 @@ IConnectionPoint_methods = [
     "GetConnectionInterface",
 ]
 mutable struct ConnectableServer <: AbstractConnectableServer
-    _connect_interfaces_::Any
+    _connect_interfaces_
     connections::Dict
     cookieNo::Int64
     _com_interfaces_::Vector

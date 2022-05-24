@@ -2,8 +2,6 @@ using PyCall
 datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
 
-
-
 import win32com_.client
 import win32com_.test.util
 import win32com_.server.util
@@ -25,7 +23,6 @@ function test_ob()
 end
 
 mutable struct TestCase <: AbstractTestCase
-
 end
 function check(self::TestCase, d, expected = nothing)
     if !pywintypes.TimeType <: datetime

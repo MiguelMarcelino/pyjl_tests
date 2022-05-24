@@ -2,7 +2,6 @@ using PyCall
 pythoncom = pyimport("pythoncom")
 import win32com_.client.build
 
-
 using win32com_.client: gencache
 abstract type AbstractArg end
 abstract type AbstractMethod end
@@ -127,19 +126,19 @@ function _CalcTypeSize(typeTuple)
 end
 
 mutable struct Arg <: AbstractArg
-    name::Any
-    size::Any
+    name
+    size
     offset::Int64
 end
 
 mutable struct Method <: AbstractMethod
-    _gw_in_args::Any
-    _gw_out_args::Any
+    _gw_in_args
+    _gw_out_args
     args::Vector
     cbArgs::Int64
-    dispid::Any
-    invkind::Any
-    name::Any
+    dispid
+    invkind
+    name
     isEventSink::Int64
 
     Method(method_info, isEventSink = 0) = begin
@@ -178,9 +177,9 @@ function _GenerateOutArgTuple(self::Method)::Tuple
 end
 
 mutable struct Definition <: AbstractDefinition
-    _iid::Any
+    _iid
     _methods::Vector
-    _is_dispatch::Any
+    _is_dispatch
 
     Definition(iid, is_dispatch, method_defs) = begin
         for info in method_defs

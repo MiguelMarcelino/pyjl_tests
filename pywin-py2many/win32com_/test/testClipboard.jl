@@ -3,7 +3,6 @@ using Test
 pythoncom = pyimport("pythoncom")
 using win32com_.test: util
 
-
 import win32con
 import winerror
 import win32clipboard
@@ -20,10 +19,10 @@ function WrapCOMObject(ob, iid = nothing)
 end
 
 mutable struct TestDataObject <: AbstractTestDataObject
-    bytesval::Any
+    bytesval
     supported_fe::Vector
     _com_interfaces_::Vector
-    _public_methods_::Any
+    _public_methods_
 
     TestDataObject(
         bytesval,
@@ -111,7 +110,6 @@ function EnumDAdvise(self::TestDataObject)
 end
 
 mutable struct ClipboardTester <: AbstractClipboardTester
-
 end
 function setUp(self::ClipboardTester)
     pythoncom.OleInitialize()

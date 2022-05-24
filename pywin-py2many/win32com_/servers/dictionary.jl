@@ -39,14 +39,12 @@ using win32com_.server: util, policy
 using win32com_.server.exception: COMException
 import winerror
 
-
-
 using winerror: S_OK
 abstract type AbstractDictionaryPolicy <: policy.BasicWrapPolicy end
 mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
-    _obj_::Any
+    _obj_
     _com_interfaces_::Vector
-    _name_to_dispid_::Dict{String,Any}
+    _name_to_dispid_::Dict{String, Any}
     _reg_clsid_::String
     _reg_desc_::String
     _reg_policy_spec_::String
@@ -56,7 +54,7 @@ mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
     DictionaryPolicy(
         _obj_,
         _com_interfaces_::Vector = [],
-        _name_to_dispid_::Dict{String,Any} = Dict(
+        _name_to_dispid_::Dict{String, Any} = Dict(
             "item" => pythoncom.DISPID_VALUE,
             "_newenum" => pythoncom.DISPID_NEWENUM,
             "count" => 1,

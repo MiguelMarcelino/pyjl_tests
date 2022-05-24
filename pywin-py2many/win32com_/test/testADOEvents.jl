@@ -3,12 +3,9 @@ pythoncom = pyimport("pythoncom")
 include("testAccess.jl")
 using win32com_.client: Dispatch, DispatchWithEvents, constants
 
-
-
 abstract type AbstractADOEvents end
 finished = 0
 mutable struct ADOEvents <: AbstractADOEvents
-
 end
 function OnWillConnect(self::ADOEvents, str, user, pw, opt, sts, cn)
     #= pass =#

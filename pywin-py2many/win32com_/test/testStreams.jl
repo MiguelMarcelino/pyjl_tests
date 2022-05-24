@@ -10,7 +10,7 @@ abstract type AbstractStream end
 abstract type AbstractBadStream <: AbstractStream end
 abstract type AbstractStreamTest <: win32com_.test.util.TestCase end
 mutable struct Persists <: AbstractPersists
-    data::Any
+    data
     dirty::Int64
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
@@ -57,7 +57,7 @@ function InitNew(self::Persists)
 end
 
 mutable struct Stream <: AbstractStream
-    data::Any
+    data
     index::Int64
     _com_interfaces_::Vector
     _public_methods_::Vector{String}
@@ -110,7 +110,6 @@ function Read(self::BadStream, amount)::Int64
 end
 
 mutable struct StreamTest <: AbstractStreamTest
-
 end
 function _readWrite(self::StreamTest, data, write_stream, read_stream = nothing)
     if read_stream === nothing

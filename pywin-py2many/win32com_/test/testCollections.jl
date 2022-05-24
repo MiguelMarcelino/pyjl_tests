@@ -6,8 +6,6 @@ import win32com_.server.util
 import win32com_.test.util
 import win32com_.client
 
-
-
 import winerror
 L = pywintypes.Unicode
 abstract type AbstractTestCase <: win32com_.test.util.TestCase end
@@ -173,7 +171,6 @@ function TestEnum(quiet = nothing)
 end
 
 mutable struct TestCase <: AbstractTestCase
-
 end
 function testEnum(self::TestCase)
     TestEnum()

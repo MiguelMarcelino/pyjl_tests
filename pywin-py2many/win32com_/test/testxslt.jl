@@ -6,7 +6,6 @@ import win32com_.test.util
 abstract type AbstractXSLT <: win32com_.test.util.TestCase end
 expected_output = "The jscript test worked.\nThe Python test worked"
 mutable struct XSLT <: AbstractXSLT
-
 end
 function testAll(self::XSLT)
     output_name = tempfile.mktemp("-pycom-test")

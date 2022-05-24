@@ -9,7 +9,7 @@ using win32com_.client: Dispatch
 import winerror
 using win32com_.test.util: CaptureWriter
 mutable struct error <: Abstracterror
-    com_exception::Any
+    com_exception
 
     error(msg, com_exception = nothing) = begin
         Exception.__init__(self, msg, string(com_exception))
@@ -262,7 +262,7 @@ end
 if logging != nothing
     mutable struct TestLogHandler <: AbstractTestLogHandler
         num_emits::Int64
-        last_record::Any
+        last_record
 
         TestLogHandler() = begin
             reset()
@@ -327,7 +327,6 @@ if logging != nothing
         @assert(handler.num_emits == 1)
         reset(handler)
     end
-
 end
 if abspath(PROGRAM_FILE) == @__FILE__
     test()
