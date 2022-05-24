@@ -55,8 +55,8 @@ function testNumpyArrays(self::PippoTester)
         println("Numpy test not possible because numpy module failed to import")
         return
     end
-    _testArray(self, numpy.array([-3, -2, -1, 0, 1, 2, 3]))
-    _testArray(self, numpy.array([-3.14, -2, -0.1, 0.0, 1.1, 2.5, 3]))
+    _testArray(self, array([-3, -2, -1, 0, 1, 2, 3]))
+    _testArray(self, array([-3.14, -2, -0.1, 0.0, 1.1, 2.5, 3]))
 end
 
 function testByteArrays(self::PippoTester)

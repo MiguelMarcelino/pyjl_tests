@@ -16,7 +16,7 @@ function TestValue(self::Tester, v)
 end
 
 function test_ob()
-    return win32com_.client.Dispatch(win32com_.server.util.wrap(Tester()))
+    return Dispatch(wrap(Tester()))
 end
 
 mutable struct TestException <: AbstractTestException

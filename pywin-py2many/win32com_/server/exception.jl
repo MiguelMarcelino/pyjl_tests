@@ -68,20 +68,20 @@ end
 Exception = COMException
 function IsCOMException(t = nothing)::Bool
     if t === nothing
-        t = sys.exc_info()[1]
+        t = exc_info()[1]
     end
     try
         return t <: pythoncom.com_error
     catch exn
         if exn isa TypeError
-            return t == pythoncon.com_error
+            return t === pythoncon.com_error
         end
     end
 end
 
 function IsCOMServerException(t = nothing)::Int64
     if t === nothing
-        t = sys.exc_info()[1]
+        t = exc_info()[1]
     end
     try
         return t <: COMException

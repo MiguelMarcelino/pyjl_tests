@@ -106,10 +106,8 @@ function CreateInstance(clsid, reqIID)
         specific policy documentation for more details.
          =#
     try
-        addnPaths = split(
-            win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regAddnPath % clsid),
-            ";",
-        )
+        addnPaths =
+            split(RegQueryValue(win32con.HKEY_CLASSES_ROOT, regAddnPath % clsid), ";")
         for newPath in addnPaths
             if newPath ∉ sys.path
                 insert(sys.path, 0, newPath)
@@ -121,7 +119,7 @@ function CreateInstance(clsid, reqIID)
         end
     end
     try
-        policy = win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regPolicy % clsid)
+        policy = RegQueryValue(win32con.HKEY_CLASSES_ROOT, regPolicy % clsid)
         policy = resolve_func(policy)
     catch exn
         if exn isa win32api.error
@@ -129,8 +127,7 @@ function CreateInstance(clsid, reqIID)
         end
     end
     try
-        dispatcher =
-            win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regDispatcher % clsid)
+        dispatcher = RegQueryValue(win32con.HKEY_CLASSES_ROOT, regDispatcher % clsid)
         if dispatcher
             dispatcher = resolve_func(dispatcher)
         end
@@ -190,7 +187,7 @@ mutable struct BasicWrapPolicy <: AbstractBasicWrapPolicy
     _com_interfaces_::Vector
 
     BasicWrapPolicy(object) = begin
-        if object != nothing
+        if object !== nothing
             _wrap_(object)
         end
         new(object)
@@ -203,7 +200,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
             in the registry (using @DefaultPolicy@)
              =#
     try
-        classSpec = win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regSpec % clsid)
+        classSpec = RegQueryValue(win32con.HKEY_CLASSES_ROOT, regSpec % clsid)
     catch exn
         if exn isa win32api.error
             throw(
@@ -217,7 +214,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
     myob = call_func(classSpec)
     _wrap_(self, myob)
     try
-        return pythoncom.WrapObject(self, reqIID)
+        return WrapObject(self, reqIID)
     catch exn
         let xxx_todo_changeme = exn
             if xxx_todo_changeme isa pythoncom.com_error
@@ -225,7 +222,7 @@ function _CreateInstance_(self::BasicWrapPolicy, clsid, reqIID)
                 desc =
                     "The object \'%r\' was created, but does not support the interface \'%s\'(%s): %s" %
                     (myob, IIDToInterfaceName(reqIID), reqIID, desc)
-                throw(pythoncom.com_error(hr, desc, exc, arg))
+                throw(com_error(hr, desc, exc, arg))
             end
         end
     end
@@ -262,7 +259,7 @@ function _wrap_(self::BasicWrapPolicy, object)
                 if i[1] != "{"
                     i = pythoncom.InterfaceNames[i+1]
                 else
-                    i = pythoncom.MakeIID(i)
+                    i = MakeIID(i)
                 end
             end
             append(self._com_interfaces_, i)
@@ -546,7 +543,7 @@ end
 function _wrap_(self::DesignatedWrapPolicy, ob)
     tlb_guid =
         (hasfield(typeof(ob), :_typelib_guid_) ? getfield(ob, :_typelib_guid_) : nothing)
-    if tlb_guid != nothing
+    if tlb_guid !== nothing
         tlb_major, tlb_minor = (
             hasfield(typeof(ob), :_typelib_version_) ?
             getfield(ob, :_typelib_version_) : (1, 0)
@@ -559,13 +556,8 @@ function _wrap_(self::DesignatedWrapPolicy, ob)
                 getfield(ob, :_com_interfaces_) : []
             ) if type_(i) != pywintypes.IIDType && !startswith(i, "{")
         ]
-        universal_data = universal.RegisterInterfaces(
-            tlb_guid,
-            tlb_lcid,
-            tlb_major,
-            tlb_minor,
-            interfaces,
-        )
+        universal_data =
+            RegisterInterfaces(tlb_guid, tlb_lcid, tlb_major, tlb_minor, interfaces)
     else
         universal_data = []
     end
@@ -655,12 +647,12 @@ function _build_typeinfos_(self::DesignatedWrapPolicy)::Vector
         hasfield(typeof(self._obj_), :_typelib_version_) ?
         getfield(self._obj_, :_typelib_version_) : (1, 0)
     )
-    tlb = pythoncom.LoadRegTypeLib(tlb_guid, tlb_major, tlb_minor)
+    tlb = LoadRegTypeLib(tlb_guid, tlb_major, tlb_minor)
     typecomp = GetTypeComp(tlb)
     for iname in self._obj_._com_interfaces_
         try
             type_info, type_comp = BindType(typecomp, iname)
-            if type_info != nothing
+            if type_info !== nothing
                 return [type_info]
             end
         catch exn
@@ -784,11 +776,10 @@ function _transform_args_(
     for arg in args
         arg_type = type_(arg)
         if arg_type == IDispatchType
-            arg = win32com_.client.Dispatch(arg)
+            arg = Dispatch(arg)
         elseif arg_type == IUnknownType
             try
-                arg =
-                    win32com_.client.Dispatch(QueryInterface(arg, pythoncom.IID_IDispatch))
+                arg = Dispatch(QueryInterface(arg, pythoncom.IID_IDispatch))
             catch exn
                 if exn isa pythoncom.error
                     #= pass =#

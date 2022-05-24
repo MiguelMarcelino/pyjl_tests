@@ -76,9 +76,9 @@ function TestConnection(dbname)
     user = "system"
     pw = "manager"
     Open(c, dsn, user, pw, constants.adAsyncConnect)
-    end_time = time.clock() + 10
-    while time.clock() < end_time
-        pythoncom.PumpWaitingMessages()
+    end_time = clock() + 10
+    while clock() < end_time
+        PumpWaitingMessages()
     end
     if !(finished) != 0
         println("XXX - Failed to connect!")
@@ -87,18 +87,18 @@ end
 
 function Test()
     try
-        testAccess.GenerateSupport()
+        GenerateSupport()
     catch exn
         if exn isa pythoncom.com_error
             println("*** Can not import the MSAccess type libraries - tests skipped")
             return
         end
     end
-    dbname = testAccess.CreateTestAccessDatabase()
+    dbname = CreateTestAccessDatabase()
     try
         TestConnection(dbname)
     finally
-        std::fs::remove_file(dbname)
+        unlink(dbname)
     end
 end
 

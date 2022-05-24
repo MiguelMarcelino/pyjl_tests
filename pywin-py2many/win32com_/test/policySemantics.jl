@@ -25,7 +25,7 @@ mutable struct PythonSemanticClass <: AbstractPythonSemanticClass
     ) = new(list, _dispid_to_func_, _public_methods_)
 end
 function _NewEnum(self::PythonSemanticClass)
-    return win32com_.server.util.NewEnum(self.list)
+    return NewEnum(self.list)
 end
 
 function _value_(self::PythonSemanticClass)::Vector
@@ -66,14 +66,14 @@ function DispExTest(ob)
             let xxx_todo_changeme = exn
                 if xxx_todo_changeme isa pythoncom.com_error
                     hr, desc, exc, arg = xxx_todo_changeme.args
-                    @assert(hr == winerror.S_FALSE)
+                    @assert(hr === winerror.S_FALSE)
                     break
                 end
             end
         end
     end
     sort(dispids)
-    if dispids != [pythoncom.DISPID_EVALUATE, pythoncom.DISPID_NEWENUM, 10, 11, 1000]
+    if dispids !== [pythoncom.DISPID_EVALUATE, pythoncom.DISPID_NEWENUM, 10, 11, 1000]
         throw(Error("Got back the wrong dispids: %s" % dispids))
     end
 end
@@ -108,8 +108,8 @@ function setUp(self::Tester)
     else
         dispatcher = nothing
     end
-    disp = win32com_.server.util.wrap(PythonSemanticClass(), dispatcher)
-    self.ob = win32com_.client.Dispatch(disp)
+    disp = wrap(PythonSemanticClass(), dispatcher)
+    self.ob = Dispatch(disp)
 end
 
 function tearDown(self::Tester)

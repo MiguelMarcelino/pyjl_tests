@@ -10,12 +10,12 @@ using win32com_.client: gencache, constants
 ammodule = nothing
 function GetDefaultProfileName()
     try
-        key = win32api.RegOpenKey(
+        key = RegOpenKey(
             win32con.HKEY_CURRENT_USER,
             "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows Messaging Subsystem\\Profiles",
         )
         try
-            return win32api.RegQueryValueEx(key, "DefaultProfile")[1]
+            return RegQueryValueEx(key, "DefaultProfile")[1]
         finally
             Close(key)
         end
@@ -97,9 +97,9 @@ function TestUser(session)
 end
 
 function test()
-    oldcwd = os.getcwd()
+    oldcwd = getcwd()
     try
-        session = gencache.EnsureDispatch("MAPI.Session")
+        session = EnsureDispatch("MAPI.Session")
         try
             Logon(session, GetDefaultProfileName())
         catch exn
@@ -112,7 +112,7 @@ function test()
         end
     catch exn
         if exn isa pythoncom.error
-            app = gencache.EnsureDispatch("Outlook.Application")
+            app = EnsureDispatch("Outlook.Application")
             session = app.Session
         end
     end
@@ -122,7 +122,7 @@ function test()
         DumpFolders(session)
     finally
         Logoff(session)
-        os.chdir(oldcwd)
+        chdir(oldcwd)
     end
 end
 

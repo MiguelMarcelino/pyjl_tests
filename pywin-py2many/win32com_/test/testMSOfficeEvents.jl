@@ -4,7 +4,7 @@ using win32com_.client: DispatchWithEvents, Dispatch
 import msvcrt
 
 import threading
-stopEvent = threading.Event()
+stopEvent = Event()
 abstract type AbstractExcelEvents end
 abstract type AbstractWorkbookEvents end
 abstract type AbstractWordEvents end
@@ -72,7 +72,7 @@ function TestExcel()
         Quit(e)
     end
     if !_CheckSeenEvents(e, ["OnNewWorkbook", "OnWindowActivate"])
-        quit(1)
+        exit(1)
     end
 end
 
@@ -101,19 +101,19 @@ function TestWord()
         Quit(w)
     end
     if !_CheckSeenEvents(w, ["OnDocumentChange", "OnWindowActivate"])
-        quit(1)
+        exit(1)
     end
 end
 
 function _WaitForFinish(ob, timeout)::Int64
-    end_ = pylib::time()() + timeout
+    end_ = time() + timeout
     while true
-        if msvcrt.kbhit()
-            msvcrt.getch()
+        if kbhit()
+            getch()
             has_break = true
             break
         end
-        pythoncom.PumpWaitingMessages()
+        PumpWaitingMessages()
         wait(stopEvent, 0.2)
         if isSet(stopEvent)
             clear(stopEvent)
@@ -129,7 +129,7 @@ function _WaitForFinish(ob, timeout)::Int64
                 #= pass =#
             end
         end
-        if pylib::time()() > end_
+        if time() > end_
             return 0
         end
     end
@@ -148,10 +148,10 @@ function _CheckSeenEvents(o, events)::Int64
 end
 
 function test()
-    if "noword" ∉ append!([PROGRAM_FILE], ARGS)[2:end]
+    if "noword" ∉ sys.argv[2:end]
         TestWord()
     end
-    if "noexcel" ∉ append!([PROGRAM_FILE], ARGS)[2:end]
+    if "noexcel" ∉ sys.argv[2:end]
         TestExcel()
     end
     println("Word and Excel event tests passed.")

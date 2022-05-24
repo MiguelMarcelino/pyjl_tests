@@ -9,9 +9,9 @@ abstract type AbstractTestEnum <: win32com_.test.util.TestCase end
 mutable struct TestEnum <: AbstractTestEnum
 end
 function testit(self::TestEnum)
-    fname, tmp = win32api.GetTempFileName(win32api.GetTempPath(), "stg")
+    fname, tmp = GetTempFileName(GetTempPath(), "stg")
     m = storagecon.STGM_READWRITE | storagecon.STGM_SHARE_EXCLUSIVE
-    pss = pythoncom.StgOpenStorageEx(
+    pss = StgOpenStorageEx(
         fname,
         m,
         storagecon.STGFMT_FILE,
@@ -47,7 +47,7 @@ function testit(self::TestEnum)
     )
     pssum = nothing
     pss = nothing
-    pssread = pythoncom.StgOpenStorageEx(
+    pssread = StgOpenStorageEx(
         fname,
         storagecon.STGM_READ | storagecon.STGM_SHARE_EXCLUSIVE,
         storagecon.STGFMT_FILE,

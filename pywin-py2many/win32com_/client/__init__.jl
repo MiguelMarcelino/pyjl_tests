@@ -1,6 +1,6 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
+pythoncom = pyimport("pythoncom")
 
 import gencache
 import win32com_.ext_modules.winerror as winerror
@@ -26,7 +26,7 @@ function __WrapDispatch(
     if resultCLSID === nothing
         try
             typeinfo = GetTypeInfo(dispatch)
-            if typeinfo != nothing
+            if typeinfo !== nothing
                 resultCLSID = string(GetTypeAttr(typeinfo)[1])
             end
         catch exn
@@ -35,16 +35,16 @@ function __WrapDispatch(
             end
         end
     end
-    if resultCLSID != nothing
-        klass = gencache.GetClassForCLSID(resultCLSID)
-        if klass != nothing
+    if resultCLSID !== nothing
+        klass = GetClassForCLSID(resultCLSID)
+        if klass !== nothing
             return klass(dispatch)
         end
     end
     if WrapperClass === nothing
         WrapperClass = CDispatch
     end
-    return dynamic.Dispatch(dispatch, userName, WrapperClass, typeinfo, clsctx)
+    return Dispatch(dispatch, userName, WrapperClass, typeinfo)
 end
 
 abstract type AbstractCDispatch <: dynamic.CDispatch end
@@ -72,10 +72,11 @@ function GetObject(Pathname = nothing, Class = nothing, clsctx = nothing)
     if clsctx === nothing
         clsctx = pythoncom.CLSCTX_ALL
     end
-    if Pathname === nothing && Class === nothing || Pathname != nothing && Class != nothing
+    if Pathname === nothing && Class === nothing ||
+       Pathname !== nothing && Class !== nothing
         throw(ValueError("You must specify a value for Pathname or Class, but not both."))
     end
-    if Class != nothing
+    if Class !== nothing
         return GetActiveObject(Class, clsctx)
     else
         return Moniker(Pathname, clsctx)
@@ -86,8 +87,8 @@ function GetActiveObject(Class, clsctx = pythoncom.CLSCTX_ALL)
     #= 
         Python friendly version of GetObject's ProgID/CLSID functionality.
          =#
-    resultCLSID = pywintypes.IID(Class)
-    dispatch = pythoncom.GetActiveObject(resultCLSID)
+    resultCLSID = IID(Class)
+    dispatch = GetActiveObject(resultCLSID)
     dispatch = QueryInterface(dispatch, pythoncom.IID_IDispatch)
     return __WrapDispatch(dispatch, Class)
 end
@@ -96,7 +97,7 @@ function Moniker(Pathname, clsctx = pythoncom.CLSCTX_ALL)
     #= 
         Python friendly version of GetObject's moniker functionality.
          =#
-    moniker, i, bindCtx = pythoncom.MkParseDisplayName(Pathname)
+    moniker, i, bindCtx = MkParseDisplayName(Pathname)
     dispatch = BindToObject(moniker, bindCtx, nothing, pythoncom.IID_IDispatch)
     return __WrapDispatch(dispatch, Pathname)
 end
@@ -111,7 +112,7 @@ function Dispatch(
 )
     #= Creates a Dispatch based COM object. =#
     @assert(UnicodeToString === nothing)
-    dispatch, userName = dynamic._GetGoodDispatchAndUserName(dispatch, userName, clsctx)
+    dispatch, userName = _GetGoodDispatchAndUserName(dispatch, userName, clsctx)
     return __WrapDispatch(dispatch, userName, resultCLSID, typeinfo)
 end
 
@@ -128,7 +129,7 @@ function DispatchEx(
     @assert(UnicodeToString === nothing)
     if clsctx === nothing
         clsctx = pythoncom.CLSCTX_SERVER
-        if machine != nothing
+        if machine !== nothing
             clsctx = clsctx & ~(pythoncom.CLSCTX_INPROC)
         end
     end
@@ -140,13 +141,8 @@ function DispatchEx(
     if userName === nothing
         userName = clsid
     end
-    dispatch = pythoncom.CoCreateInstanceEx(
-        clsid,
-        nothing,
-        clsctx,
-        serverInfo,
-        (pythoncom.IID_IDispatch,),
-    )[1]
+    dispatch =
+        CoCreateInstanceEx(clsid, nothing, clsctx, serverInfo, (pythoncom.IID_IDispatch,))[1]
     return Dispatch(dispatch, userName, resultCLSID, typeinfo)
 end
 
@@ -177,8 +173,8 @@ end
 function CastTo(ob, target, typelib = nothing)
     #= 'Cast' a COM object to another interface =#
     mod = nothing
-    if typelib != nothing
-        mod = gencache.MakeModuleForTypelib(
+    if typelib !== nothing
+        mod = MakeModuleForTypelib(
             typelib.clsid,
             typelib.lcid,
             parse(Int, typelib.major),
@@ -194,19 +190,14 @@ function CastTo(ob, target, typelib = nothing)
         end
     elseif hasfield(typeof(target), :index)
         if "CLSID" ∉ ob.__class__.__dict__
-            ob = gencache.EnsureDispatch(ob)
+            ob = EnsureDispatch(ob)
         end
         if "CLSID" ∉ ob.__class__.__dict__
             throw(ValueError("Must be a makepy-able object for this to work"))
         end
         clsid = ob.CLSID
-        mod = gencache.GetModuleForCLSID(clsid)
-        mod = gencache.GetModuleForTypelib(
-            mod.CLSID,
-            mod.LCID,
-            mod.MajorVersion,
-            mod.MinorVersion,
-        )
+        mod = GetModuleForCLSID(clsid)
+        mod = GetModuleForTypelib(mod.CLSID, mod.LCID, mod.MajorVersion, mod.MinorVersion)
         target_clsid = get(mod.NamesToIIDMap, target)
         if target_clsid === nothing
             throw(
@@ -216,9 +207,9 @@ function CastTo(ob, target, typelib = nothing)
                 ),
             )
         end
-        mod = gencache.GetModuleForCLSID(target_clsid)
+        mod = GetModuleForCLSID(target_clsid)
     end
-    if mod != nothing
+    if mod !== nothing
         target_class = getfield(mod, :target)
         target_class = (
             hasfield(typeof(target_class), :default_interface) ?
@@ -320,8 +311,8 @@ function DispatchWithEvents(clsid, user_event_class)::EventsProxy
             disp_clsid = GetTypeAttr(ti)[1]
             tlb, index = GetContainingTypeLib(ti)
             tla = GetLibAttr(tlb)
-            gencache.EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
-            disp_class = gencache.GetClassForProgID(string(disp_clsid))
+            EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
+            disp_class = GetClassForProgID(string(disp_clsid))
         catch exn
             if exn isa pythoncom.com_error
                 throw(
@@ -389,8 +380,8 @@ function WithEvents(disp, user_event_class)
             disp_clsid = GetTypeAttr(ti)[1]
             tlb, index = GetContainingTypeLib(ti)
             tla = GetLibAttr(tlb)
-            gencache.EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
-            disp_class = gencache.GetClassForProgID(string(disp_clsid))
+            EnsureModule(tla[1], tla[2], tla[4], tla[5], 0)
+            disp_class = GetClassForProgID(string(disp_clsid))
         catch exn
             if exn isa pythoncom.com_error
                 throw(
@@ -463,14 +454,14 @@ function getevents(clsid)
         Visibility changed:  1
         >>>
          =#
-    clsid = string(pywintypes.IID(clsid))
-    klass = gencache.GetClassForCLSID(clsid)
+    clsid = string(IID(clsid))
+    klass = GetClassForCLSID(clsid)
     try
         return klass.default_source
     catch exn
         if exn isa AttributeError
             try
-                return gencache.GetClassForCLSID(klass.coclass_clsid).default_source
+                return GetClassForCLSID(klass.coclass_clsid).default_source
             catch exn
                 if exn isa AttributeError
                     return nothing
@@ -491,9 +482,9 @@ function Record(name, object)
           point.y = 0
           app.MoveTo(point)
          =#
-    object = gencache.EnsureDispatch(object)
+    object = EnsureDispatch(object)
     module_ = sys.modules[object.__class__.__module__+1]
-    package = gencache.GetModuleForTypelib(
+    package = GetModuleForTypelib(
         module_.CLSID,
         module_.LCID,
         module_.MajorVersion,
@@ -511,7 +502,7 @@ function Record(name, object)
             )
         end
     end
-    return pythoncom.GetRecordFromGuids(
+    return GetRecordFromGuids(
         module_.CLSID,
         module_.MajorVersion,
         module_.MinorVersion,
@@ -696,7 +687,7 @@ end
 
 function __getattr__(self::CoClassBaseClass, attr)
     d = self.__dict__["_dispobj_"]
-    if d != nothing
+    if d !== nothing
         return getfield(d, :attr)
     end
     throw(AttributeError(attr))
@@ -709,7 +700,7 @@ function __setattr__(self::CoClassBaseClass, attr, value)
     end
     try
         d = self.__dict__["_dispobj_"]
-        if d != nothing
+        if d !== nothing
             __setattr__(d, attr, value)
             return
         end

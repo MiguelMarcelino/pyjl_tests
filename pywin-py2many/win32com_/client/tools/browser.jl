@@ -463,13 +463,11 @@ function OnInitDialog(self::DialogShowObject)
     try
         strval = string(self.object)
     catch exn
-        t, v, tb = sys.exc_info()
+        t, v, tb = exc_info()
         strval = "Exception getting object value\n\n%s:%s" % (t, v)
         tb = nothing
     end
-    strval =
-    # Unsupported use of re.sub with less than 3 arguments
-        sub()("\n", "\r\n", strval)
+    strval = sub("\n", "\r\n", strval)
     ReplaceSel(self.edit, strval)
 end
 
@@ -486,8 +484,8 @@ mutable struct dynamic_browser <: Abstractdynamic_browser
     cs
     dt::Vector{
         Union{
-            Vector{Union{Tuple{Int64}, Any, String}},
-            Vector{Union{Tuple{Int64}, Any, String, Tuple{Union{Int64, String}}}},
+            Vector{Union{Tuple{Union{String, Int64}}, String, Tuple{Int64}, Any}},
+            Vector{Union{String, Tuple{Int64}, Any}},
         },
     }
     style
@@ -500,8 +498,8 @@ mutable struct dynamic_browser <: Abstractdynamic_browser
         ) | commctrl.TVS_HASBUTTONS,
         dt::Vector{
             Union{
-                Vector{Union{Tuple{Int64}, Any, String}},
-                Vector{Union{Tuple{Int64}, Any, String, Tuple{Union{Int64, String}}}},
+                Vector{Union{Tuple{Union{String, Int64}}, String, Tuple{Int64}, Any}},
+                Vector{Union{String, Tuple{Int64}, Any}},
             },
         } = [
             [
@@ -539,8 +537,8 @@ end
 
 function on_size(self::dynamic_browser, params)
     lparam = params[4]
-    w = win32api.LOWORD(lparam)
-    h = win32api.HIWORD(lparam)
+    w = LOWORD(lparam)
+    h = HIWORD(lparam)
     MoveWindow(GetDlgItem(self, win32ui.IDC_LIST1), (0, 0, w, h))
 end
 
@@ -603,7 +601,7 @@ mutable struct BrowserView <: AbstractBrowserView
 end
 function OnInitialUpdate(self::BrowserView)
     rc = OnInitialUpdate(self._obj_)
-    list = hierlist.HierListWithItems(
+    list = HierListWithItems(
         GetDocument(self).root,
         win32ui.IDB_BROWSER_HIER,
         win32ui.AFX_IDW_PANE_FIRST,

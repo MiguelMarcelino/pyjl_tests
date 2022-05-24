@@ -9,13 +9,13 @@ using win32com_.client: gencache, constants, Dispatch
 
 function CreateTestAccessDatabase(dbname = nothing)
     if dbname === nothing
-        dbname = join
+        dbname = joinpath(GetTempPath(), "COMTestSuiteTempDatabase.mdb")
     end
     access = Dispatch("Access.Application")
     dbEngine = access.DBEngine
     workspace = Workspaces(dbEngine, 0)
     try
-        std::fs::remove_file(dbname)
+        unlink(dbname)
     catch exn
         if exn isa os.error
             println(
@@ -83,7 +83,7 @@ function DoDumpAccessInfo(dbname)
         @printf("Opening database %s\n", dbname)
         OpenCurrentDatabase(a, dbname)
         db = CurrentDb(a)
-        daodump.DumpDB(db, 1)
+        DumpDB(db, 1)
         forms = a.Forms
         @printf("There are %d forms open.\n", length(forms))
         reports = a.Reports
@@ -103,13 +103,13 @@ function DoDumpAccessInfo(dbname)
 end
 
 function GenerateSupport()
-    gencache.EnsureModule("{00025E01-0000-0000-C000-000000000046}", 0, 4, 0)
-    gencache.EnsureDispatch("Access.Application")
+    EnsureModule("{00025E01-0000-0000-C000-000000000046}", 0, 4, 0)
+    EnsureDispatch("Access.Application")
 end
 
 function DumpAccessInfo(dbname)
-    amod = gencache.GetModuleForProgID("Access.Application")
-    dmod = gencache.GetModuleForProgID("DAO.DBEngine.35")
+    amod = GetModuleForProgID("Access.Application")
+    dmod = GetModuleForProgID("DAO.DBEngine.35")
     if amod === nothing && dmod === nothing
         DoDumpAccessInfo(dbname)
         GenerateSupport()
@@ -140,8 +140,8 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     dbname = nothing
-    if length(append!([PROGRAM_FILE], ARGS)) > 1
-        dbname = append!([PROGRAM_FILE], ARGS)[2]
+    if length(sys.argv) > 1
+        dbname = sys.argv[2]
     end
     test(dbname)
     CheckClean()

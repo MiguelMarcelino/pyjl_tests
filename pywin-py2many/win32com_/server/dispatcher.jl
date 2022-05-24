@@ -26,7 +26,7 @@ end
 function _CreateInstance_(self::DispatcherBase, clsid, reqIID)
     try
         _CreateInstance_(self.policy, clsid, reqIID)
-        return pythoncom.WrapObject(self, reqIID)
+        return WrapObject(self, reqIID)
     catch exn
         return _HandleException_(self)
     end
@@ -150,17 +150,17 @@ function _HandleException_(self::DispatcherBase)
             Default behaviour is to print the exception.
              =#
     if !IsCOMServerException()
-        if self.logger != nothing
+        if self.logger !== nothing
             exception(self.logger, "pythoncom server error")
         else
-            current_exceptions() != [] ? current_exceptions()[end] : nothing()
+            print_exc()
         end
     end
     error()
 end
 
 function _trace_(self::DispatcherBase)
-    if self.logger != nothing
+    if self.logger !== nothing
         record = join(map(str, args), " ")
         debug(self.logger, record)
     else
@@ -290,9 +290,9 @@ mutable struct DispatcherOutputDebugString <: AbstractDispatcherOutputDebugStrin
 end
 function _trace_(self::DispatcherOutputDebugString)
     for arg in args[begin:-1]
-        win32api.OutputDebugString(string(arg) * " ")
+        OutputDebugString(string(arg) * " ")
     end
-    win32api.OutputDebugString(string(args[end]) * "\n")
+    OutputDebugString(string(args[end]) * "\n")
 end
 
 mutable struct DispatcherWin32dbg <: AbstractDispatcherWin32dbg
@@ -332,7 +332,7 @@ function _HandleException_(self::DispatcherWin32dbg)
         try
             post_mortem(win32com_.gen_py.debugger, tb, typ, val)
         catch exn
-            current_exceptions() != [] ? current_exceptions()[end] : nothing()
+            print_exc()
         end
     end
     #Delete Unsupported

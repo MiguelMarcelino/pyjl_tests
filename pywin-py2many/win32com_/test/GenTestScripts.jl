@@ -9,22 +9,22 @@ import win32com_.test
 genList = [("msword8", "{00020905-0000-0000-C000-000000000046}", 1033, 8, 0)]
 genDir = "Generated4Test"
 function GetGenPath()
-    return join
+    return joinpath(GetFullPathName(win32com_.test.__path__[1]), genDir)
 end
 
 function GenerateFromRegistered(fname)
     genPath = GetGenPath()
     try
-        os.stat(genPath)
+        stat(genPath)
     catch exn
         if exn isa os.error
-            os.mkdir(genPath)
+            mkdir(genPath)
         end
     end
-    close(readline(join))
+    close(readline(joinpath(genPath, "__init__.py")))
     print("$(fname): generating -")
-    f = readline(join)
-    win32com_.client.makepy.GenerateFromTypeLibSpec(loadArgs, f, 1, 1)
+    f = readline(joinpath(genPath, fname + ".py"))
+    GenerateFromTypeLibSpec(loadArgs, f, 1, 1)
     close(f)
     print("compiling -")
     fullModName = "win32com_.test.%s.%s" % (genDir, fname)
@@ -60,7 +60,7 @@ function CleanAll()
     for args in genList
         try
             name = args[1] + ".py"
-            std::fs::remove_file(join)
+            unlink(joinpath(genPath, name))
         catch exn
             let details = exn
                 if details isa os.error
@@ -72,7 +72,7 @@ function CleanAll()
         end
         try
             name = args[1] + ".pyc"
-            std::fs::remove_file(join)
+            unlink(joinpath(genPath, name))
         catch exn
             let details = exn
                 if details isa os.error
@@ -83,18 +83,18 @@ function CleanAll()
             end
         end
         try
-            std::fs::remove_file(join)
+            unlink(joinpath(genPath, "__init__.py"))
         catch exn
             #= pass =#
         end
         try
-            std::fs::remove_file(join)
+            unlink(joinpath(genPath, "__init__.pyc"))
         catch exn
             #= pass =#
         end
     end
     try
-        os.rmdir(genPath)
+        rmdir(genPath)
     catch exn
         let details = exn
             if details isa os.error

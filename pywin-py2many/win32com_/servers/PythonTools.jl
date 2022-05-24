@@ -28,14 +28,14 @@ function echo(self::Tools, arg)
 end
 
 function sleep(self::Tools, t)
-    time.sleep(t)
+    sleep(t)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     clsid = "{06ce7630-1d81-11d0-ae37-c2fa70000000}"
     progid = "Python.Tools"
     verprogid = "Python.Tools.1"
-    if "--unregister" ∈ append!([PROGRAM_FILE], ARGS)
+    if "--unregister" ∈ sys.argv
         println("Unregistering...")
         UnregisterServer(clsid, progid, verprogid)
         println("Unregistered OK")

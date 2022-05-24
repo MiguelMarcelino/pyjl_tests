@@ -137,13 +137,13 @@ function TestVB(vbtest, bUseGenerated)
         DoSomeCallbacks(vbtest, callback_ob)
     end
     ret = PassIntByVal(vbtest, 1)
-    if ret != 2
+    if ret !== 2
         throw(error("Could not increment the integer - " * string(ret)))
     end
     TestVBInterface(vbtest)
     if bUseGenerated
         ret = PassIntByRef(vbtest, 1)
-        if ret != (1, 2)
+        if ret !== (1, 2)
             throw(error("Could not increment the integer - " * string(ret)))
         end
     end
@@ -163,14 +163,14 @@ function _DoTestCollection(vbtest, col_name, expected)
     for item in c
         push!(check, item)
     end
-    if check != collect(expected)
+    if check !== collect(expected)
         throw(error("Collection %s didn\'t have %r (had %r)" % (col_name, expected, check)))
     end
     check = []
     for item in c
         push!(check, item)
     end
-    if check != collect(expected)
+    if check !== collect(expected)
         throw(
             error(
                 "Collection 2nd time around %s didn\'t have %r (had %r)" %
@@ -183,7 +183,7 @@ function _DoTestCollection(vbtest, col_name, expected)
     for item in i
         push!(check, item)
     end
-    if check != collect(expected)
+    if check !== collect(expected)
         throw(
             error(
                 "Collection iterator %s didn\'t have %r 2nd time around (had %r)" %
@@ -195,7 +195,7 @@ function _DoTestCollection(vbtest, col_name, expected)
     for item in i
         push!(check, item)
     end
-    if check != []
+    if check !== []
         throw(
             error(
                 "2nd time around Collection iterator %s wasn\'t empty (had %r)" %
@@ -217,7 +217,7 @@ function _DoTestCollection(vbtest, col_name, expected)
     for i = 0:_getcount(c)-1
         push!(check, c[i+1])
     end
-    if check != collect(expected)
+    if check !== collect(expected)
         throw(error("Collection %s didn\'t have %r (had %r)" % (col_name, expected, check)))
     end
     c = _NewEnum(getfield(vbtest, :col_name))
@@ -230,7 +230,7 @@ function _DoTestCollection(vbtest, col_name, expected)
         end
         push!(check, n[1])
     end
-    if check != collect(expected)
+    if check !== collect(expected)
         throw(error("Collection %s didn\'t have %r (had %r)" % (col_name, expected, check)))
     end
 end
@@ -250,7 +250,7 @@ end
 function _DoTestArray(vbtest, data, expected_exception = nothing)
     try
         vbtest.ArrayProperty = data
-        if expected_exception != nothing
+        if expected_exception !== nothing
             throw(error("Expected \'%s\'" % expected_exception))
         end
     catch exn
@@ -309,7 +309,7 @@ function TestArrays(vbtest, bUseGenerated)
     if bUseGenerated
         testData = split("Mark was here")
         resultData, byRefParam = PassSAFEARRAY(vbtest, testData)
-        if testData != collect(resultData)
+        if testData !== collect(resultData)
             throw(
                 error(
                     "The safe array data was not what we expected - got " *
@@ -317,7 +317,7 @@ function TestArrays(vbtest, bUseGenerated)
                 ),
             )
         end
-        if testData != collect(byRefParam)
+        if testData !== collect(byRefParam)
             throw(
                 error(
                     "The safe array data was not what we expected - got " *
@@ -327,16 +327,16 @@ function TestArrays(vbtest, bUseGenerated)
         end
         testData = [1.0, 2.0, 3.0]
         resultData, byRefParam = PassSAFEARRAYVariant(vbtest, testData)
-        @assert(testData == collect(byRefParam))
-        @assert(testData == collect(resultData))
+        @assert(testData === collect(byRefParam))
+        @assert(testData === collect(resultData))
         testData = ["hi", "from", "Python"]
         resultData, byRefParam = PassSAFEARRAYVariant(vbtest, testData)
-        @assert(testData == collect(byRefParam))
-        @assert(testData == collect(resultData))
+        @assert(testData === collect(byRefParam))
+        @assert(testData === collect(resultData))
         testData = [1, 2.0, "3"]
         resultData, byRefParam = PassSAFEARRAYVariant(vbtest, testData)
-        @assert(testData == collect(byRefParam))
-        @assert(testData == collect(resultData))
+        @assert(testData === collect(byRefParam))
+        @assert(testData === collect(resultData))
     end
     println("Array tests passed")
 end
@@ -396,7 +396,7 @@ function TestStructs(vbtest)
         throw(error("After sending to VB, the struct array value didnt persist!"))
     end
     @assert(s === s)
-    @assert(s != nothing)
+    @assert(s !== nothing)
     if sys.version_info > (3, 0)
         try
             s < nothing
@@ -415,16 +415,16 @@ function TestStructs(vbtest)
             end
         end
     end
-    @assert(s != s.sub_val)
-    s2 = copy.copy(s)
-    @assert(s != s2)
+    @assert(s !== s.sub_val)
+    s2 = copy(s)
+    @assert(s !== s2)
     @assert(s === s2)
     s2.int_val = 123
-    @assert(s != s2)
+    @assert(s !== s2)
     s2 = GetStructFunc(vbtest)
     @assert(s === s2)
     SetStructSub(vbtest, s2)
-    s = win32com_.client.Record("VBStruct", vbtest)
+    s = Record("VBStruct", vbtest)
     @assert(s.int_val == 0)
     s.int_val = -1
     SetStructSub(vbtest, s)
@@ -490,10 +490,10 @@ function TestObjectSemantics(ob)
     @assert(!(ob._oleobj_ != ob))
     @assert(ob._oleobj_ == QueryInterface(ob._oleobj_, pythoncom.IID_IUnknown))
     @assert(!(ob._oleobj_ != QueryInterface(ob._oleobj_, pythoncom.IID_IUnknown)))
-    @assert(ob._oleobj_ != nothing)
-    @assert(nothing != ob._oleobj_)
-    @assert(ob != nothing)
-    @assert(nothing != ob)
+    @assert(ob._oleobj_ !== nothing)
+    @assert(nothing !== ob._oleobj_)
+    @assert(ob !== nothing)
+    @assert(nothing !== ob)
     if sys.version_info > (3, 0)
         try
             ob < nothing
@@ -522,16 +522,16 @@ function TestObjectSemantics(ob)
 end
 
 function DoTestAll()
-    o = win32com_.client.Dispatch("PyCOMVBTest.Tester")
+    o = Dispatch("PyCOMVBTest.Tester")
     TestObjectSemantics(o)
     TestVB(o, 1)
-    o = win32com_.client.dynamic.DumbDispatch("PyCOMVBTest.Tester")
+    o = DumbDispatch("PyCOMVBTest.Tester")
     TestObjectSemantics(o)
     TestVB(o, 0)
 end
 
 function TestAll()
-    win32com_.client.gencache.EnsureDispatch("PyCOMVBTest.Tester")
+    EnsureDispatch("PyCOMVBTest.Tester")
     if !(__debug__)
         throw(RuntimeError("This must be run in debug mode - we use assert!"))
     end
@@ -540,18 +540,18 @@ function TestAll()
         println("All tests appear to have worked!")
     catch exn
         println("TestAll() failed!!")
-        current_exceptions() != [] ? current_exceptions()[end] : nothing()
+        print_exc()
         error()
     end
 end
 
 function suite()
-    test = util.CapturingFunctionTestCase(TestAll, "VB tests")
-    suite = unittest.TestSuite()
+    test = CapturingFunctionTestCase(TestAll, "VB tests")
+    suite = TestSuite()
     addTest(suite, test)
     return suite
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    util.testmain()
+    testmain()
 end

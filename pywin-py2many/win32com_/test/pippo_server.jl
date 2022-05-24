@@ -48,28 +48,28 @@ function Method3(self::CPippo, in1)::Vector
 end
 
 function BuildTypelib()
-    this_dir = dirname(os.path, __file__)
-    idl = abspath(os.path, join)
+    this_dir = dirname(__file__)
+    idl = abspath(os.path, joinpath(this_dir, "pippo.idl"))
     tlb = splitext(os.path, idl)[1] + ".tlb"
     if newer(idl, tlb)
         @printf("Compiling %s\n", idl)
-        rc = os.system("midl \"%s\"" % (idl,))
+        rc = system("midl \"%s\"" % (idl,))
         if rc
             throw(RuntimeError("Compiling MIDL failed!"))
         end
         for fname in split("dlldata.c pippo_i.c pippo_p.c pippo.h")
-            os.remove(join)
+            remove(joinpath(this_dir, fname))
         end
     end
     @printf("Registering %s\n", tlb)
-    tli = pythoncom.LoadTypeLib(tlb)
-    pythoncom.RegisterTypeLib(tli, tlb)
+    tli = LoadTypeLib(tlb)
+    RegisterTypeLib(tli, tlb)
 end
 
 function UnregisterTypelib()
     k = CPippo
     try
-        pythoncom.UnRegisterTypeLib(
+        UnRegisterTypeLib(
             k._typelib_guid_,
             k._typelib_version_[1],
             k._typelib_version_[2],
@@ -92,16 +92,16 @@ end
 
 function main(argv = nothing)
     if argv === nothing
-        argv = append!([PROGRAM_FILE], ARGS)[2:end]
+        argv = sys.argv[2:end]
     end
     if "--unregister" ∈ argv
         UnregisterTypelib()
     else
         BuildTypelib()
     end
-    win32com_.server.register.UseCommandLine(CPippo)
+    UseCommandLine(CPippo)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main(append!([PROGRAM_FILE], ARGS))
+    main(sys.argv)
 end

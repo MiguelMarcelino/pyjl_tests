@@ -38,7 +38,7 @@ mutable struct ArrayTest <: AbstractArrayTest
     arr
 end
 function setUp(self::ArrayTest)
-    self.arr = gencache.EnsureDispatch("PyCOMTest.ArrayTest")
+    self.arr = EnsureDispatch("PyCOMTest.ArrayTest")
 end
 
 function tearDown(self::ArrayTest)
@@ -92,7 +92,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     try
-        util.testmain()
+        testmain()
     catch exn
         let rc = exn
             if rc isa SystemExit

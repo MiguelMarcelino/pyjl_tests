@@ -48,7 +48,7 @@ mapVTToTypeString = Dict(
 function MakeDefaultArgsForPropertyPut(argsDesc)::Tuple
     ret = []
     for desc in argsDesc[2:end]
-        default = build.MakeDefaultArgRepr(desc)
+        default = MakeDefaultArgRepr(desc)
         if default === nothing
             has_break = true
             break
@@ -91,7 +91,7 @@ end
 function __cmp__(self::WritableItem, other)
     #= Compare for sorting =#
     ret = cmp(self.order, other.order)
-    if ret == 0 && self.doc
+    if ret === 0 && self.doc
         ret = cmp(self.doc[1], other.doc[1])
     end
     return ret
@@ -248,7 +248,7 @@ function WriteEnumerationItems(self::EnumerationItem, stream)::Int64
                         " # This VARIANT type cannot be converted automatically"
                 end
             end
-            write(stream, "$(build.MakePublicAttributeName(name, true))")
+            write(stream, "$(MakePublicAttributeName(name, true))")
             num += 1
         end
     end
@@ -293,7 +293,7 @@ function WriteVTableMap(self::VTableItem, generator)
             if (item_num % 5) == 0
                 write(stream, "\n\t\t\t")
             end
-            defval = build.MakeDefaultArgRepr(arg)
+            defval = MakeDefaultArgRepr(arg)
             if arg[4] === nothing
                 arg3_repr = nothing
             else
@@ -353,10 +353,10 @@ function WriteClassHeader(self::DispatchItem, generator)
     stream = generator.file
     write(stream, "$(("class " + self.python_name))(DispatchBaseClass):")
     if doc[2]
-        write(stream, "\t$(build._makeDocString(doc[2]))")
+        write(stream, "\t$(_makeDocString(doc[2]))")
     end
     try
-        progId = pythoncom.ProgIDFromCLSID(self.clsid)
+        progId = ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -379,10 +379,10 @@ function WriteEventSinkClassHeader(self::DispatchItem, generator)
     stream = generator.file
     write(stream, "$(("class " + self.python_name)):")
     if doc[2]
-        write(stream, "\t$(build._makeDocString(doc[2]))")
+        write(stream, "\t$(_makeDocString(doc[2]))")
     end
     try
-        progId = pythoncom.ProgIDFromCLSID(self.clsid)
+        progId = ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -445,10 +445,10 @@ function WriteCallbackClassBody(self::DispatchItem, generator)
         methName = MakeEventMethodName(entry.names[1])
         write(
             stream,
-            "$(("#\tdef " * methName * "(self" + build.BuildCallList(fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", true)))):",
+            "$(("#\tdef " * methName * "(self" + BuildCallList(fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", true)))):",
         )
         if entry.doc && entry.doc[2]
-            write(stream, "#\t\t$(build._makeDocString(entry.doc[2]))")
+            write(stream, "#\t\t$(_makeDocString(entry.doc[2]))")
         end
     end
     println(stream)
@@ -498,7 +498,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     "$(name) is actually a property, but must be used as a method to correctly pass the arguments",
                 )
             end
-            ret = MakeFuncMethod(self, entry, build.MakePublicAttributeName(name))
+            ret = MakeFuncMethod(self, entry, MakePublicAttributeName(name))
             for line in ret
                 write(stream, "$(line)")
             end
@@ -539,7 +539,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     continue
                 end
             end
-            write(stream, "$(build.MakePublicAttributeName(key))\": $(mapEntry)")
+            write(stream, "$(MakePublicAttributeName(key))\": $(mapEntry)")
         end
     end
     names = collect(keys(self.propMapGet))
@@ -576,7 +576,7 @@ function WriteClassBody(self::DispatchItem, generator)
                     continue
                 end
             end
-            write(stream, "$(build.MakePublicAttributeName(key))\": $(mapEntry)")
+            write(stream, "$(MakePublicAttributeName(key))\": $(mapEntry)")
         end
     end
     write(stream, "\t}")
@@ -588,7 +588,7 @@ function WriteClassBody(self::DispatchItem, generator)
         if generator.bBuildHidden || !(entry.hidden)
             lkey = lower(key)
             details = entry.desc
-            defArgDesc = build.MakeDefaultArgRepr(details[3])
+            defArgDesc = MakeDefaultArgRepr(details[3])
             if defArgDesc === nothing
                 defArgDesc = ""
             else
@@ -596,7 +596,7 @@ function WriteClassBody(self::DispatchItem, generator)
             end
             write(
                 stream,
-                "$(build.MakePublicAttributeName(key))\" : (($(details[1]), 0),($(pythoncom.DISPATCH_PROPERTYPUT)",
+                "$(MakePublicAttributeName(key))\" : (($(details[1]), 0),($(pythoncom.DISPATCH_PROPERTYPUT)",
             )
         end
     end
@@ -609,7 +609,7 @@ function WriteClassBody(self::DispatchItem, generator)
             defArgDesc = MakeDefaultArgsForPropertyPut(details[3])
             write(
                 stream,
-                "$(build.MakePublicAttributeName(key))\": (($(details[1]), 0),$(details[5])",
+                "$(MakePublicAttributeName(key))\": (($(details[1]), 0),$(details[5])",
             )
         end
     end
@@ -641,7 +641,7 @@ function WriteClassBody(self::DispatchItem, generator)
         invkind = pythoncom.DISPATCH_METHOD | pythoncom.DISPATCH_PROPERTYGET
         resultCLSID = "None"
     end
-    if resultCLSID == "None" && "Item" ∈ self.mapFuncs
+    if resultCLSID === "None" && "Item" ∈ self.mapFuncs
         resultCLSID = GetResultCLSIDStr(self.mapFuncs["Item"])
     end
     write(stream, "\tdef __iter__(self):")
@@ -737,7 +737,7 @@ function WriteClass(self::CoClassItem, generator)
         end
     end
     try
-        progId = pythoncom.ProgIDFromCLSID(self.clsid)
+        progId = ProgIDFromCLSID(self.clsid)
         write(stream, "$(progId)\'")
     catch exn
         if exn isa pythoncom.com_error
@@ -949,8 +949,8 @@ function _Build_Interface(self::Generator, type_info_tuple)::Tuple
     info, infotype, doc, attr = type_info_tuple
     oleItem = nothing
     vtableItem = nothing
-    if infotype == pythoncom.TKIND_DISPATCH ||
-       infotype == pythoncom.TKIND_INTERFACE && attr[12] & pythoncom.TYPEFLAG_FDISPATCHABLE
+    if infotype === pythoncom.TKIND_DISPATCH ||
+       infotype === pythoncom.TKIND_INTERFACE && attr[12] & pythoncom.TYPEFLAG_FDISPATCHABLE
         oleItem = DispatchItem(info, attr, doc)
         if attr.wTypeFlags & pythoncom.TYPEFLAG_FDUAL
             refhtype = GetRefTypeOfImplType(info, -1)
@@ -962,7 +962,7 @@ function _Build_Interface(self::Generator, type_info_tuple)::Tuple
         end
     end
     @assert(infotype ∈ [nothing, pythoncom.TKIND_INTERFACE])
-    if infotype == pythoncom.TKIND_INTERFACE
+    if infotype === pythoncom.TKIND_INTERFACE
         vtableItem = VTableItem(info, attr, doc)
     end
     return (oleItem, vtableItem)
@@ -977,23 +977,23 @@ function BuildOleItemsFromType(self::Generator)
     for type_info_tuple in CollectOleItemInfosFromType(self)
         info, infotype, doc, attr = type_info_tuple
         clsid = attr[1]
-        if infotype == pythoncom.TKIND_ENUM || infotype == pythoncom.TKIND_MODULE
+        if infotype === pythoncom.TKIND_ENUM || infotype === pythoncom.TKIND_MODULE
             newItem = EnumerationItem(info, attr, doc)
             enumItems[newItem.doc[1]] = newItem
         elseif infotype ∈ [pythoncom.TKIND_DISPATCH, pythoncom.TKIND_INTERFACE]
             if clsid ∉ oleItems
                 oleItem, vtableItem = _Build_Interface(self, type_info_tuple)
                 oleItems[clsid] = oleItem
-                if vtableItem != nothing
+                if vtableItem !== nothing
                     vtableItems[clsid] = vtableItem
                 end
             end
-        elseif infotype == pythoncom.TKIND_RECORD || infotype == pythoncom.TKIND_UNION
+        elseif infotype === pythoncom.TKIND_RECORD || infotype === pythoncom.TKIND_UNION
             newItem = RecordItem(info, attr, doc)
             recordItems[newItem.clsid] = newItem
-        elseif infotype == pythoncom.TKIND_ALIAS
+        elseif infotype === pythoncom.TKIND_ALIAS
             continue
-        elseif infotype == pythoncom.TKIND_COCLASS
+        elseif infotype === pythoncom.TKIND_COCLASS
             newItem, child_infos = _Build_CoClass(self, type_info_tuple)
             _Build_CoClassChildren(self, newItem, child_infos, oleItems, vtableItems)
             oleItems[newItem.clsid] = newItem
@@ -1012,7 +1012,7 @@ end
 function finish_writer(self::Generator, filename, f, worked)
     close(f)
     try
-        std::fs::remove_file(filename)
+        unlink(filename)
     catch exn
         if exn isa os.error
             #= pass =#
@@ -1021,26 +1021,26 @@ function finish_writer(self::Generator, filename, f, worked)
     temp_filename = get_temp_filename(self, filename)
     if worked
         try
-            os.rename(temp_filename, filename)
+            rename(temp_filename, filename)
         catch exn
             if exn isa os.error
                 try
-                    std::fs::remove_file(filename)
+                    unlink(filename)
                 catch exn
                     if exn isa os.error
                         #= pass =#
                     end
                 end
-                os.rename(temp_filename, filename)
+                rename(temp_filename, filename)
             end
         end
     else
-        std::fs::remove_file(temp_filename)
+        unlink(temp_filename)
     end
 end
 
 function get_temp_filename(self::Generator, filename)
-    return "%s.%d.temp" % (filename, os.getpid())
+    return "%s.%d.temp" % (filename, getpid())
 end
 
 function generate(self::Generator, file, is_for_demand = 0)
@@ -1073,8 +1073,8 @@ function do_gen_file_header(self::Generator)
     if self.sourceFilename
         write(self.file, "$(splitdir(self.sourceFilename)[2])\'")
     end
-    write(self.file, "$(time.ctime(pylib::time()()))")
-    write(self.file, "$(build._makeDocString(docDesc))")
+    write(self.file, "$(ctime(time()))")
+    write(self.file, "$(_makeDocString(docDesc))")
     write(self.file, "makepy_version =$(repr(makepy_version))")
     write(self.file, "$(sys.hexversion)")
     println(self.file)
@@ -1128,7 +1128,7 @@ function do_generate(self::Generator)
         println(stream)
     end
     if self.generate_type == GEN_FULL
-        items = [l for l in values(oleItems) if l != nothing]
+        items = [l for l in values(oleItems) if l !== nothing]
         sort(items)
         for oleitem in items
             Tick(self.progress)
@@ -1156,7 +1156,7 @@ function do_generate(self::Generator)
     if self.generate_type == GEN_FULL
         write(stream, "CLSIDToClassMap = {")
         for item in values(oleItems)
-            if item != nothing && item.bWritten
+            if item !== nothing && item.bWritten
                 write(stream, "$(string(item.clsid))\' : $(item.python_name)")
             end
         end
@@ -1177,7 +1177,7 @@ function do_generate(self::Generator)
         write(stream, "CLSIDToClassMap = {}")
         write(stream, "CLSIDToPackageMap = {")
         for item in values(oleItems)
-            if item != nothing
+            if item !== nothing
                 write(stream, "$(string(item.clsid))\' : $(repr(item.python_name))")
             end
         end
@@ -1193,7 +1193,7 @@ function do_generate(self::Generator)
     println(stream)
     map = OrderedDict()
     for item in values(oleItems)
-        if item != nothing && !isa(item, CoClassItem)
+        if item !== nothing && !isa(item, CoClassItem)
             map[item.python_name] = item.clsid
         end
     end
@@ -1229,12 +1229,12 @@ function generate_child(self::Generator, child, dir)
         found = 0
         for type_info_tuple in infos
             info, infotype, doc, attr = type_info_tuple
-            if infotype == pythoncom.TKIND_COCLASS
+            if infotype === pythoncom.TKIND_COCLASS
                 coClassItem, child_infos = _Build_CoClass(self, type_info_tuple)
-                found = build.MakePublicAttributeName(doc[1]) == child
+                found = MakePublicAttributeName(doc[1]) == child
                 if !(found)
                     for (info, info_type, refType, doc, refAttr, flags) in child_infos
-                        if build.MakePublicAttributeName(doc[1]) == child
+                        if MakePublicAttributeName(doc[1]) == child
                             found = 1
                             has_break = true
                             break
@@ -1259,11 +1259,11 @@ function generate_child(self::Generator, child, dir)
             for type_info_tuple in infos
                 info, infotype, doc, attr = type_info_tuple
                 if infotype ∈ [pythoncom.TKIND_INTERFACE, pythoncom.TKIND_DISPATCH]
-                    if build.MakePublicAttributeName(doc[1]) == child
+                    if MakePublicAttributeName(doc[1]) == child
                         found = 1
                         oleItem, vtableItem = _Build_Interface(self, type_info_tuple)
                         oleItems[clsid] = oleItem
-                        if vtableItem != nothing
+                        if vtableItem !== nothing
                             vtableItems[clsid] = vtableItem
                         end
                     end
@@ -1277,7 +1277,7 @@ function generate_child(self::Generator, child, dir)
         end
         for (key, value) in collect(vtableItems)
             existing = get(items, key, nothing)
-            if existing != nothing
+            if existing !== nothing
                 new_val = (existing[1], value)
             else
                 new_val = (nothing, value)
@@ -1288,14 +1288,14 @@ function generate_child(self::Generator, child, dir)
         for (oleitem, vtableitem) in values(items)
             an_item = oleitem || vtableitem
             @assert(!(self.file))
-            out_name = join + ".py"
+            out_name = joinpath(dir, an_item.python_name) + ".py"
             worked = false
             self.file = open_writer(self, out_name)
             try
-                if oleitem != nothing
+                if oleitem !== nothing
                     do_gen_child_item(self, oleitem)
                 end
-                if vtableitem != nothing
+                if vtableitem !== nothing
                     do_gen_child_item(self, vtableitem)
                 end
                 Tick(self.progress)

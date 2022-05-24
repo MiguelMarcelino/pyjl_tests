@@ -7,8 +7,8 @@ abstract type AbstractTestROT <: win32com_.test.util.TestCase end
 mutable struct TestROT <: AbstractTestROT
 end
 function testit(self::TestROT)
-    ctx = pythoncom.CreateBindCtx()
-    rot = pythoncom.GetRunningObjectTable()
+    ctx = CreateBindCtx()
+    rot = GetRunningObjectTable()
     num = 0
     for mk in rot
         name = GetDisplayName(mk, ctx, nothing)

@@ -8,9 +8,9 @@ expected_output = "The jscript test worked.\nThe Python test worked"
 mutable struct XSLT <: AbstractXSLT
 end
 function testAll(self::XSLT)
-    output_name = tempfile.mktemp("-pycom-test")
+    output_name = mktemp("-pycom-test")
     cmd = "cscript //nologo testxslt.js doesnt_matter.xml testxslt.xsl " + output_name
-    win32com_.test.util.ExecuteShellCommand(cmd, self)
+    ExecuteShellCommand(cmd, self)
     try
         f = open(output_name)
         try
@@ -24,7 +24,7 @@ function testAll(self::XSLT)
         end
     finally
         try
-            std::fs::remove_file(output_name)
+            unlink(output_name)
         catch exn
             if exn isa os.error
                 #= pass =#

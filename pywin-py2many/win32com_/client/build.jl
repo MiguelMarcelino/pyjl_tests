@@ -11,9 +11,9 @@ dynamically, or possibly even generate .html documentation for objects.
  =#
 using PyCall
 using StringEncodings
-datetime = pyimport("datetime")
-pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
+pythoncom = pyimport("pythoncom")
+datetime = pyimport("datetime")
 
 import win32com_.ext_modules.string as string
 
@@ -177,7 +177,7 @@ end
 function _propMapPutCheck_(self::DispatchItem, key::String, item::MapEntry)
     ins, outs, opts = CountInOutOptArgs(self, item.desc[3])
     if ins > 1
-        if (opts + 1) === ins || ins == (item.desc[7] + 1)
+        if (opts + 1) === ins || ins === (item.desc[7] + 1)
             newKey = "Set" * key
             deleteExisting = 0
         else
@@ -261,7 +261,7 @@ function _AddFunc_(self::DispatchItem, typeinfo, fdesc, bForUser)::Tuple
         map = self.propMapGet
     elseif invkind ∈ (pythoncom.INVOKE_PROPERTYPUT, pythoncom.INVOKE_PROPERTYPUTREF)
         existing = get(self.propMapPut, name, nothing)
-        if existing != nothing
+        if existing !== nothing
             if existing.desc[5] == pythoncom.INVOKE_PROPERTYPUT
                 map = self.mapFuncs
                 name = "Set" * name
@@ -363,7 +363,7 @@ function CountInOutOptArgs(self::DispatchItem, argTuple)
 end
 
 function MakeFuncMethod(self::DispatchItem, entry, name, bMakeClass = 1)::Vector
-    if entry.desc != nothing && length(entry.desc) < 6 || entry.desc[7] != -1
+    if entry.desc !== nothing && length(entry.desc) < 6 || entry.desc[7] != -1
         return MakeDispatchFuncMethod(self, entry, name, bMakeClass)
     else
         return MakeVarArgsFuncMethod(self, entry, name, bMakeClass)
@@ -521,7 +521,7 @@ mutable struct VTableItem <: AbstractVTableItem
 end
 function Build(self::VTableItem, typeinfo, attr, bForUser = 1)
     DispatchItem.Build(self, typeinfo, attr, bForUser)
-    @assert(typeinfo != nothing)
+    @assert(typeinfo !== nothing)
     meth_list = append!(
         append!(collect(values(self.mapFuncs)), collect(values(self.propMapGet))),
         collect(values(self.propMapPut)),
@@ -551,7 +551,7 @@ typeSubstMap = Dict(
 function _ResolveType(typerepr, itypeinfo)::Tuple
     if type_(typerepr) == tuple
         indir_vt, subrepr = typerepr
-        if indir_vt == pythoncom.VT_PTR
+        if indir_vt === pythoncom.VT_PTR
             was_user = type_(subrepr) == tuple && subrepr[1] == pythoncom.VT_USERDEFINED
             subrepr, sub_clsid, sub_doc = _ResolveType(subrepr, itypeinfo)
             if was_user &&
@@ -560,14 +560,14 @@ function _ResolveType(typerepr, itypeinfo)::Tuple
             end
             return (subrepr | pythoncom.VT_BYREF, sub_clsid, sub_doc)
         end
-        if indir_vt == pythoncom.VT_SAFEARRAY
+        if indir_vt === pythoncom.VT_SAFEARRAY
             subrepr, sub_clsid, sub_doc = _ResolveType(subrepr, itypeinfo)
             return (pythoncom.VT_ARRAY | subrepr, sub_clsid, sub_doc)
         end
-        if indir_vt == pythoncom.VT_CARRAY
+        if indir_vt === pythoncom.VT_CARRAY
             return (pythoncom.VT_CARRAY, nothing, nothing)
         end
-        if indir_vt == pythoncom.VT_USERDEFINED
+        if indir_vt === pythoncom.VT_USERDEFINED
             try
                 resultTypeInfo = GetRefTypeInfo(itypeinfo, subrepr)
             catch exn
@@ -643,13 +643,13 @@ function MakePublicAttributeName(className, is_global = false)::Any
         className = "NONE"
     elseif iskeyword(className)
         ret = capitalize(className)
-        if ret == className
+        if ret === className
             ret = upper(ret)
         end
         return ret
     elseif is_global && hasfield(typeof(__builtins__), :className)
         ret = capitalize(className)
-        if ret == className
+        if ret === className
             ret = upper(ret)
         end
         return ret
@@ -670,7 +670,7 @@ function MakeDefaultArgRepr(defArgVal)::String
         if isa(val, datetime.datetime)
             return repr(tuple(utctimetuple(val)))
         end
-        if type_(val) == TimeType
+        if type_(val) === TimeType
             year = val.year
             month = val.month
             day = val.day
@@ -708,7 +708,7 @@ function BuildCallList(
     for arg = 0:numArgs-1
         try
             argName = names[arg+2]
-            namedArg = argName != nothing
+            namedArg = argName !== nothing
         catch exn
             if exn isa IndexError
                 namedArg = 0

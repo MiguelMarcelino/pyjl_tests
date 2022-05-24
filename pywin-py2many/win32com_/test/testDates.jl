@@ -1,6 +1,6 @@
 using PyCall
-datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
+datetime = pyimport("datetime")
 
 import win32com_.client
 import win32com_.test.util
@@ -19,7 +19,7 @@ function TestDate(self::Tester, d)
 end
 
 function test_ob()
-    return win32com_.client.Dispatch(win32com_.server.util.wrap(Tester()))
+    return Dispatch(wrap(Tester()))
 end
 
 mutable struct TestCase <: AbstractTestCase
@@ -33,18 +33,18 @@ function check(self::TestCase, d, expected = nothing)
 end
 
 function testUTC(self::TestCase)
-    check(self, datetime(2000, 12, 25, 500000, TimeZoneInfo.utc()))
+    check(self, datetime(2000, 12, 25, 500000, utc()))
 end
 
 function testLocal(self::TestCase)
-    check(self, datetime(2000, 12, 25, 500000, TimeZoneInfo.local()))
+    check(self, datetime(2000, 12, 25, 500000, local_()))
 end
 
 function testMSTruncated(self::TestCase)
     check(
         self,
-        datetime(2000, 12, 25, 500500, TimeZoneInfo.utc()),
-        datetime(2000, 12, 25, 500000, TimeZoneInfo.utc()),
+        datetime(2000, 12, 25, 500500, utc()),
+        datetime(2000, 12, 25, 500000, utc()),
     )
 end
 

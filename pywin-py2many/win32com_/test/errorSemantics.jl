@@ -38,7 +38,7 @@ function Commit(self::TestServer, flags)
         throw(Exception("😀"))
     end
     excepinfo = (winerror.E_UNEXPECTED, "source", "😀", "helpfile", 1, winerror.E_FAIL)
-    throw(pythoncom.com_error(winerror.E_UNEXPECTED, "desc", excepinfo, nothing))
+    throw(com_error(winerror.E_UNEXPECTED, "desc", excepinfo, nothing))
 end
 
 function test()
@@ -259,7 +259,7 @@ catch exn
         logging = nothing
     end
 end
-if logging != nothing
+if logging !== nothing
     mutable struct TestLogHandler <: AbstractTestLogHandler
         num_emits::Int64
         last_record
@@ -287,9 +287,9 @@ if logging != nothing
     function testLogger()
         @assert(!hasfield(typeof(win32com_), :logger))
         handler = TestLogHandler()
-        formatter = logging.Formatter("%(message)s")
+        formatter = Formatter("%(message)s")
         setFormatter(handler, formatter)
-        log = logging.getLogger("win32com_test")
+        log = getLogger("win32com_test")
         addHandler(log, handler)
         win32com_.logger = log
         com_server = wrap(TestServer(), pythoncom.IID_IStream)
@@ -330,7 +330,7 @@ if logging != nothing
 end
 if abspath(PROGRAM_FILE) == @__FILE__
     test()
-    if logging != nothing
+    if logging !== nothing
         testLogger()
     end
     CheckClean()

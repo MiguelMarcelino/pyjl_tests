@@ -14,7 +14,7 @@ function SetupEnvironment()
     KEY_QUERY_VALUE = 1
     try
         keyName = "SOFTWARE\\Python\\PythonCore\\%s\\PythonPath\\win32com_" % sys.winver
-        key = win32api.RegOpenKey(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE)
+        key = RegOpenKey(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE)
     catch exn
         if exn isa (win32api.error, AttributeError)
             key = nothing
@@ -22,9 +22,9 @@ function SetupEnvironment()
     end
     try
         found = 0
-        if key != nothing
+        if key !== nothing
             try
-                append(__path__, win32api.RegQueryValue(key, "Extensions"))
+                append(__path__, RegQueryValue(key, "Extensions"))
                 found = 1
             catch exn
                 if exn isa win32api.error
@@ -34,10 +34,7 @@ function SetupEnvironment()
         end
         if !(found) != 0
             try
-                append(
-                    __path__,
-                    win32api.GetFullPathName(__path__[1] + "\\..\\win32comext"),
-                )
+                append(__path__, GetFullPathName(__path__[1] + "\\..\\win32comext"))
             catch exn
                 if exn isa win32api.error
                     #= pass =#
@@ -45,9 +42,9 @@ function SetupEnvironment()
             end
         end
         try
-            if key != nothing
+            if key !== nothing
                 global __build_path__
-                __build_path__ = win32api.RegQueryValue(key, "BuildPath")
+                __build_path__ = RegQueryValue(key, "BuildPath")
                 append(__path__, __build_path__)
             end
         catch exn
@@ -56,9 +53,9 @@ function SetupEnvironment()
             end
         end
         global __gen_path__
-        if key != nothing
+        if key !== nothing
             try
-                __gen_path__ = win32api.RegQueryValue(key, "GenPath")
+                __gen_path__ = RegQueryValue(key, "GenPath")
             catch exn
                 if exn isa win32api.error
                     #= pass =#
@@ -66,7 +63,7 @@ function SetupEnvironment()
             end
         end
     finally
-        if key != nothing
+        if key !== nothing
             Close(key)
         end
     end
@@ -85,15 +82,19 @@ if !(__gen_path__)
     try
     catch exn
         if exn isa ImportError
-            __gen_path__ = abspath(os.path, join)
-            if !isdir(os.path, __gen_path__)
-                __gen_path__ = join
+            __gen_path__ = abspath(os.path, joinpath(__path__[1], "gen_py"))
+            if !isdir(__gen_path__)
+                __gen_path__ = joinpath(
+                    GetTempPath(),
+                    "gen_py",
+                    "%d.%d" % (sys.version_info[1], sys.version_info[2]),
+                )
             end
         end
     end
 end
 if "win32com_.gen_py" ∉ sys.modules
-    gen_py = types.ModuleType("win32com_.gen_py")
+    gen_py = ModuleType("win32com_.gen_py")
     gen_py.__path__ = [__gen_path__]
     sys.modules[gen_py.__name__+1] = gen_py
     #Delete Unsupported

@@ -55,12 +55,12 @@ function TestInterpInThread(stopEvent, cookie)
     try
         DoTestInterpInThread(cookie)
     finally
-        win32event.SetEvent(stopEvent)
+        SetEvent(stopEvent)
     end
 end
 
 function CreateGIT()
-    return pythoncom.CoCreateInstance(
+    return CoCreateInstance(
         pythoncom.CLSID_StdGlobalInterfaceTable,
         nothing,
         pythoncom.CLSCTX_INPROC,
@@ -70,11 +70,11 @@ end
 
 function DoTestInterpInThread(cookie)
     try
-        pythoncom.CoInitialize()
-        myThread = win32api.GetCurrentThreadId()
+        CoInitialize()
+        myThread = GetCurrentThreadId()
         GIT = CreateGIT()
         interp = GetInterfaceFromGlobal(GIT, cookie, pythoncom.IID_IDispatch)
-        interp = win32com_.client.Dispatch(interp)
+        interp = Dispatch(interp)
         TestInterp(interp)
         Exec(interp, "import win32api")
         @printf(
@@ -83,9 +83,9 @@ function DoTestInterpInThread(cookie)
             Eval(interp, "win32api.GetCurrentThreadId()")
         )
         interp = nothing
-        pythoncom.CoUninitialize()
+        CoUninitialize()
     catch exn
-        current_exceptions() != [] ? current_exceptions()[end] : nothing()
+        print_exc()
     end
 end
 
@@ -98,28 +98,23 @@ function BeginThreadsSimpleMarshal(numThreads, cookie)::Vector
          =#
     ret = []
     for i = 0:numThreads-1
-        hEvent = win32event.CreateEvent(nothing, 0, 0, nothing)
-        _thread.start_new(TestInterpInThread, (hEvent, cookie))
+        hEvent = CreateEvent(nothing, 0, 0, nothing)
+        start_new(TestInterpInThread, (hEvent, cookie))
         push!(ret, hEvent)
     end
     return ret
 end
 
 function test(fn)
-    @printf("The main thread is %d\n", win32api.GetCurrentThreadId())
+    @printf("The main thread is %d\n", GetCurrentThreadId())
     GIT = CreateGIT()
-    interp = win32com_.client.Dispatch("Python.Interpreter")
+    interp = Dispatch("Python.Interpreter")
     cookie = RegisterInterfaceInGlobal(GIT, interp._oleobj_, pythoncom.IID_IDispatch)
     events = fn(4, cookie)
     numFinished = 0
     while true
         try
-            rc = win32event.MsgWaitForMultipleObjects(
-                events,
-                0,
-                2000,
-                win32event.QS_ALLINPUT,
-            )
+            rc = MsgWaitForMultipleObjects(events, 0, 2000, win32event.QS_ALLINPUT)
             if rc >= win32event.WAIT_OBJECT_0 &&
                rc < (win32event.WAIT_OBJECT_0 + length(events))
                 numFinished = numFinished + 1
@@ -128,12 +123,12 @@ function test(fn)
                     break
                 end
             elseif rc == (win32event.WAIT_OBJECT_0 + length(events))
-                pythoncom.PumpWaitingMessages()
+                PumpWaitingMessages()
             else
                 @printf(
                     "Waiting for thread to stop with interfaces=%d, gateways=%d\n",
-                    pythoncom._GetInterfaceCount(),
-                    pythoncom._GetGatewayCount()
+                    _GetInterfaceCount(),
+                    _GetGatewayCount()
                 )
             end
         catch exn
@@ -151,13 +146,13 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     test(BeginThreadsSimpleMarshal)
-    win32api.Sleep(500)
-    pythoncom.CoUninitialize()
-    if pythoncom._GetInterfaceCount() != 0 || pythoncom._GetGatewayCount() != 0
+    Sleep(500)
+    CoUninitialize()
+    if _GetInterfaceCount() != 0 || _GetGatewayCount() != 0
         @printf(
             "Done with interfaces=%d, gateways=%d\n",
-            pythoncom._GetInterfaceCount(),
-            pythoncom._GetGatewayCount()
+            _GetInterfaceCount(),
+            _GetGatewayCount()
         )
     else
         println("Done.")

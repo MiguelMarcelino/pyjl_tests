@@ -885,9 +885,7 @@ mutable struct Argument <: AbstractArgument
         raw_type,
         type_,
         unc_type,
-        regex = re.compile(
-            "/\\* \\[([^\\]]*.*?)] \\*/[ \\t](.*[* ]+)(\\w+)(\\[ *])?[\\),]",
-        ),
+        regex = compile("/\\* \\[([^\\]]*.*?)] \\*/[ \\t](.*[* ]+)(\\w+)(\\[ *])?[\\),]"),
     ) = new(
         arrayDecl,
         const_,
@@ -996,7 +994,7 @@ mutable struct Method <: AbstractMethod
         good_interface_names,
         name,
         result,
-        regex = re.compile("virtual (/\\*.*?\\*/ )?(.*?) (.*?) (.*?)\\(\\w?"),
+        regex = compile("virtual (/\\*.*?\\*/ )?(.*?) (.*?) (.*?)\\(\\w?"),
     ) = new(args, callconv, good_interface_names, name, result, regex)
 end
 function BuildFromFile(self::Method, file)
@@ -1045,7 +1043,7 @@ mutable struct Interface <: AbstractInterface
     name
     regex
 
-    Interface(mo, regex = re.compile("(interface|) ([^ ]*) : public (.*)\$")) = begin
+    Interface(mo, regex = compile("(interface|) ([^ ]*) : public (.*)\$")) = begin
         if VERBOSE
             @printf("Interface %s : public %s\n", name, base)
         end
@@ -1085,7 +1083,7 @@ function find_interface(interfaceName, file)
             name = group(mo, 2)
             println(name)
             AllConverters[name] = (ArgFormatterInterface, 0, 1)
-            if name == interfaceName
+            if name === interfaceName
                 interface = Interface(mo)
                 BuildMethods(interface, file)
             end
@@ -1109,7 +1107,7 @@ function parse_interface_info(interfaceName, file)
         return find_interface(interfaceName, file)
     catch exn
         if exn isa re.error
-            current_exceptions() != [] ? current_exceptions()[end] : nothing()
+            print_exc()
             println("The interface could not be built, as the regular expression failed!")
         end
     end

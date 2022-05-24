@@ -41,7 +41,7 @@ function Resolve(self::TypelibSpec)::Int64
     if self.dll === nothing
         return 0
     end
-    tlb = pythoncom.LoadTypeLib(self.dll)
+    tlb = LoadTypeLib(self.dll)
     FromTypelib(self, tlb, nothing)
     return 1
 end
@@ -62,14 +62,14 @@ function EnumKeys(root)::Vector
     ret = []
     while true
         try
-            item = win32api.RegEnumKey(root, index)
+            item = RegEnumKey(root, index)
         catch exn
             if exn isa win32api.error
                 break
             end
         end
         try
-            val = win32api.RegQueryValue(root, item)
+            val = RegQueryValue(root, item)
         catch exn
             if exn isa win32api.error
                 val = ""
@@ -86,12 +86,12 @@ FLAG_CONTROL = 2
 FLAG_HIDDEN = 4
 function EnumTlbs(excludeFlags = 0)::Vector
     #= Return a list of TypelibSpec objects, one for each registered library. =#
-    key = win32api.RegOpenKey(win32con.HKEY_CLASSES_ROOT, "Typelib")
+    key = RegOpenKey(win32con.HKEY_CLASSES_ROOT, "Typelib")
     iids = EnumKeys(key)
     results = []
     for (iid, crap) in iids
         try
-            key2 = win32api.RegOpenKey(key, string(iid))
+            key2 = RegOpenKey(key, string(iid))
         catch exn
             if exn isa win32api.error
                 continue
@@ -104,9 +104,9 @@ function EnumTlbs(excludeFlags = 0)::Vector
             end
             major = major_minor[1]
             minor = major_minor[2]
-            key3 = win32api.RegOpenKey(key2, string(version))
+            key3 = RegOpenKey(key2, string(version))
             try
-                flags = parse(Int, win32api.RegQueryValue(key3, "FLAGS"))
+                flags = parse(Int, RegQueryValue(key3, "FLAGS"))
             catch exn
                 if exn isa (win32api.error, ValueError)
                     flags = 0
@@ -122,11 +122,11 @@ function EnumTlbs(excludeFlags = 0)::Vector
                         end
                     end
                     try
-                        key4 = win32api.RegOpenKey(key3, "%s\\win32" % (lcid,))
+                        key4 = RegOpenKey(key3, "%s\\win32" % (lcid,))
                     catch exn
                         if exn isa win32api.error
                             try
-                                key4 = win32api.RegOpenKey(key3, "%s\\win64" % (lcid,))
+                                key4 = RegOpenKey(key3, "%s\\win64" % (lcid,))
                             catch exn
                                 if exn isa win32api.error
                                     continue
@@ -135,9 +135,9 @@ function EnumTlbs(excludeFlags = 0)::Vector
                         end
                     end
                     try
-                        dll, typ = win32api.RegQueryValueEx(key4, nothing)
-                        if typ == win32con.REG_EXPAND_SZ
-                            dll = win32api.ExpandEnvironmentStrings(dll)
+                        dll, typ = RegQueryValueEx(key4, nothing)
+                        if typ === win32con.REG_EXPAND_SZ
+                            dll = ExpandEnvironmentStrings(dll)
                         end
                     catch exn
                         if exn isa win32api.error
@@ -176,7 +176,7 @@ function SelectTlb(title = "Select Library", excludeFlags = 0)::Vector
         i.minor = parse(Int, i.minor)
     end
     sort(items)
-    rc = collect(win32com.gen_py.dialogs).SelectFromLists(title, items, ["Type Library"])
+    rc = SelectFromLists(title, items, ["Type Library"])
     if rc === nothing
         return nothing
     end

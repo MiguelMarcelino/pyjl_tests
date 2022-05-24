@@ -11,10 +11,10 @@ try
     this_file = __file__
 catch exn
     if exn isa NameError
-        this_file = append!([PROGRAM_FILE], ARGS)[1]
+        this_file = sys.argv[1]
     end
 end
-win32com_src_dir = abspath(os.path, join)
+win32com_src_dir = abspath(os.path, joinpath(this_file, "../.."))
 import win32com_
 win32com_.__path__[1] = win32com_src_dir
 abstract type AbstractPyCOMTest <: TestCase end
@@ -31,28 +31,28 @@ using win32com_.test.util:
     RegisterPythonServer
 verbosity = 1
 function GenerateAndRunOldStyle()
-    GenTestScripts.GenerateAll()
+    GenerateAll()
     try
         #= pass =#
     finally
-        GenTestScripts.CleanAll()
+        CleanAll()
     end
 end
 
 function CleanGenerated()
-    if isdir(os.path, win32com_.__gen_path__)
+    if isdir(win32com_.__gen_path__)
         if verbosity > 1
             @printf("Deleting files from %s\n", win32com_.__gen_path__)
         end
-        shutil.rmtree(win32com_.__gen_path__)
+        rmtree(win32com_.__gen_path__)
     end
-    win32com_.client.gencache.__init__()
+    __init__()
 end
 
 function RemoveRefCountOutput(data)::String
     while true
         last_line_pos = rfind(data, "\n")
-        if !re.match("\\[\\d+ refs\\]", data[last_line_pos+2:end])
+        if !match("\\[\\d+ refs\\]", data[last_line_pos+2:end])
             has_break = true
             break
         end
@@ -65,7 +65,7 @@ function RemoveRefCountOutput(data)::String
 end
 
 function ExecuteSilentlyIfOK(cmd, testcase)::String
-    f = os.popen(cmd)
+    f = popen(cmd)
     data = strip(read(f))
     rc = close(f)
     if rc
@@ -81,8 +81,11 @@ mutable struct PyCOMTest <: AbstractPyCOMTest
     PyCOMTest(no_leak_tests::Bool = true) = new(no_leak_tests)
 end
 function testit(self::PyCOMTest)
-    RegisterPythonServer(join, "Python.Test.PyCOMTest")
-    fname = join
+    RegisterPythonServer(
+        joinpath(dirname(__file__), "..", "servers", "test_pycomtest.py"),
+        "Python.Test.PyCOMTest",
+    )
+    fname = joinpath(dirname(this_file), "testPyComTest.py")
     cmd = "%s \"%s\" -q 2>&1" % (sys.executable, fname)
     data = ExecuteSilentlyIfOK(cmd, self)
 end
@@ -92,7 +95,7 @@ end
 function testit(self::PippoTest)
     RegisterPythonServer(pippo_server.__file__, "Python.Test.Pippo")
     python = sys.executable
-    fname = join
+    fname = joinpath(dirname(this_file), "testPippo.py")
     cmd = "%s \"%s\" 2>&1" % (python, fname)
     ExecuteSilentlyIfOK(cmd, self)
 end
@@ -133,7 +136,7 @@ function get_test_mod_and_func(test_name, import_failures)::Tuple
         __import__(fq_mod_name)
         mod = sys.modules[fq_mod_name+1]
     catch exn
-        append(import_failures, (mod_name, sys.exc_info()[begin:2]))
+        append(import_failures, (mod_name, exc_info()[begin:2]))
         return (nothing, nothing)
     end
     func = func_name === nothing ? (nothing) : (getfield(mod, :func_name))
@@ -141,7 +144,7 @@ function get_test_mod_and_func(test_name, import_failures)::Tuple
 end
 
 function make_test_suite(test_level = 1)
-    suite = unittest.TestSuite()
+    suite = TestSuite()
     import_failures = []
     loader = TestLoader()
     for i = 0:testLevel-1
@@ -150,7 +153,7 @@ function make_test_suite(test_level = 1)
             if mod === nothing
                 throw(Exception("no such module \'$()\'"))
             end
-            if func != nothing
+            if func !== nothing
                 test = CapturingFunctionTestCase(func, mod_name)
             elseif hasfield(typeof(mod), :suite)
                 test = suite(mod)
@@ -172,7 +175,7 @@ function make_test_suite(test_level = 1)
             try
                 __import__(mod_name)
             catch exn
-                push!(import_failures, (mod_name, sys.exc_info()[begin:2]))
+                push!(import_failures, (mod_name, exc_info()[begin:2]))
                 continue
             end
             mod = sys.modules[mod_name+1]
@@ -195,12 +198,12 @@ function usage(why)
     println("usage: testall [-v] test_level")
     println("  where test_level is an integer 1-3.  Level 1 tests are quick,")
     println("  level 2 tests invoke Word, IE etc, level 3 take ages!")
-    quit(1)
+    exit(1)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     try
-        opts, args = getopt.getopt(append!([PROGRAM_FILE], ARGS)[2:end], "v")
+        opts, args = getopt(sys.argv[2:end], "v")
     catch exn
         let why = exn
             if why isa getopt.error
@@ -255,7 +258,7 @@ if abspath(PROGRAM_FILE) == @__FILE__
             "*** The following test modules could not be imported ***",
         )
         for (mod_name, (exc_type, exc_val)) in import_failures
-            desc = join(traceback.format_exception_only(exc_type, exc_val), "\n")
+            desc = join(format_exception_only(exc_type, exc_val), "\n")
             write(testResult.stream, "%s: %s" % (mod_name, desc))
         end
         writeln(
@@ -267,9 +270,9 @@ if abspath(PROGRAM_FILE) == @__FILE__
         println("- unittest tests FAILED")
     end
     CheckClean()
-    pythoncom.CoUninitialize()
+    CoUninitialize()
     CleanGenerated()
     if !wasSuccessful(testResult)
-        quit(1)
+        exit(1)
     end
 end

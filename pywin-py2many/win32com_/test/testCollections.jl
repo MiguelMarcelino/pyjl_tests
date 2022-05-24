@@ -1,6 +1,6 @@
 using PyCall
-pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
+pythoncom = pyimport("pythoncom")
 
 import win32com_.server.util
 import win32com_.test.util
@@ -12,14 +12,14 @@ abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 
 error = "collection test error"
 function MakeEmptyEnum()
-    o = win32com_.server.util.wrap(win32com_.server.util.Collection())
-    return win32com_.client.Dispatch(o)
+    o = wrap(Collection())
+    return Dispatch(o)
 end
 
 function MakeTestEnum()
-    sub = win32com_.server.util.wrap(win32com_.server.util.Collection(["Sub1", 2, "Sub3"]))
-    o = win32com_.server.util.wrap(win32com_.server.util.Collection([1, "Two", 3, sub]))
-    return win32com_.client.Dispatch(o)
+    sub = wrap(Collection(["Sub1", 2, "Sub3"]))
+    o = wrap(Collection([1, "Two", 3, sub]))
+    return Dispatch(o)
 end
 
 function TestEnumAgainst(o, check)
@@ -64,7 +64,7 @@ end
 
 function TestEnum(quiet = nothing)
     if quiet === nothing
-        quiet = !("-v" ∈ append!([PROGRAM_FILE], ARGS))
+        quiet = !("-v" ∈ sys.argv)
     end
     if !(quiet)
         println("Simple enum test")

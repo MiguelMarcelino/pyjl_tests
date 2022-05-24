@@ -68,11 +68,11 @@ function TestObjectFromWindow()
     msg = RegisterWindowMessage(win32gui, "WM_HTML_GETOBJECT")
     rc, result =
         SendMessageTimeout(win32gui, hwnd, msg, 0, 0, win32con.SMTO_ABORTIFHUNG, 1000)
-    ob = pythoncom.ObjectFromLresult(result, pythoncom.IID_IDispatch, 0)
+    ob = ObjectFromLresult(result, pythoncom.IID_IDispatch, 0)
     doc = Dispatch(ob)
     for color in split("red green blue orange white")
         doc.bgColor = color
-        time.sleep(0.2)
+        sleep(0.2)
     end
 end
 
@@ -80,11 +80,11 @@ function TestExplorer(iexplore)
     if !(iexplore.Visible)
         iexplore.Visible = -1
     end
-    filename = join
-    Navigate(iexplore, win32api.GetFullPathName(filename))
-    win32api.Sleep(1000)
+    filename = joinpath(dirname(__file__), "..\\readme.html")
+    Navigate(iexplore, GetFullPathName(filename))
+    Sleep(1000)
     TestObjectFromWindow()
-    win32api.Sleep(3000)
+    Sleep(3000)
     try
         Quit(iexplore)
     catch exn
@@ -98,7 +98,7 @@ function TestAll()
     try
         try
             try
-                iexplore = win32com_.client.dynamic.Dispatch("InternetExplorer.Application")
+                iexplore = Dispatch("InternetExplorer.Application")
             catch exn
                 let exc = exn
                     if exc isa pythoncom.com_error
@@ -111,11 +111,11 @@ function TestAll()
                 end
             end
             TestExplorer(iexplore)
-            win32api.Sleep(1000)
+            Sleep(1000)
             iexplore = nothing
             TestExplorerEvents()
-            time.sleep(2)
-            gencache.EnsureModule("{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 0, 1, 1)
+            sleep(2)
+            EnsureModule("{EAB22AC0-30C1-11CF-A7EB-0000C05BAE0B}", 0, 1, 1)
             iexplore = Dispatch(win32com_.client, "InternetExplorer.Application")
             TestExplorer(iexplore)
         catch exn

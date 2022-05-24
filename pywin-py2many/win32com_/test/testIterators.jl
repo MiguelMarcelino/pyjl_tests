@@ -84,7 +84,7 @@ end
 
 mutable struct VBTestCase <: AbstractVBTestCase
     object
-    expected_data::Vector{Union{Int64, String}}
+    expected_data::Vector{Union{String, Int64}}
     iter_factory
 end
 function setUp(self::VBTestCase)
@@ -115,11 +115,11 @@ mutable struct SomeObject <: AbstractSomeObject
         new(data, _public_methods_)
 end
 function GetCollection(self::SomeObject)
-    return win32com_.server.util.NewCollection(self.data)
+    return NewCollection(self.data)
 end
 
 mutable struct WrappedPythonCOMServerTestCase <: AbstractWrappedPythonCOMServerTestCase
-    expected_data::Vector{Union{Int64, String}}
+    expected_data::Vector{Union{String, Int64}}
     object
     iter_factory
 end
@@ -132,7 +132,7 @@ function setUp(self::WrappedPythonCOMServerTestCase)
     end
 
     self.expected_data = [1, "Two", 3]
-    sv = win32com_.server.util.wrap(SomeObject(self.expected_data))
+    sv = wrap(SomeObject(self.expected_data))
     self.object = Dispatch(sv)
     self.iter_factory = factory
 end
@@ -142,12 +142,12 @@ function tearDown(self::WrappedPythonCOMServerTestCase)
 end
 
 function suite()
-    suite = unittest.TestSuite()
+    suite = TestSuite()
     for item in collect(values(globals()))
         if type_(item) == type_(unittest.TestCase) &&
            item <: unittest.TestCase &&
            item != _BaseTestCase
-            addTest(suite, unittest.makeSuite(item))
+            addTest(suite, makeSuite(item))
         end
     end
     return suite

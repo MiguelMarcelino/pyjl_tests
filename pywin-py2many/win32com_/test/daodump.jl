@@ -57,15 +57,15 @@ end
 
 function DumpContainerDocuments(container)
     for doc in container.Documents
-        timeStr = time.ctime(parse(Int, doc.LastUpdated))
+        timeStr = ctime(parse(Int, doc.LastUpdated))
         print("$(doc.Name) - updated $(timeStr)")
         println("$(doc.LastUpdated))")
     end
 end
 
 function TestEngine(engine)
-    if length(append!([PROGRAM_FILE], ARGS)) > 1
-        dbName = append!([PROGRAM_FILE], ARGS)[2]
+    if length(sys.argv) > 1
+        dbName = sys.argv[2]
     else
         dbName = "e:\\temp\\TestPython.mdb"
     end

@@ -17,14 +17,14 @@ function RegisterInterfaces(
 )::Vector
     ret = []
     try
-        mod = gencache.GetModuleForTypelib(typelibGUID, lcid, major, minor)
+        mod = GetModuleForTypelib(typelibGUID, lcid, major, minor)
     catch exn
         if exn isa ImportError
             mod = nothing
         end
     end
     if mod === nothing
-        tlb = pythoncom.LoadRegTypeLib(typelibGUID, major, minor, lcid)
+        tlb = LoadRegTypeLib(typelibGUID, major, minor, lcid)
         typecomp_lib = GetTypeComp(tlb)
         if interface_names === nothing
             interface_names = []
@@ -50,11 +50,7 @@ function RegisterInterfaces(
                 type_info = GetRefTypeInfo(type_info, refhtype)
                 attr = GetTypeAttr(type_info)
             end
-            item = win32com_.client.build.VTableItem(
-                type_info,
-                attr,
-                GetDocumentation(type_info, -1),
-            )
+            item = VTableItem(type_info, attr, GetDocumentation(type_info, -1))
             _doCreateVTable(
                 item.clsid,
                 item.python_name,
@@ -84,7 +80,7 @@ function RegisterInterfaces(
                     )
                 end
             end
-            sub_mod = gencache.GetModuleForCLSID(iid)
+            sub_mod = GetModuleForCLSID(iid)
             is_dispatch = (
                 hasfield(typeof(sub_mod), :name + _vtables_dispatch_) ?
                 getfield(sub_mod, :name + _vtables_dispatch_) : nothing

@@ -11,13 +11,13 @@ using win32com_.client: makepy, selecttlb, gencache
 import winerror
 function TestBuildAll(verbose = 1)::Int64
     num = 0
-    tlbInfos = selecttlb.EnumTlbs()
+    tlbInfos = EnumTlbs()
     for info in tlbInfos
         if verbose
             @printf("%s (%s)\n", info.desc, info.dll)
         end
         try
-            makepy.GenerateFromTypeLibSpec(info)
+            GenerateFromTypeLibSpec(info)
             num += 1
         catch exn
             let details = exn
@@ -34,13 +34,13 @@ function TestBuildAll(verbose = 1)::Int64
                 throw(KeyboardInterrupt)
             end
             println("Failed:$(info.desc)")
-            current_exceptions() != [] ? current_exceptions()[end] : nothing()
+            print_exc()
         end
         if makepy.bForDemandDefault
             tinfo = (info.clsid, info.lcid, info.major, info.minor)
-            mod = gencache.EnsureModule(info.clsid, info.lcid, info.major, info.minor)
+            mod = EnsureModule(info.clsid, info.lcid, info.major, info.minor)
             for name in keys(mod.NamesToIIDMap)
-                makepy.GenerateChildFromTypeLibSpec(name, tinfo)
+                GenerateChildFromTypeLibSpec(name, tinfo)
             end
         end
     end
@@ -50,9 +50,9 @@ end
 function TestAll(verbose = 0)
     num = TestBuildAll(verbose)
     println("Generated and imported$(num)modules")
-    win32com_.test.util.CheckClean()
+    CheckClean()
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    TestAll("-q" ∉ append!([PROGRAM_FILE], ARGS))
+    TestAll("-q" ∉ sys.argv)
 end

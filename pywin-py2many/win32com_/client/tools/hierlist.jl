@@ -79,8 +79,8 @@ end
 
 function SetStyle(self::HierList, newStyle)
     hwnd = GetSafeHwnd(self.listControl)
-    style = win32api.GetWindowLong(hwnd, win32con.GWL_STYLE)
-    win32api.SetWindowLong(hwnd, win32con.GWL_STYLE, style | newStyle)
+    style = GetWindowLong(hwnd, win32con.GWL_STYLE)
+    SetWindowLong(hwnd, win32con.GWL_STYLE, style | newStyle)
 end
 
 function HierInit(self::HierList, parent, listControl = nothing)
@@ -89,7 +89,7 @@ function HierInit(self::HierList, parent, listControl = nothing)
     else
         bitmapMask = self.bitmapMask
     end
-    self.imageList = win32ui.CreateImageList(self.bitmapID, 16, 0, bitmapMask)
+    self.imageList = CreateImageList(self.bitmapID, 16, 0, bitmapMask)
     if listControl === nothing
         if self.listBoxId === nothing
             self.listBoxId = win32ui.IDC_LIST1
@@ -140,7 +140,7 @@ end
 
 function OnTreeItemDoubleClick(self::HierList, info, extra)::Int64
     hwndFrom, idFrom, code = info
-    if idFrom != self.listBoxId
+    if idFrom !== self.listBoxId
         return nothing
     end
     item = self.itemHandleMap[GetSelectedItem(self.listControl)]
@@ -150,7 +150,7 @@ end
 
 function OnTreeItemExpanding(self::HierList, info, extra)::Int64
     hwndFrom, idFrom, code = info
-    if idFrom != self.listBoxId
+    if idFrom !== self.listBoxId
         return nothing
     end
     action, itemOld, itemNew, pt = extra
@@ -165,7 +165,7 @@ end
 
 function OnTreeItemSelChanged(self::HierList, info, extra)::Int64
     hwndFrom, idFrom, code = info
-    if idFrom != self.listBoxId
+    if idFrom !== self.listBoxId
         return nothing
     end
     action, itemOld, itemNew, pt = extra
@@ -307,7 +307,7 @@ end
 
 function PerformItemSelected(self::HierList, item)
     try
-        win32ui.SetStatusText("Selected " + GetText(self, item))
+        SetStatusText("Selected " + GetText(self, item))
     catch exn
         if exn isa win32ui.error
             #= pass =#
@@ -316,7 +316,7 @@ function PerformItemSelected(self::HierList, item)
 end
 
 function TakeDefaultAction(self::HierList, item)
-    win32ui.MessageBox("Got item " + GetText(self, item))
+    MessageBox("Got item " + GetText(self, item))
 end
 
 mutable struct HierListWithItems <: AbstractHierListWithItems

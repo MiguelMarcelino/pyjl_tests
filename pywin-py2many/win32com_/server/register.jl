@@ -24,25 +24,25 @@ import winerror
 
 CATID_PythonCOMServer = "{B3EF80D0-68E2-11D0-A689-00C04FD658FF}"
 function _set_subkeys(keyName, valueDict, base = win32con.HKEY_CLASSES_ROOT)
-    hkey = win32api.RegCreateKey(base, keyName)
+    hkey = RegCreateKey(base, keyName)
     try
         for (key, value) in items(valueDict)
-            win32api.RegSetValueEx(hkey, key, nothing, win32con.REG_SZ, value)
+            RegSetValueEx(hkey, key, nothing, win32con.REG_SZ, value)
         end
     finally
-        win32api.RegCloseKey(hkey)
+        RegCloseKey(hkey)
     end
 end
 
 function _set_string(path, value, base = win32con.HKEY_CLASSES_ROOT)
     #= Set a string value in the registry. =#
-    win32api.RegSetValue(base, path, win32con.REG_SZ, value)
+    RegSetValue(base, path, win32con.REG_SZ, value)
 end
 
 function _get_string(path, base = win32con.HKEY_CLASSES_ROOT)
     #= Get a string value from the registry. =#
     try
-        return win32api.RegQueryValue(base, path)
+        return RegQueryValue(base, path)
     catch exn
         if exn isa win32api.error
             return nothing
@@ -53,13 +53,13 @@ end
 function _remove_key(path, base = win32con.HKEY_CLASSES_ROOT)
     #= Remove a string from the registry. =#
     try
-        win32api.RegDeleteKey(base, path)
+        RegDeleteKey(base, path)
     catch exn
         let xxx_todo_changeme1 = exn
             if xxx_todo_changeme1 isa win32api.error
                 code, fn, msg = xxx_todo_changeme1.args
-                if code != winerror.ERROR_FILE_NOT_FOUND
-                    throw(win32api.error(code, fn, msg))
+                if code !== winerror.ERROR_FILE_NOT_FOUND
+                    throw(error(code, fn, msg))
                 end
             end
         end
@@ -72,13 +72,13 @@ function recurse_delete_key(path, base = win32con.HKEY_CLASSES_ROOT)
         This is needed since you can't blast a key when subkeys exist.
          =#
     try
-        h = win32api.RegOpenKey(base, path)
+        h = RegOpenKey(base, path)
     catch exn
         let xxx_todo_changeme2 = exn
             if xxx_todo_changeme2 isa win32api.error
                 code, fn, msg = xxx_todo_changeme2.args
-                if code != winerror.ERROR_FILE_NOT_FOUND
-                    throw(win32api.error(code, fn, msg))
+                if code !== winerror.ERROR_FILE_NOT_FOUND
+                    throw(error(code, fn, msg))
                 end
             end
         end
@@ -86,7 +86,7 @@ function recurse_delete_key(path, base = win32con.HKEY_CLASSES_ROOT)
 end
 
 function _cat_registrar()
-    return pythoncom.CoCreateInstance(
+    return CoCreateInstance(
         pythoncom.CLSID_StdComponentCategoriesMgr,
         nothing,
         pythoncom.CLSCTX_INPROC_SERVER,
@@ -103,29 +103,29 @@ function _find_localserver_exe(mustfind)
     else
         exeBaseName = "pythonw_d.exe"
     end
-    exeName = join
-    if !exists(os.path, exeName)
-        exeName = join
+    exeName = joinpath(splitdir(sys.executable)[1], exeBaseName)
+    if !ispath(exeName)
+        exeName = joinpath(sys.prefix, exeBaseName)
     end
-    if !exists(os.path, exeName)
+    if !ispath(exeName)
         if "64 bit" ∈ sys.version
-            exeName = join
+            exeName = joinpath(sys.prefix, "PCbuild", "amd64", exeBaseName)
         else
-            exeName = join
+            exeName = joinpath(sys.prefix, "PCbuild", exeBaseName)
         end
     end
-    if !exists(os.path, exeName)
+    if !ispath(exeName)
         try
             key = "SOFTWARE\\Python\\PythonCore\\%s\\InstallPath" % sys.winver
-            path = win32api.RegQueryValue(win32con.HKEY_LOCAL_MACHINE, key)
-            exeName = join
+            path = RegQueryValue(win32con.HKEY_LOCAL_MACHINE, key)
+            exeName = joinpath(path, exeBaseName)
         catch exn
             if exn isa (AttributeError, win32api.error)
                 #= pass =#
             end
         end
     end
-    if !exists(os.path, exeName)
+    if !ispath(exeName)
         if mustfind
             throw(RuntimeError("Can not locate the program \'%s\'" % exeBaseName))
         end
@@ -137,9 +137,9 @@ end
 function _find_localserver_module()
     path = win32com_.server.__path__[1]
     baseName = "localserver"
-    pyfile = join
+    pyfile = joinpath(path, baseName * ".py")
     try
-        os.stat(pyfile)
+        stat(pyfile)
     catch exn
         if exn isa os.error
             if __debug__
@@ -147,9 +147,9 @@ function _find_localserver_module()
             else
                 ext = ".pyo"
             end
-            pyfile = join
+            pyfile = joinpath(path, baseName + ext)
             try
-                os.stat(pyfile)
+                stat(pyfile)
             catch exn
                 if exn isa os.error
                     throw(
@@ -228,7 +228,7 @@ function RegisterServer(
     if clsctx & pythoncom.CLSCTX_INPROC_SERVER
         if pythoncom.frozen
             if hasfield(typeof(sys), :frozendllhandle)
-                dllName = win32api.GetModuleFileName(sys.frozendllhandle)
+                dllName = GetModuleFileName(sys.frozendllhandle)
             else
                 throw(
                     RuntimeError(
@@ -237,9 +237,13 @@ function RegisterServer(
                 )
             end
         else
-            pythoncom_dir = dirname(os.path, pythoncom.__file__)
+            pythoncom_dir = dirname(pythoncom.__file__)
             suffix = "_d" ∈ pythoncom.__file__ ? ("_d") : ("")
-            loadername = join
+            loadername = joinpath(
+                pythoncom_dir,
+                "pythoncomloader%d%d%s.dll" %
+                (sys.version_info[1], sys.version_info[2], suffix),
+            )
             dllName = isfile(os.path, loadername) ? (loadername) : (pythoncom.__file__)
         end
         _set_subkeys(
@@ -251,11 +255,11 @@ function RegisterServer(
     end
     if clsctx & pythoncom.CLSCTX_LOCAL_SERVER
         if pythoncom.frozen
-            exeName = win32api.GetShortPathName(sys.executable)
+            exeName = GetShortPathName(sys.executable)
             command = "%s /Automate" % (exeName,)
         else
             exeName = _find_localserver_exe(1)
-            exeName = win32api.GetShortPathName(exeName)
+            exeName = GetShortPathName(exeName)
             pyfile = _find_localserver_module()
             command = "%s \"%s\" %s" % (exeName, pyfile, string(clsid))
         end
@@ -382,7 +386,7 @@ function _get(ob, attr, default = nothing)
     end
     for base in bases
         val = _get(base, attr, nothing)
-        if val != nothing
+        if val !== nothing
             return val
         end
     end
@@ -421,12 +425,9 @@ function RegisterClasses()
         end
         if spec === nothing
             moduleName = cls.__module__
-            if moduleName == "__main__"
+            if moduleName === "__main__"
                 try
-                    moduleName = splitext(
-                        os.path,
-                        win32api.FindFiles(append!([PROGRAM_FILE], ARGS)[1])[1][9],
-                    )[1]
+                    moduleName = splitext(os.path, FindFiles(sys.argv[1])[1][9])[1]
                 catch exn
                     if exn isa (IndexError, win32api.error)
                         throw(
@@ -439,11 +440,11 @@ function RegisterClasses()
             end
             spec = (moduleName + ".") + cls.__name__
             if !(pythoncom.frozen)
-                scriptDir = splitdir(append!([PROGRAM_FILE], ARGS)[1])[1]
+                scriptDir = splitdir(sys.argv[1])[1]
                 if !(scriptDir)
                     scriptDir = "."
                 end
-                addnPath = win32api.GetFullPathName(scriptDir)
+                addnPath = GetFullPathName(scriptDir)
             end
         end
         RegisterServer(
@@ -467,8 +468,8 @@ function RegisterClasses()
         end
         if tlb_filename
             tlb_filename = abspath(os.path, tlb_filename)
-            typelib = pythoncom.LoadTypeLib(tlb_filename)
-            pythoncom.RegisterTypeLib(typelib, tlb_filename)
+            typelib = LoadTypeLib(tlb_filename)
+            RegisterTypeLib(typelib, tlb_filename)
             if !(quiet)
                 println("Registered type library:$(tlb_filename)")
             end
@@ -487,7 +488,7 @@ function UnregisterClasses()
         progID = _get(cls, "_reg_progid_")
         verProgID = _get(cls, "_reg_verprogid_")
         customKeys = _get(cls, "_reg_remove_keys_")
-        unregister_typelib = _get(cls, "_reg_typelib_filename_") != nothing
+        unregister_typelib = _get(cls, "_reg_typelib_filename_") !== nothing
         UnregisterServer(clsid, progID, verProgID, customKeys)
         if !(quiet)
             println("Unregistered:$(progID || string(clsid))")
@@ -500,7 +501,7 @@ function UnregisterClasses()
                 major, minor = _get(cls, "_typelib_version_", (1, 0))
                 lcid = _get(cls, "_typelib_lcid_", 0)
                 try
-                    pythoncom.UnRegisterTypeLib(tlb_guid, major, minor, lcid)
+                    UnRegisterTypeLib(tlb_guid, major, minor, lcid)
                     if !(quiet)
                         println("Unregistered type library")
                     end
@@ -534,42 +535,42 @@ function ReExecuteElevated(flags)
     if !(flags["quiet"])
         println("Requesting elevation and retrying...")
     end
-    new_params = join([("\"" + a) * "\"" for a in append!([PROGRAM_FILE], ARGS)], " ")
+    new_params = join([("\"" + a) * "\"" for a in sys.argv], " ")
     if !(flags["unattended"])
         new_params += " --unattended"
     end
     hwnd = get(flags, "hwnd", nothing)
     if hwnd === nothing
         try
-            hwnd = winxpgui.GetConsoleWindow()
+            hwnd = GetConsoleWindow()
         catch exn
             if exn isa winxpgui.error
                 hwnd = 0
             end
         end
     end
-    tempbase = tempfile.mktemp("pycomserverreg")
+    tempbase = mktemp("pycomserverreg")
     outfile = tempbase + ".out"
     batfile = tempbase + ".bat"
     current_exe = lower(splitdir(sys.executable)[2])
     exe_to_run = nothing
     if current_exe == "pythonwin.exe"
-        exe_to_run = join
+        exe_to_run = joinpath(sys.prefix, "python.exe")
     elseif current_exe == "pythonwin_d.exe"
-        exe_to_run = join
+        exe_to_run = joinpath(sys.prefix, "python_d.exe")
     end
-    if !(exe_to_run) || !exists(os.path, exe_to_run)
+    if !(exe_to_run) || !ispath(exe_to_run)
         exe_to_run = sys.executable
     end
     try
         batf = readline(batfile)
         try
-            cwd = os.getcwd()
+            cwd = getcwd()
             write(batf, "@echo off")
             write(batf, "$(get(os.environ, "PYTHONPATH", ""))")
             write(batf, "$(splitdrive(os.path, cwd)[1])")
-            write(batf, "$(os.getcwd())\"")
-            write(batf, "$(win32api.GetShortPathName(exe_to_run)) $(new_params)\" 2>&1")
+            write(batf, "$(getcwd())\"")
+            write(batf, "$(GetShortPathName(exe_to_run)) $(new_params)\" 2>&1")
         finally
             close(batf)
         end
@@ -583,8 +584,8 @@ function ReExecuteElevated(flags)
             win32con.SW_SHOW,
         )
         hproc = rc["hProcess"]
-        win32event.WaitForSingleObject(hproc, win32event.INFINITE)
-        exit_code = win32process.GetExitCodeProcess(hproc)
+        WaitForSingleObject(hproc, win32event.INFINITE)
+        exit_code = GetExitCodeProcess(hproc)
         outf = readline(outfile)
         try
             output = read(outf)
@@ -598,7 +599,7 @@ function ReExecuteElevated(flags)
     finally
         for f in (outfile, batfile)
             try
-                std::fs::remove_file(f)
+                unlink(f)
             catch exn
                 let exc = exn
                     if exc isa os.error
@@ -611,12 +612,11 @@ function ReExecuteElevated(flags)
 end
 
 function UseCommandLine()::Vector
-    unregisterInfo = "--unregister_info" ∈ append!([PROGRAM_FILE], ARGS)
-    unregister = "--unregister" ∈ append!([PROGRAM_FILE], ARGS)
-    flags["quiet"] = get(flags, "quiet", 0) || "--quiet" ∈ append!([PROGRAM_FILE], ARGS)
-    flags["debug"] = get(flags, "debug", 0) || "--debug" ∈ append!([PROGRAM_FILE], ARGS)
-    flags["unattended"] =
-        get(flags, "unattended", 0) || "--unattended" ∈ append!([PROGRAM_FILE], ARGS)
+    unregisterInfo = "--unregister_info" ∈ sys.argv
+    unregister = "--unregister" ∈ sys.argv
+    flags["quiet"] = get(flags, "quiet", 0) || "--quiet" ∈ sys.argv
+    flags["debug"] = get(flags, "debug", 0) || "--debug" ∈ sys.argv
+    flags["unattended"] = get(flags, "unattended", 0) || "--unattended" ∈ sys.argv
     if unregisterInfo
         return UnregisterInfoClasses()
     end
@@ -631,7 +631,7 @@ function UseCommandLine()::Vector
             if exc isa win32api.error
                 if flags["unattended"] ||
                    exc.winerror != winerror.ERROR_ACCESS_DENIED ||
-                   sys.getwindowsversion()[1] < 5
+                   getwindowsversion()[1] < 5
                     error()
                 end
                 ReExecuteElevated(flags)
@@ -648,7 +648,7 @@ end
 
 if !(pythoncom.frozen)
     try
-        win32api.RegQueryValue(
+        RegQueryValue(
             win32con.HKEY_CLASSES_ROOT,
             "Component Categories\\%s" % CATID_PythonCOMServer,
         )

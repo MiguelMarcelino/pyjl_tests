@@ -2,7 +2,7 @@ import netscape
 
 error = "Netscape Test Error"
 if abspath(PROGRAM_FILE) == @__FILE__
-    n = netscape.CNetworkCX()
+    n = CNetworkCX()
     rc = Open(n, "http://d|/temp/apyext.html", 0, nothing, 0, nothing)
     if !(rc)
         throw(error("Open method of Netscape failed"))

@@ -97,20 +97,20 @@ function _invalid(self::Template, mo)
 end
 
 function substitute()
-    if mapping == _sentinel_dict
+    if mapping === _sentinel_dict
         mapping = kws
     elseif kws
         mapping = _ChainMap(kws, mapping)
     end
     function convert(mo)::String
         named = group(mo, "named") || group(mo, "braced")
-        if named != nothing
+        if named !== nothing
             return string(mapping[named+1])
         end
-        if group(mo, "escaped") != nothing
+        if group(mo, "escaped") !== nothing
             return self.delimiter
         end
-        if group(mo, "invalid") != nothing
+        if group(mo, "invalid") !== nothing
             _invalid(self, mo)
         end
         throw(ValueError("Unrecognized named group in pattern", self.pattern))
@@ -120,14 +120,14 @@ function substitute()
 end
 
 function safe_substitute()
-    if mapping == _sentinel_dict
+    if mapping === _sentinel_dict
         mapping = kws
     elseif kws
         mapping = _ChainMap(kws, mapping)
     end
     function convert(mo)::String
         named = group(mo, "named") || group(mo, "braced")
-        if named != nothing
+        if named !== nothing
             try
                 return string(mapping[named+1])
             catch exn
@@ -136,10 +136,10 @@ function safe_substitute()
                 end
             end
         end
-        if group(mo, "escaped") != nothing
+        if group(mo, "escaped") !== nothing
             return self.delimiter
         end
-        if group(mo, "invalid") != nothing
+        if group(mo, "invalid") !== nothing
             return group(mo)
         end
         throw(ValueError("Unrecognized named group in pattern", self.pattern))
@@ -179,9 +179,9 @@ function _vformat(
         if literal_text
             push!(result, literal_text)
         end
-        if field_name != nothing
+        if field_name !== nothing
             if field_name == ""
-                if auto_arg_index == false
+                if auto_arg_index === false
                     throw(
                         ValueError(
                             "cannot switch from manual field specification to automatic field numbering",
@@ -241,11 +241,11 @@ function convert_field(self::Formatter, value, conversion)::String
 end
 
 function parse(self::Formatter, format_string)
-    return _string.formatter_parser(format_string)
+    return formatter_parser(format_string)
 end
 
 function get_field(self::Formatter, field_name, args, kwargs)::Tuple
-    first, rest = _string.formatter_field_name_split(field_name)
+    first, rest = formatter_field_name_split(field_name)
     obj = get_value(self, first, args, kwargs)
     for (is_attr, i) in rest
         if is_attr

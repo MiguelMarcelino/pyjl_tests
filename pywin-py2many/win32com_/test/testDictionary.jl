@@ -1,7 +1,7 @@
 using PyCall
-datetime = pyimport("datetime")
-pythoncom = pyimport("pythoncom")
 pywintypes = pyimport("pywintypes")
+pythoncom = pyimport("pythoncom")
+datetime = pyimport("datetime")
 import win32com_.servers.dictionary
 using win32com_.test.util: RegisterPythonServer
 
@@ -14,7 +14,7 @@ import win32timezone
 
 abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 function MakeTestDictionary()
-    return win32com_.client.Dispatch("Python.Dictionary")
+    return Dispatch("Python.Dictionary")
 end
 
 function TestDictAgainst(dict, check)
@@ -36,7 +36,7 @@ end
 
 function TestDict(quiet = nothing)
     if quiet === nothing
-        quiet = !("-v" ∈ append!([PROGRAM_FILE], ARGS))
+        quiet = !("-v" ∈ sys.argv)
     end
     Register(quiet)
     if !(quiet)
@@ -51,7 +51,7 @@ function TestDict(quiet = nothing)
     dict["NewKey"] = nothing
     delete!(checkDict, "NewKey")
     TestDictAgainst(dict, checkDict)
-    now = win32timezone.now()
+    now = now()
     now = replace(now, round(now.microsecond / 1000) * 1000)
     dict["Now"] = now
     checkDict["Now"] = now
@@ -66,7 +66,7 @@ function TestDict(quiet = nothing)
         let xxx_todo_changeme = exn
             if xxx_todo_changeme isa pythoncom.com_error
                 hr, desc, exc, argErr = xxx_todo_changeme.args
-                if hr != winerror.DISP_E_BADPARAMCOUNT
+                if hr !== winerror.DISP_E_BADPARAMCOUNT
                     throw(
                         Exception(
                             "Expected DISP_E_BADPARAMCOUNT - got %d (%s)" % (hr, desc),
@@ -83,7 +83,7 @@ function TestDict(quiet = nothing)
         let xxx_todo_changeme1 = exn
             if xxx_todo_changeme1 isa pythoncom.com_error
                 hr, desc, exc, argErr = xxx_todo_changeme1.args
-                if hr != winerror.DISP_E_BADPARAMCOUNT
+                if hr !== winerror.DISP_E_BADPARAMCOUNT
                     throw(
                         Exception(
                             "Expected DISP_E_BADPARAMCOUNT - got %d (%s)" % (hr, desc),
@@ -100,7 +100,7 @@ function TestDict(quiet = nothing)
         let xxx_todo_changeme2 = exn
             if xxx_todo_changeme2 isa pythoncom.com_error
                 hr, desc, exc, argErr = xxx_todo_changeme2.args
-                if hr != winerror.DISP_E_TYPEMISMATCH
+                if hr !== winerror.DISP_E_TYPEMISMATCH
                     throw(
                         Exception(
                             "Expected DISP_E_TYPEMISMATCH - got %d (%s)" % (hr, desc),

@@ -49,7 +49,7 @@ function GetConnectionInterface(self::ConnectableServer)
 end
 
 function GetConnectionPointContainer(self::ConnectableServer)
-    return win32com_.server.util.wrap(self)
+    return wrap(self)
 end
 
 function Advise(self::ConnectableServer, pUnk)::Int64
@@ -82,7 +82,7 @@ end
 
 function FindConnectionPoint(self::ConnectableServer, iid)
     if iid ∈ self._connect_interfaces_
-        return win32com_.server.util.wrap(self)
+        return wrap(self)
     end
 end
 

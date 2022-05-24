@@ -81,11 +81,11 @@ function OnAttachedObjectDeath(self::TypeBrowseDialog)
 end
 
 function _SetupMenu(self::TypeBrowseDialog)
-    menu = win32ui.CreateMenu()
+    menu = CreateMenu()
     flags = win32con.MF_STRING | win32con.MF_ENABLED
     AppendMenu(menu, flags, win32ui.ID_FILE_OPEN, "&Open...")
     AppendMenu(menu, flags, win32con.IDCANCEL, "&Close")
-    mainMenu = win32ui.CreateMenu()
+    mainMenu = CreateMenu()
     AppendMenu(mainMenu, flags | win32con.MF_POPUP, GetHandle(menu), "&File")
     SetMenu(self, mainMenu)
     HookCommand(self, self.OnFileOpen, win32ui.ID_FILE_OPEN)
@@ -94,10 +94,10 @@ end
 function OnFileOpen(self::TypeBrowseDialog, id, code)
     openFlags = win32con.OFN_OVERWRITEPROMPT | win32con.OFN_FILEMUSTEXIST
     fspec = "Type Libraries (*.tlb, *.olb)|*.tlb;*.olb|OCX Files (*.ocx)|*.ocx|DLL\'s (*.dll)|*.dll|All Files (*.*)|*.*||"
-    dlg = win32ui.CreateFileDialog(1, nothing, nothing, openFlags, fspec)
+    dlg = CreateFileDialog(1, nothing, nothing, openFlags, fspec)
     if DoModal(dlg) == win32con.IDOK
         try
-            self.tlb = pythoncom.LoadTypeLib(GetPathName(dlg))
+            self.tlb = LoadTypeLib(GetPathName(dlg))
         catch exn
             if exn isa pythoncom.ole_error
                 MessageBox(self, "The file does not contain type information")
@@ -294,15 +294,15 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     fname = nothing
     try
-        fname = append!([PROGRAM_FILE], ARGS)[2]
+        fname = sys.argv[2]
     catch exn
         #= pass =#
     end
     dlg = TypeBrowseDialog(fname)
     try
-        win32api.GetConsoleTitle()
+        GetConsoleTitle()
         DoModal(dlg)
     catch exn
-        CreateWindow(dlg, win32ui.GetMainFrame())
+        CreateWindow(dlg, GetMainFrame())
     end
 end

@@ -41,7 +41,7 @@ function _wrap(self::SimpleConnection, obj)
     if self.debug
         useDispatcher = dispatcher.DefaultDebugDispatcher
     end
-    return win32com_.server.util.wrap(obj, useDispatcher)
+    return wrap(obj, useDispatcher)
 end
 
 function Connect(self::SimpleConnection, coInstance, eventInstance, eventCLSID = nothing)

@@ -8,7 +8,7 @@ import winerror
 using win32com_.server.exception: Exception
 abstract type AbstractVeryPermissive end
 error = "testDynamic error"
-iid = pythoncom.MakeIID("{b48969a0-784b-11d0-ae71-d23f56000000}")
+iid = MakeIID("{b48969a0-784b-11d0-ae71-d23f56000000}")
 mutable struct VeryPermissive <: AbstractVeryPermissive
 end
 function _dynamic_(self::VeryPermissive, name, lcid, wFlags, args)
@@ -46,9 +46,9 @@ function write(self::VeryPermissive)
 end
 
 function Test()
-    ob = win32com_.server.util.wrap(VeryPermissive(), win32com_.server.policy.DynamicPolicy)
+    ob = wrap(VeryPermissive(), win32com_.server.policy.DynamicPolicy)
     try
-        handle = pythoncom.RegisterActiveObject(ob, iid, 0)
+        handle = RegisterActiveObject(ob, iid, 0)
     catch exn
         let details = exn
             if details isa pythoncom.com_error
@@ -58,7 +58,7 @@ function Test()
         end
     end
     try
-        client = win32com_.client.dynamic.Dispatch(iid)
+        client = Dispatch(iid)
         client.ANewAttr = "Hello"
         if client.ANewAttr != "Hello"
             throw(error("Could not set dynamic property"))
@@ -80,8 +80,8 @@ function Test()
         end
         client = nothing
     finally
-        if handle != nothing
-            pythoncom.RevokeActiveObject(handle)
+        if handle !== nothing
+            RevokeActiveObject(handle)
         end
     end
     println("Test worked!")

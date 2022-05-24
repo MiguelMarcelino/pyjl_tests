@@ -25,10 +25,7 @@ function IIDToInterfaceName(iid)::String
         if exn isa KeyError
             try
                 try
-                    return win32api.RegQueryValue(
-                        win32con.HKEY_CLASSES_ROOT,
-                        "Interface\\%s" % iid,
-                    )
+                    return RegQueryValue(win32con.HKEY_CLASSES_ROOT, "Interface\\%s" % iid)
                 catch exn
                     if exn isa win32api.error
                         #= pass =#

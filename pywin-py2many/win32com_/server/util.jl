@@ -31,8 +31,8 @@ function wrap(ob, iid = nothing, usePolicy = nothing, useDispatcher = nothing)
     else
         ob = useDispatcher(usePolicy, ob)
     end
-    ob = pythoncom.WrapObject(ob)
-    if iid != nothing
+    ob = WrapObject(ob)
+    if iid !== nothing
         ob = QueryInterface(ob, iid)
     end
     return ob
@@ -44,7 +44,7 @@ function unwrap(ob)
         Given an interface which wraps up a Gateway, return the object behind
         the gateway.
          =#
-    ob = pythoncom.UnwrapObject(ob)
+    ob = UnwrapObject(ob)
     if hasfield(typeof(ob), :policy)
         ob = ob.policy
     end
@@ -225,8 +225,8 @@ function NewCollection(seq, cls = Collection)
         Optionally, a custom COM server for enumeration can be passed
         (the default is @Collection@).
          =#
-    return pythoncom.WrapObject(
-        policy.DefaultPolicy(cls(seq)),
+    return WrapObject(
+        DefaultPolicy(cls(seq)),
         pythoncom.IID_IDispatch,
         pythoncom.IID_IDispatch,
     )
