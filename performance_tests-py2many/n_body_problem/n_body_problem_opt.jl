@@ -6,8 +6,8 @@ function combinations(l)::Vector
     # result = Tuple{eltype(l), eltype(l)}[]
     result::Vector{
         Tuple{
-            Tuple{Vector{Float64},Vector{Float64},Float64},
-            Tuple{Vector{Float64},Vector{Float64},Float64},
+            Tuple{Vector{Float64}, Vector{Float64}, Float64},
+            Tuple{Vector{Float64}, Vector{Float64}, Float64},
         },
     } = []
     for x = 0:length(l)-2

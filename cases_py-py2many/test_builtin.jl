@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 using StringEncodings
 using Test
 
@@ -2528,3 +2529,6 @@ test_bad_args(test_type)
 test_bad_slots(test_type)
 test_namespace_order(test_type)
 end
+=======
+FAILED
+>>>>>>> f214ca7f5ced7424e7132e581746e8672e842fb6

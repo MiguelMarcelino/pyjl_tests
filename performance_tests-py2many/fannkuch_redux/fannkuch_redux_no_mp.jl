@@ -1,8 +1,5 @@
 using ResumableFunctions
 
-
-
-
 @resumable function permutations(n, start, size)
     p = Vector{UInt8}(0:n-1)
     count = Vector{UInt8}(n)

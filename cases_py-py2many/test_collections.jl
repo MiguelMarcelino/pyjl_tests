@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #= Unit tests for collections.py. =#
 using OrderedCollections
 using ResumableFunctions
@@ -2828,3 +2829,6 @@ test_lt(test_counter)
 test_ge(test_counter)
 test_gt(test_counter)
 end
+=======
+FAILED
+>>>>>>> f214ca7f5ced7424e7132e581746e8672e842fb6

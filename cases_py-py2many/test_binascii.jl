@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 #= Test the binascii C module. =#
 using StringEncodings
 using Test
@@ -468,3 +469,6 @@ test_deprecated_warnings(bin_a_s_c_i_i_test)
 checksum_big_buffer_test_case = ChecksumBigBufferTestCase()
 test_big_buffer(checksum_big_buffer_test_case)
 end
+=======
+FAILED
+>>>>>>> f214ca7f5ced7424e7132e581746e8672e842fb6

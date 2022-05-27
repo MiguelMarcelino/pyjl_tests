@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 using Test
 
 import locale
@@ -1398,3 +1399,5 @@ test_from_hex(hex_float_test_case)
 test_roundtrip(hex_float_test_case)
 test_subclass(hex_float_test_case)
 end
+=======
+>>>>>>> f214ca7f5ced7424e7132e581746e8672e842fb6
