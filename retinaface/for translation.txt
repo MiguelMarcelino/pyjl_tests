@@ -1,0 +1,9 @@
+Retinaface repo - https://github.com/serengil/retinaface
+Flux - https://github.com/FluxML/Flux.jl
+Tensorflow - https://github.com/malmaud/TensorFlow.jl
+JuliaTorch - https://github.com/boathit/JuliaTorch
+Keras.jl - https://github.com/invenia/Keras.jl
+OpenCV - https://docs.opencv.org/4.x/d8/da4/tutorial_julia.html
+
+Extras:
+CxxWrap - https://github.com/JuliaInterop/CxxWrap.jl

@@ -3,11 +3,8 @@
 
 
 
-abstract type AbstractListTest <: Abstractlist_tests.CommonTest end
-abstract type AbstractL <: Abstractlist end
-abstract type AbstractX end
-abstract type AbstractY end
-abstract type AbstractZ end
+abstract type AbstractListTest <: list_tests.CommonTest end
+abstract type AbstractL <: list end
 mutable struct ListTest <: AbstractListTest
 type2test
 
@@ -19,7 +16,7 @@ assertEqual(self, collect([]), [])
 l0_3 = [0, 1, 2, 3]
 l0_3_bis = collect(l0_3)
 assertEqual(self, l0_3, l0_3_bis)
-assertTrue(self, l0_3 != l0_3_bis)
+assertTrue(self, l0_3 !== l0_3_bis)
 assertEqual(self, collect(()), [])
 assertEqual(self, collect((0, 1, 2, 3)), [0, 1, 2, 3])
 assertEqual(self, collect(""), [])
@@ -46,7 +43,7 @@ assertTrue(self, [42])
 end
 
 function test_identity(self::ListTest)
-assertTrue(self, [] != [])
+assertTrue(self, [] !== [])
 end
 
 function test_len(self::ListTest)
@@ -87,28 +84,28 @@ orig = type2test(self, [4, 5, 6, 7])
 data = [10, 11, 12, 13, 14, 15]
 for proto in 0:pickle.HIGHEST_PROTOCOL
 itorig = (x for x in orig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), data)
 next(itorig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), data[2:end])
 for i in 1:length(orig) - 1
 next(itorig)
 end
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), data[length(orig) + 1:end])
 assertRaises(self, StopIteration, next, itorig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, collect(it), [])
 end
@@ -119,28 +116,28 @@ orig = type2test(self, [4, 5, 6, 7])
 data = [10, 11, 12, 13, 14, 15]
 for proto in 0:pickle.HIGHEST_PROTOCOL
 itorig = reversed(orig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), data[end:-1:length(orig)])
 next(itorig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), data[end:-1:length(orig) - -1])
 for i in 1:length(orig) - 1
 next(itorig)
 end
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, type_(it), type_(itorig))
 assertEqual(self, collect(it), [])
 assertRaises(self, StopIteration, next, itorig)
-d = dumps(pickle, (itorig, orig), proto)
-it, a = loads(pickle, d)
+d = dumps((itorig, orig), proto)
+it, a = loads(d)
 a[begin:end] = data
 assertEqual(self, collect(it), [])
 end
@@ -197,9 +194,9 @@ end
 
 function test_preallocation(self::ListTest)
 iterable = repeat([0],10)
-iter_size = getsizeof(sys, iterable)
-assertEqual(self, iter_size, getsizeof(sys, collect(repeat([0],10))))
-assertEqual(self, iter_size, getsizeof(sys, collect(0:9)))
+iter_size = getsizeof(iterable)
+assertEqual(self, iter_size, getsizeof(collect(repeat([0],10))))
+assertEqual(self, iter_size, getsizeof(collect(0:9)))
 end
 
 function test_count_index_remove_crashes(self::L)

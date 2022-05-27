@@ -82,7 +82,7 @@ function compute_rows(n, f)
 end
 
 function mandelbrot(n)
-    write = x -> Base.write(stdout, x)
+    write = stdout.buffer.write
     compute_rows(n, compute_row) do rows
         write(encode("P4\n$(n) $(n)\n", "UTF-8"))
         for row in rows

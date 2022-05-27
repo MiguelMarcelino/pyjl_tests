@@ -1,4 +1,3 @@
-using BisectPy
 using ResumableFunctions
 
 alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
@@ -53,7 +52,7 @@ function randomFasta(table, n::Int64)
     width = 60
     r = 0:width-1
     gR = Random
-    bb = bisect_right
+    bb = bisect.bisect
     jn = x -> join(x, "")
     probs, chars = makeCumulative(table)
     for j = 0:n÷width-1
@@ -66,7 +65,7 @@ function randomFasta(table, n::Int64)
 end
 
 function main()
-    n = parse(Int, append!([PROGRAM_FILE], ARGS)[2])
+    n = parse(Int, sys.argv[2])
     println(">ONE Homo sapiens alu")
     repeatFasta(alu, n * 2)
     println(">TWO IUB ambiguity codes")

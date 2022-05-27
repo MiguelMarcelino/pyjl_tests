@@ -5,7 +5,6 @@ using StringEncodings
 
 
 
-abstract type Abstractlean_call end
 lean_buffer = Dict()
 function lean_args(sequence, reading_frames, i, j)
     global lean_buffer
@@ -207,7 +206,7 @@ function main()
         (sequence, reading_frames, partitions[i+1], partitions[i+2]) for
         i = 0:length(partitions)-2
     ]
-    if n == 1
+    if n === 1
         results = collect(chain(starmap(count_frequencies, count_jobs)...))
     else
         lean_jobs = collect(starmap(lean_args, count_jobs))

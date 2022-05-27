@@ -5,7 +5,6 @@ using StringEncodings
 
 
 
-abstract type Abstractlean_call end
 lean_buffer = Dict()
 function lean_args(sequence, reading_frames, i, j)
     global lean_buffer

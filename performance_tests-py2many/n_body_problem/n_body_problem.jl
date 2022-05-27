@@ -112,5 +112,5 @@ function main(n, ref = "sun")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    main(parse(Int, sys.argv[2]))
 end

@@ -73,8 +73,8 @@ function read_sequences(file)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    write = x -> Base.write(stdout, x)
-    flush = Base.flush(stdout)
+    write = stdout.buffer.write
+    flush = stdout.buffer.flush
     s = read_sequences(stdin.buffer)
     data = take!(s)
     @resumable function merge(v, g)

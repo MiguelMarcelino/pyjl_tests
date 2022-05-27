@@ -1,8 +1,6 @@
 using Test
 
 abstract type AbstractTypeAnnotationTests end
-abstract type AbstractC end
-abstract type AbstractD end
 mutable struct TypeAnnotationTests <: AbstractTypeAnnotationTests
 my_annotations::Dict
 a::Int64

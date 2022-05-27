@@ -7,7 +7,7 @@ using ResumableFunctions
 
 
 
-write = x -> Base.write(stdout, x)
+write = sys.stdout.buffer.write
 function acquired_lock()
     lock = Lock()
     acquire(lock)
@@ -254,5 +254,5 @@ function fasta(n)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    fasta(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    fasta(parse(Int, sys.argv[2]))
 end

@@ -12,7 +12,7 @@ function var_find(f)::Int64
 end
 
 function main()
-    seq = read(stdin, String)()
+    seq = read()
     ilen = length(seq)
     seq = replace(seq, r">.*\n|\n" => s"")
     clen = length(seq)
