@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 using Test
 
 
@@ -838,6 +837,3 @@ test_overflow(complex_test)
 test_repr_roundtrip(complex_test)
 test_format(complex_test)
 end
-=======
-FAILED
->>>>>>> f214ca7f5ced7424e7132e581746e8672e842fb6
