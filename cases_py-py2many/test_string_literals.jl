@@ -44,24 +44,24 @@ save_path
 tmpdir
 check_encoding
 end
-function setUp(self::TestLiterals)
+function setUp(self)
 self.save_path = sys.path[begin:end]
 self.tmpdir = mkdtemp()
 insert(sys.path, 0, self.tmpdir)
 end
 
-function tearDown(self::TestLiterals)
+function tearDown(self)
 sys.path[begin:end] = self.save_path
-rmtree(self.tmpdir, true)
+rmtree(self.tmpdir, ignore_errors = true)
 end
 
-function test_template(self::TestLiterals)
+function test_template(self)
 for c in TEMPLATE
 @assert(c == "\n" || " " <= c <= "~")
 end
 end
 
-function test_eval_str_normal(self::TestLiterals)
+function test_eval_str_normal(self)
 @test (eval(" \'x\' ") == "x")
 @test (eval(" \'\\x01\' ") == Char(1))
 @test (eval(" \'\' ") == Char(1))
@@ -73,7 +73,7 @@ function test_eval_str_normal(self::TestLiterals)
 @test (eval(" \'𝄠\' ") == Char(119072))
 end
 
-function test_eval_str_incomplete(self::TestLiterals)
+function test_eval_str_incomplete(self)
 @test_throws SyntaxError eval(" \'\\x\' ")
 @test_throws SyntaxError eval(" \'\\x0\' ")
 @test_throws SyntaxError eval(" \'\\u\' ")
@@ -90,7 +90,7 @@ function test_eval_str_incomplete(self::TestLiterals)
 @test_throws SyntaxError eval(" \'\\U0000000\' ")
 end
 
-function test_eval_str_invalid_escape(self::TestLiterals)
+function test_eval_str_invalid_escape(self)
 for b in 1:127
 if b ∈ b"\n\r\"\'01234567NU\\abfnrtuvx"
 continue;
@@ -99,15 +99,15 @@ assertWarns(self, DeprecationWarning) do
 @test (eval("\'\\%c\'" % b) == "\\" + Char(b))
 end
 end
-catch_warnings(true) do w 
-simplefilter("always", DeprecationWarning)
+catch_warnings(record = true) do w 
+simplefilter("always", category = DeprecationWarning)
 eval("\'\'\'\n\\z\'\'\'")
 end
 @test (length(w) == 1)
 @test (w[1].filename == "<string>")
 @test (w[1].lineno == 1)
-catch_warnings(true) do w 
-simplefilter("error", DeprecationWarning)
+catch_warnings(record = true) do w 
+simplefilter("error", category = DeprecationWarning)
 assertRaises(self, SyntaxError) do cm 
 eval("\'\'\'\n\\z\'\'\'")
 end
@@ -119,7 +119,7 @@ end
 @test (exc.offset == 1)
 end
 
-function test_eval_str_raw(self::TestLiterals)
+function test_eval_str_raw(self)
 @test (eval(" r\'x\' ") == "x")
 @test (eval(" r\'\\x01\' ") == "\\" * "x01")
 @test (eval(" r\'\' ") == Char(1))
@@ -131,7 +131,7 @@ function test_eval_str_raw(self::TestLiterals)
 @test (eval(" r\'𝄠\' ") == Char(119072))
 end
 
-function test_eval_bytes_normal(self::TestLiterals)
+function test_eval_bytes_normal(self)
 @test (eval(" b\'x\' ") == b"x")
 @test (eval(" b\'\\x01\' ") == byte(1))
 @test (eval(" b\'\' ") == byte(1))
@@ -143,12 +143,12 @@ function test_eval_bytes_normal(self::TestLiterals)
 @test_throws SyntaxError eval(" b\'𝄠\' ")
 end
 
-function test_eval_bytes_incomplete(self::TestLiterals)
+function test_eval_bytes_incomplete(self)
 @test_throws SyntaxError eval(" b\'\\x\' ")
 @test_throws SyntaxError eval(" b\'\\x0\' ")
 end
 
-function test_eval_bytes_invalid_escape(self::TestLiterals)
+function test_eval_bytes_invalid_escape(self)
 for b in 1:127
 if b ∈ b"\n\r\"\'01234567\\abfnrtvx"
 continue;
@@ -157,15 +157,15 @@ assertWarns(self, DeprecationWarning) do
 @test (eval("b\'\\%c\'" % b) == append!(b"\\", bytes([b])))
 end
 end
-catch_warnings(true) do w 
-simplefilter("always", DeprecationWarning)
+catch_warnings(record = true) do w 
+simplefilter("always", category = DeprecationWarning)
 eval("b\'\'\'\n\\z\'\'\'")
 end
 @test (length(w) == 1)
 @test (w[1].filename == "<string>")
 @test (w[1].lineno == 1)
-catch_warnings(true) do w 
-simplefilter("error", DeprecationWarning)
+catch_warnings(record = true) do w 
+simplefilter("error", category = DeprecationWarning)
 assertRaises(self, SyntaxError) do cm 
 eval("b\'\'\'\n\\z\'\'\'")
 end
@@ -176,7 +176,7 @@ end
 @test (exc.lineno == 1)
 end
 
-function test_eval_bytes_raw(self::TestLiterals)
+function test_eval_bytes_raw(self)
 @test (eval(" br\'x\' ") == b"x")
 @test (eval(" rb\'x\' ") == b"x")
 @test (eval(" br\'\\x01\' ") == append!(b"\\", b"x01"))
@@ -203,7 +203,7 @@ function test_eval_bytes_raw(self::TestLiterals)
 @test_throws SyntaxError eval(" rbb\'\' ")
 end
 
-function test_eval_str_u(self::TestLiterals)
+function test_eval_str_u(self)
 @test (eval(" u\'x\' ") == "x")
 @test (eval(" U\'ä\' ") == "ä")
 @test (eval(" u\'ä\' ") == "ä")
@@ -213,7 +213,7 @@ function test_eval_str_u(self::TestLiterals)
 @test_throws SyntaxError eval(" ub\'\' ")
 end
 
-function check_encoding(self::TestLiterals, encoding, extra = "")
+function check_encoding(self, encoding, extra = "")
 modname = "xx_" + replace(encoding, "-", "_")
 fn = joinpath(self.tmpdir, modname * ".py")
 f = readline(fn)
@@ -228,29 +228,29 @@ __import__(modname)
 del(sys.modules)
 end
 
-function test_file_utf_8(self::TestLiterals)
+function test_file_utf_8(self)
 extra = "z = \'ሴ\'; assert ord(z) == 0x1234\n"
 check_encoding(self, "utf-8", extra)
 end
 
-function test_file_utf_8_error(self::TestLiterals)
+function test_file_utf_8_error(self)
 extra = "b\'\x80\'\n"
 @test_throws SyntaxError self.check_encoding("utf-8", extra)
 end
 
-function test_file_utf8(self::TestLiterals)
+function test_file_utf8(self)
 check_encoding(self, "utf-8")
 end
 
-function test_file_iso_8859_1(self::TestLiterals)
+function test_file_iso_8859_1(self)
 check_encoding(self, "iso-8859-1")
 end
 
-function test_file_latin_1(self::TestLiterals)
+function test_file_latin_1(self)
 check_encoding(self, "latin-1")
 end
 
-function test_file_latin9(self::TestLiterals)
+function test_file_latin9(self)
 check_encoding(self, "latin9")
 end
 

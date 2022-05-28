@@ -66,7 +66,7 @@ n = 10
 mutable struct TestInvariantWithoutMutations <: AbstractTestInvariantWithoutMutations
 
 end
-function test_invariant(self::TestInvariantWithoutMutations)
+function test_invariant(self)
 it = self.it
 for i in reversed(1:n)
 assertEqual(self, length_hint(it), i)
@@ -80,7 +80,7 @@ end
 mutable struct TestTemporarilyImmutable <: AbstractTestTemporarilyImmutable
 
 end
-function test_immutable_during_iteration(self::TestTemporarilyImmutable)
+function test_immutable_during_iteration(self)
 it = self.it
 assertEqual(self, length_hint(it), n)
 next(it)
@@ -93,28 +93,28 @@ end
 mutable struct TestRepeat <: AbstractTestRepeat
 it
 end
-function setUp(self::TestRepeat)
+function setUp(self)
 self.it = repeat(nothing)
 end
 
 mutable struct TestXrange <: AbstractTestXrange
 it
 end
-function setUp(self::TestXrange)
+function setUp(self)
 self.it = (x for x in 0:n - 1)
 end
 
 mutable struct TestXrangeCustomReversed <: AbstractTestXrangeCustomReversed
 it
 end
-function setUp(self::TestXrangeCustomReversed)
+function setUp(self)
 self.it = reversed(0:n - 1)
 end
 
 mutable struct TestTuple <: AbstractTestTuple
 it
 end
-function setUp(self::TestTuple)
+function setUp(self)
 self.it = (x for x in tuple(0:n - 1))
 end
 
@@ -122,7 +122,7 @@ mutable struct TestDeque <: AbstractTestDeque
 it
 mutate
 end
-function setUp(self::TestDeque)
+function setUp(self)
 d = deque(0:n - 1)
 self.it = (x for x in d)
 self.mutate = d.pop
@@ -132,7 +132,7 @@ mutable struct TestDequeReversed <: AbstractTestDequeReversed
 it
 mutate
 end
-function setUp(self::TestDequeReversed)
+function setUp(self)
 d = deque(0:n - 1)
 self.it = reversed(d)
 self.mutate = d.pop
@@ -142,7 +142,7 @@ mutable struct TestDictKeys <: AbstractTestDictKeys
 it
 mutate
 end
-function setUp(self::TestDictKeys)
+function setUp(self)
 d = fromkeys(dict, 0:n - 1)
 self.it = (x for x in d)
 self.mutate = d.popitem
@@ -152,7 +152,7 @@ mutable struct TestDictItems <: AbstractTestDictItems
 it
 mutate
 end
-function setUp(self::TestDictItems)
+function setUp(self)
 d = fromkeys(dict, 0:n - 1)
 self.it = (x for x in items(d))
 self.mutate = d.popitem
@@ -162,7 +162,7 @@ mutable struct TestDictValues <: AbstractTestDictValues
 it
 mutate
 end
-function setUp(self::TestDictValues)
+function setUp(self)
 d = fromkeys(dict, 0:n - 1)
 self.it = (x for x in values(d))
 self.mutate = d.popitem
@@ -172,7 +172,7 @@ mutable struct TestSet <: AbstractTestSet
 it
 mutate
 end
-function setUp(self::TestSet)
+function setUp(self)
 d = set(0:n - 1)
 self.it = (x for x in d)
 self.mutate = d.pop
@@ -181,11 +181,11 @@ end
 mutable struct TestList <: AbstractTestList
 it
 end
-function setUp(self::TestList)
+function setUp(self)
 self.it = (x for x in 0:n - 1)
 end
 
-function test_mutation(self::TestList)
+function test_mutation(self)
 d = collect(0:n - 1)
 it = (x for x in d)
 next(it)
@@ -203,11 +203,11 @@ end
 mutable struct TestListReversed <: AbstractTestListReversed
 it
 end
-function setUp(self::TestListReversed)
+function setUp(self)
 self.it = reversed(0:n - 1)
 end
 
-function test_mutation(self::TestListReversed)
+function test_mutation(self)
 d = collect(0:n - 1)
 it = reversed(d)
 next(it)
@@ -225,40 +225,40 @@ end
 mutable struct BadLen <: AbstractBadLen
 
 end
-function __iter__(self::BadLen)
+function __iter__(self)
 return (x for x in 0:9)
 end
 
-function __len__(self::BadLen)
+function __len__(self)
 throw(RuntimeError("hello"))
 end
 
 mutable struct BadLengthHint <: AbstractBadLengthHint
 
 end
-function __iter__(self::BadLengthHint)
+function __iter__(self)
 return (x for x in 0:9)
 end
 
-function __length_hint__(self::BadLengthHint)
+function __length_hint__(self)
 throw(RuntimeError("hello"))
 end
 
 mutable struct NoneLengthHint <: AbstractNoneLengthHint
 
 end
-function __iter__(self::NoneLengthHint)
+function __iter__(self)
 return (x for x in 0:9)
 end
 
-function __length_hint__(self::NoneLengthHint)
+function __length_hint__(self)
 return NotImplemented
 end
 
 mutable struct TestLengthHintExceptions <: AbstractTestLengthHintExceptions
 
 end
-function test_issue1242657(self::TestLengthHintExceptions)
+function test_issue1242657(self)
 @test_throws RuntimeError list(BadLen())
 @test_throws RuntimeError list(BadLengthHint())
 @test_throws RuntimeError [].extend(BadLen())
@@ -268,7 +268,7 @@ b = Vector{UInt8}(0:9)
 @test_throws RuntimeError b.extend(BadLengthHint())
 end
 
-function test_invalid_hint(self::TestLengthHintExceptions)
+function test_invalid_hint(self)
 @test (collect(NoneLengthHint()) == collect(0:9))
 end
 

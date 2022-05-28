@@ -75,11 +75,11 @@ abstract type AbstractMyCounter <: Counter end
 mutable struct TestUserObjects <: AbstractTestUserObjects
 
 end
-function _superset_test(self::TestUserObjects, a, b)
-assertGreaterEqual(self, set(dir(a)), set(dir(b)), "$(a) should have all the methods of $(b)")
+function _superset_test(self, a, b)
+assertGreaterEqual(self, set(dir(a)), set(dir(b)), "$(a.__name__) should have all the methods of $(b.__name__)")
 end
 
-function _copy_test(self::TestUserObjects, obj)
+function _copy_test(self, obj)
 obj_copy = copy(obj)
 assertIsNot(self, obj.data, obj_copy.data)
 @test (obj.data == obj_copy.data)
@@ -90,25 +90,25 @@ assertIsNot(self, obj.data, obj_copy.data)
 assertIs(self, obj.test, obj_copy.test)
 end
 
-function test_str_protocol(self::TestUserObjects)
+function test_str_protocol(self)
 _superset_test(self, UserString, str)
 end
 
-function test_list_protocol(self::TestUserObjects)
+function test_list_protocol(self)
 _superset_test(self, UserList, list)
 end
 
-function test_dict_protocol(self::TestUserObjects)
+function test_dict_protocol(self)
 _superset_test(self, UserDict, dict)
 end
 
-function test_list_copy(self::TestUserObjects)
+function test_list_copy(self)
 obj = UserList()
 append(obj, 123)
 _copy_test(self, obj)
 end
 
-function test_dict_copy(self::TestUserObjects)
+function test_dict_copy(self)
 obj = UserDict()
 obj[124] = "abc"
 _copy_test(self, obj)
@@ -117,7 +117,7 @@ end
 mutable struct TestChainMap <: AbstractTestChainMap
 called::Bool
 end
-function test_basics(self::TestChainMap)
+function test_basics(self)
 c = ChainMap()
 c["a"] = 1
 c["b"] = 2
@@ -125,23 +125,23 @@ d = new_child(c)
 d["b"] = 20
 d["c"] = 30
 @test (d.maps == [Dict("b" => 20, "c" => 30), Dict("a" => 1, "b" => 2)])
-@test (items(d) == items(dict(1, 20, 30)))
+@test (items(d) == items(dict(a = 1, b = 20, c = 30)))
 @test (length(d) == 3)
 for key in "abc"
 assertIn(self, key, d)
 end
-for (k, v) in items(dict(1, 20, 30, 100))
+for (k, v) in items(dict(a = 1, b = 20, c = 30, z = 100))
 @test (get(d, k, 100) == v)
 end
 #Delete Unsupported
 del(d)
 @test (d.maps == [Dict("c" => 30), Dict("a" => 1, "b" => 2)])
-@test (items(d) == items(dict(1, 2, 30)))
+@test (items(d) == items(dict(a = 1, b = 2, c = 30)))
 @test (length(d) == 3)
 for key in "abc"
 assertIn(self, key, d)
 end
-for (k, v) in items(dict(1, 2, 30, 100))
+for (k, v) in items(dict(a = 1, b = 2, c = 30, z = 100))
 @test (get(d, k, 100) == v)
 end
 assertIn(self, repr(d), [type_(d).__name__ + "({\'c\': 30}, {\'a\': 1, \'b\': 2})", type_(d).__name__ + "({\'c\': 30}, {\'b\': 2, \'a\': 1})"])
@@ -179,7 +179,7 @@ f["b"] = 5
 @test (f.parents["b"] == 2)
 end
 
-function test_ordering(self::TestChainMap)
+function test_ordering(self)
 baseline = Dict("music" => "bach", "art" => "rembrandt")
 adjustments = Dict("art" => "van gogh", "opera" => "carmen")
 cm = ChainMap(adjustments, baseline)
@@ -188,34 +188,34 @@ update(combined, adjustments)
 @test (collect(items(combined)) == collect(items(cm)))
 end
 
-function test_constructor(self::TestChainMap)
+function test_constructor(self)
 @test (ChainMap().maps == [Dict()])
 @test (ChainMap(Dict(1 => 2)).maps == [Dict(1 => 2)])
 end
 
-function test_bool(self::TestChainMap)
+function test_bool(self)
 @test !(ChainMap())
 @test !(ChainMap(Dict(), Dict()))
 @test ChainMap(Dict(1 => 2), Dict())
 @test ChainMap(Dict(), Dict(1 => 2))
 end
 
-function test_missing(self::DefaultChainMap)
+function test_missing(self)
 mutable struct DefaultChainMap <: AbstractDefaultChainMap
 
 end
-function __missing__(self::DefaultChainMap, key)::Int64
+function __missing__(self, key)::Int64
 return 999
 end
 
-d = DefaultChainMap(dict(1, 2), dict(20, 30))
-for (k, v) in items(dict(1, 2, 30, 999))
+d = DefaultChainMap(dict(a = 1, b = 2), dict(b = 20, c = 30))
+for (k, v) in items(dict(a = 1, b = 2, c = 30, d = 999))
 assertEqual(self, d[k + 1], v)
 end
-for (k, v) in items(dict(1, 2, 30, 77))
+for (k, v) in items(dict(a = 1, b = 2, c = 30, d = 77))
 assertEqual(self, get(d, k, 77), v)
 end
-for (k, v) in items(dict(true, true, true, false))
+for (k, v) in items(dict(a = true, b = true, c = true, d = false))
 assertEqual(self, k ∈ d, v)
 end
 assertEqual(self, pop(d, "a", 1001), 1, d)
@@ -226,22 +226,22 @@ popitem(d)
 end
 end
 
-function test_order_preservation(self::TestChainMap)
-d = ChainMap(OrderedDict(0, 88888), OrderedDict(), OrderedDict(9999, 4444, 3333), OrderedDict(666, 222, 777, 333, 888), OrderedDict(), OrderedDict(55, 22), OrderedDict(1, 2, 3, 4, 5), OrderedDict())
+function test_order_preservation(self)
+d = ChainMap(OrderedDict(j = 0, h = 88888), OrderedDict(), OrderedDict(i = 9999, d = 4444, c = 3333), OrderedDict(f = 666, b = 222, g = 777, c = 333, h = 888), OrderedDict(), OrderedDict(e = 55, b = 22), OrderedDict(a = 1, b = 2, c = 3, d = 4, e = 5), OrderedDict())
 @test (join(d, "") == "abcdefghij")
 @test (collect(items(d)) == [("a", 1), ("b", 222), ("c", 3333), ("d", 4444), ("e", 55), ("f", 666), ("g", 777), ("h", 88888), ("i", 9999), ("j", 0)])
 end
 
-function test_iter_not_calling_getitem_on_maps(self::DictWithGetItem)
+function test_iter_not_calling_getitem_on_maps(self)
 mutable struct DictWithGetItem <: AbstractDictWithGetItem
 called::Bool
 
             DictWithGetItem() = begin
-                UserDict.__init__(self, args..., kwds)
+                UserDict.__init__(self, args..., None = kwds)
                 new()
             end
 end
-function __getitem__(self::DictWithGetItem, item)
+function __getitem__(self, item)
 self.called = true
 __getitem__(self, item)
 end
@@ -253,13 +253,13 @@ set(c)
 assertFalse(self, d.called, "__getitem__ was called")
 end
 
-function test_dict_coercion(self::TestChainMap)
-d = ChainMap(dict(1, 2), dict(20, 30))
-@test (dict(d) == dict(1, 2, 30))
-@test (dict(items(d)) == dict(1, 2, 30))
+function test_dict_coercion(self)
+d = ChainMap(dict(a = 1, b = 2), dict(b = 20, c = 30))
+@test (dict(d) == dict(a = 1, b = 2, c = 30))
+@test (dict(items(d)) == dict(a = 1, b = 2, c = 30))
 end
 
-function test_new_child(self::lowerdict)
+function test_new_child(self)
 #= Tests for changes for issue #16613. =#
 c = ChainMap()
 c["a"] = 1
@@ -271,14 +271,14 @@ assertIs(self, m, d.maps[1])
 mutable struct lowerdict <: Abstractlowerdict
 
 end
-function __getitem__(self::lowerdict, key)
+function __getitem__(self, key)
 if isa(key, str)
 key = lower(key)
 end
 return __getitem__(dict, self)
 end
 
-function __contains__(self::lowerdict, key)
+function __contains__(self, key)
 if isa(key, str)
 key = lower(key)
 end
@@ -294,19 +294,19 @@ assertIs(self, m, d.maps[1])
 for key in "abc"
 assertIn(self, key, d)
 end
-for (k, v) in collect(dict(1, 20, 30, 100))
+for (k, v) in collect(dict(a = 1, B = 20, C = 30, z = 100))
 assertEqual(self, get(d, k, 100), v)
 end
 c = ChainMap(Dict("a" => 1, "b" => 2))
-d = new_child(c, 20, 30)
+d = new_child(c, b = 20, c = 30)
 assertEqual(self, d.maps, [Dict("b" => 20, "c" => 30), Dict("a" => 1, "b" => 2)])
 end
 
-function test_union_operators(self::SubclassRor)
-cm1 = ChainMap(dict(1, 2), dict(3, 4))
-cm2 = ChainMap(dict(10, 5), dict(20, 4))
+function test_union_operators(self)
+cm1 = ChainMap(dict(a = 1, b = 2), dict(c = 3, d = 4))
+cm2 = ChainMap(dict(a = 10, e = 5), dict(b = 20, d = 4))
 cm3 = copy(cm1)
-d = dict(10, 30)
+d = dict(a = 10, c = 30)
 pairs = [("c", 3), ("p", 0)]
 tmp = __or__(cm1, cm2)
 assertEqual(self, tmp.maps, [cm1.maps[1] | dict(cm2), cm1.maps[2:end]...])
@@ -330,7 +330,7 @@ end
 mutable struct SubclassRor <: AbstractSubclassRor
 
 end
-function __ror__(self::SubclassRor, other)
+function __ror__(self, other)
 return __ror__(super(), other)
 end
 
@@ -356,7 +356,7 @@ y
                     TestNamedTuple(x = loads(dumps(Point.x)), y = loads(dumps(Point.y))) =
                         new(x, y)
 end
-function test_factory(self::TestNamedTuple)
+function test_factory(self)
 Point = namedtuple("Point", "x y")
 @test (Point.__name__ == "Point")
 @test (Point.__slots__ == ())
@@ -381,17 +381,17 @@ assertNotIn(self, "u\'", repr(nt._fields))
 @test_throws TypeError Point._make([11, 22, 33])
 end
 
-function test_defaults(self::TestNamedTuple)
-Point = namedtuple("Point", "x y", (10, 20))
+function test_defaults(self)
+Point = namedtuple("Point", "x y", defaults = (10, 20))
 @test (Point._field_defaults == Dict("x" => 10, "y" => 20))
 @test (Point(1, 2) == (1, 2))
 @test (Point(1) == (1, 20))
 @test (Point() == (10, 20))
-Point = namedtuple("Point", "x y", (20,))
+Point = namedtuple("Point", "x y", defaults = (20,))
 @test (Point._field_defaults == Dict("y" => 20))
 @test (Point(1, 2) == (1, 2))
 @test (Point(1) == (1, 20))
-Point = namedtuple("Point", "x y", ())
+Point = namedtuple("Point", "x y", defaults = ())
 @test (Point._field_defaults == Dict())
 @test (Point(1, 2) == (1, 2))
 assertRaises(self, TypeError) do 
@@ -404,28 +404,28 @@ assertRaises(self, TypeError) do
 Point(1, 2, 3)
 end
 assertRaises(self, TypeError) do 
-Point = namedtuple("Point", "x y", (10, 20, 30))
+Point = namedtuple("Point", "x y", defaults = (10, 20, 30))
 end
 assertRaises(self, TypeError) do 
-Point = namedtuple("Point", "x y", 10)
+Point = namedtuple("Point", "x y", defaults = 10)
 end
 assertRaises(self, TypeError) do 
-Point = namedtuple("Point", "x y", false)
+Point = namedtuple("Point", "x y", defaults = false)
 end
-Point = namedtuple("Point", "x y", nothing)
+Point = namedtuple("Point", "x y", defaults = nothing)
 @test (Point._field_defaults == Dict())
 assertIsNone(self, Point.__new__.__defaults__, nothing)
 @test (Point(10, 20) == (10, 20))
 assertRaises(self, TypeError) do 
 Point(10)
 end
-Point = namedtuple("Point", "x y", [10, 20])
+Point = namedtuple("Point", "x y", defaults = [10, 20])
 @test (Point._field_defaults == Dict("x" => 10, "y" => 20))
 @test (Point.__new__.__defaults__ == (10, 20))
 @test (Point(1, 2) == (1, 2))
 @test (Point(1) == (1, 20))
 @test (Point() == (10, 20))
-Point = namedtuple("Point", "x y", (x for x in [10, 20]))
+Point = namedtuple("Point", "x y", defaults = (x for x in [10, 20]))
 @test (Point._field_defaults == Dict("x" => 10, "y" => 20))
 @test (Point.__new__.__defaults__ == (10, 20))
 @test (Point(1, 2) == (1, 2))
@@ -433,7 +433,7 @@ Point = namedtuple("Point", "x y", (x for x in [10, 20]))
 @test (Point() == (10, 20))
 end
 
-function test_readonly(self::TestNamedTuple)
+function test_readonly(self)
 Point = namedtuple("Point", "x y")
 p = Point(11, 22)
 assertRaises(self, AttributeError) do 
@@ -454,14 +454,14 @@ end
 @test (p[1] == 11)
 end
 
-function test_factory_doc_attr(self::TestNamedTuple)
+function test_factory_doc_attr(self)
 Point = namedtuple("Point", "x y")
 @test (Point.__doc__ == "Point(x, y)")
 Point.__doc__ = "2D point"
 @test (Point.__doc__ == "2D point")
 end
 
-function test_field_doc(self::TestNamedTuple)
+function test_field_doc(self)
 Point = namedtuple("Point", "x y")
 @test (Point.x.__doc__ == "Alias for field number 0")
 @test (Point.y.__doc__ == "Alias for field number 1")
@@ -473,14 +473,14 @@ Vector.x.__doc__ = "docstring for Vector.x"
 @test (Vector.x.__doc__ == "docstring for Vector.x")
 end
 
-function test_field_doc_reuse(self::TestNamedTuple)
+function test_field_doc_reuse(self)
 P = namedtuple("P", ["m", "n"])
 Q = namedtuple("Q", ["o", "p"])
 assertIs(self, P.m.__doc__, Q.o.__doc__)
 assertIs(self, P.n.__doc__, Q.p.__doc__)
 end
 
-function test_field_repr(self::TestNamedTuple)
+function test_field_repr(self)
 Point = namedtuple("Point", "x y")
 @test (repr(Point.x) == "_tuplegetter(0, \'Alias for field number 0\')")
 @test (repr(Point.y) == "_tuplegetter(1, \'Alias for field number 1\')")
@@ -490,25 +490,25 @@ Point.y.__doc__ = "The y-coordinate"
 @test (repr(Point.y) == "_tuplegetter(1, \'The y-coordinate\')")
 end
 
-function test_name_fixer(self::TestNamedTuple)
+function test_name_fixer(self)
 for (spec, renamed) in [[("efg", "g%hi"), ("efg", "_1")], [("abc", "class"), ("abc", "_1")], [("8efg", "9ghi"), ("_0", "_1")], [("abc", "_efg"), ("abc", "_1")], [("abc", "efg", "efg", "ghi"), ("abc", "efg", "_2", "ghi")], [("abc", "", "x"), ("abc", "_1", "x")]]
-@test (namedtuple("NT", spec, true)._fields == renamed)
+@test (namedtuple("NT", spec, rename = true)._fields == renamed)
 end
 end
 
-function test_module_parameter(self::TestNamedTuple)
-NT = namedtuple("NT", ["x", "y"], collections)
+function test_module_parameter(self)
+NT = namedtuple("NT", ["x", "y"], module_ = collections)
 @test (NT.__module__ == collections)
 end
 
-function test_instance(self::TestNamedTuple)
+function test_instance(self)
 Point = namedtuple("Point", "x y")
 p = Point(11, 22)
 @test (p == Point(11, 22))
 @test (p == Point(11, 22))
 @test (p == Point(22, 11))
 @test (p == Point((11, 22)...))
-@test (p == Point(dict(11, 22)))
+@test (p == Point(dict(x = 11, y = 22)))
 @test_throws TypeError Point(1)
 @test_throws TypeError Point(1, 2, 3)
 assertRaises(self, TypeError) do 
@@ -521,10 +521,10 @@ end
 assertNotIn(self, "__weakref__", dir(p))
 @test (p == _make(Point, [11, 22]))
 @test (p._fields == ("x", "y"))
-@test (_replace(p, 1) == (1, 22))
-@test (_asdict(p) == dict(11, 22))
+@test (_replace(p, x = 1) == (1, 22))
+@test (_asdict(p) == dict(x = 11, y = 22))
 try
-_replace(p, 1, 2)
+_replace(p, x = 1, error = 2)
 catch exn
 if exn isa ValueError
 #= pass =#
@@ -538,7 +538,7 @@ p = Point(11, 22)
 @test (repr(p) == "Point(x=11, y=22)")
 end
 
-function test_tupleness(self::TestNamedTuple)
+function test_tupleness(self)
 Point = namedtuple("Point", "x y")
 p = Point(11, 22)
 @test isa(self, p)
@@ -562,7 +562,7 @@ p.z
 end
 end
 
-function test_odd_sizes(self::TestNamedTuple)
+function test_odd_sizes(self)
 Zero = namedtuple("Zero", "")
 @test (Zero() == ())
 @test (_make(Zero, []) == ())
@@ -575,7 +575,7 @@ Dot = namedtuple("Dot", "d")
 @test (Dot(1).d == 1)
 @test (repr(Dot(1)) == "Dot(d=1)")
 @test (_asdict(Dot(1)) == Dict("d" => 1))
-@test (_replace(Dot(1), 999) == (999,))
+@test (_replace(Dot(1), d = 999) == (999,))
 @test (Dot(1)._fields == ("d",))
 n = 5000
 names = collect(set((join([choice(string.ascii_letters) for j in 0:9], "") for i in 0:n - 1)))
@@ -591,7 +591,7 @@ repr(b)
 d = _asdict(b)
 d_expected = dict(zip(names, 0:n - 1))
 @test (d == d_expected)
-b2 = _replace(b, dict([(names[2], 999), (names[end - -3], 42)]))
+b2 = _replace(b, None = dict([(names[2], 999), (names[end - -3], 42)]))
 b2_expected = collect(0:n - 1)
 b2_expected[2] = 999
 b2_expected[end - -3] = 42
@@ -599,8 +599,8 @@ b2_expected[end - -3] = 42
 @test (b._fields == tuple(names))
 end
 
-function test_pickle(self::TestNamedTuple)
-p = TestNT(10, 20, 30)
+function test_pickle(self)
+p = TestNT(x = 10, y = 20, z = 30)
 for module_ in (pickle,)
 loads = getfield(module_, :loads)
 dumps = getfield(module_, :dumps)
@@ -613,8 +613,8 @@ end
 end
 end
 
-function test_copy(self::TestNamedTuple)
-p = TestNT(10, 20, 30)
+function test_copy(self)
+p = TestNT(x = 10, y = 20, z = 30)
 for copier in (copy.copy, copy.deepcopy)
 q = copier(p)
 @test (p == q)
@@ -622,18 +622,18 @@ q = copier(p)
 end
 end
 
-function test_name_conflicts(self::TestNamedTuple)
+function test_name_conflicts(self)
 T = namedtuple("T", "itemgetter property self cls tuple")
 t = T(1, 2, 3, 4, 5)
 @test (t == (1, 2, 3, 4, 5))
-newt = _replace(t, 10, 20, 30, 40, 50)
+newt = _replace(t, itemgetter = 10, property = 20, self = 30, cls = 40, tuple = 50)
 @test (newt == (10, 20, 30, 40, 50))
 words = Set(["Alias", "At", "AttributeError", "Build", "Bypass", "Create", "Encountered", "Expected", "Field", "For", "Got", "Helper", "IronPython", "Jython", "KeyError", "Make", "Modify", "Note", "OrderedDict", "Point", "Return", "Returns", "Type", "TypeError", "Used", "Validate", "ValueError", "Variables", "a", "accessible", "add", "added", "all", "also", "an", "arg_list", "args", "arguments", "automatically", "be", "build", "builtins", "but", "by", "cannot", "class_namespace", "classmethod", "cls", "collections", "convert", "copy", "created", "creation", "d", "debugging", "defined", "dict", "dictionary", "doc", "docstring", "docstrings", "duplicate", "effect", "either", "enumerate", "environments", "error", "example", "exec", "f", "f_globals", "field", "field_names", "fields", "formatted", "frame", "function", "functions", "generate", "get", "getter", "got", "greater", "has", "help", "identifiers", "index", "indexable", "instance", "instantiate", "interning", "introspection", "isidentifier", "isinstance", "itemgetter", "iterable", "join", "keyword", "keywords", "kwds", "len", "like", "list", "map", "maps", "message", "metadata", "method", "methods", "module", "module_name", "must", "name", "named", "namedtuple", "namedtuple_", "names", "namespace", "needs", "new", "nicely", "num_fields", "number", "object", "of", "operator", "option", "p", "particular", "pickle", "pickling", "plain", "pop", "positional", "property", "r", "regular", "rename", "replace", "replacing", "repr", "repr_fmt", "representation", "result", "reuse_itemgetter", "s", "seen", "self", "sequence", "set", "side", "specified", "split", "start", "startswith", "step", "str", "string", "strings", "subclass", "sys", "targets", "than", "the", "their", "this", "to", "tuple", "tuple_new", "type", "typename", "underscore", "unexpected", "unpack", "up", "use", "used", "user", "valid", "values", "variable", "verbose", "where", "which", "work", "x", "y", "z", "zip"])
 T = namedtuple("T", words)
 values = tuple(0:length(words) - 1)
 t = T(values...)
 @test (t == values)
-t = T(dict(zip(T._fields, values)))
+t = T(None = dict(zip(T._fields, values)))
 @test (t == values)
 t = _make(T, values)
 @test (t == values)
@@ -641,13 +641,13 @@ repr(t)
 @test (_asdict(t) == dict(zip(T._fields, values)))
 t = _make(T, values)
 newvalues = tuple((v*10 for v in values)...)
-newt = _replace(t, dict(zip(T._fields, newvalues)))
+newt = _replace(t, None = dict(zip(T._fields, newvalues)))
 @test (newt == newvalues)
 @test (T._fields == tuple(words))
 @test (__getnewargs__(t) == values)
 end
 
-function test_repr(self::B)
+function test_repr(self)
 A = namedtuple("A", "x")
 assertEqual(self, repr(A(1)), "A(x=1)")
 mutable struct B <: AbstractB
@@ -657,18 +657,18 @@ end
 assertEqual(self, repr(B(1)), "B(x=1)")
 end
 
-function test_keyword_only_arguments(self::TestNamedTuple)
+function test_keyword_only_arguments(self)
 assertRaises(self, TypeError) do 
 NT = namedtuple("NT", ["x", "y"], true)
 end
-NT = namedtuple("NT", ["abc", "def"], true)
+NT = namedtuple("NT", ["abc", "def"], rename = true)
 @test (NT._fields == ("abc", "_1"))
 assertRaises(self, TypeError) do 
 NT = namedtuple("NT", ["abc", "def"], false, true)
 end
 end
 
-function test_namedtuple_subclass_issue_24931(self::Point)
+function test_namedtuple_subclass_issue_24931(self)
 mutable struct Point <: AbstractPoint
 
 end
@@ -679,7 +679,7 @@ a.w = 5
 assertEqual(self, a.__dict__, Dict("w" => 5))
 end
 
-function test_field_descriptor(self::NewPoint)
+function test_field_descriptor(self)
 Point = namedtuple("Point", "x y")
 p = Point(11, 22)
 assertTrue(self, isdatadescriptor(Point.x))
@@ -699,14 +699,14 @@ assertEqual(self, np.x, 1)
 assertEqual(self, np.y, 2)
 end
 
-function test_new_builtins_issue_43102(self::TestNamedTuple)
+function test_new_builtins_issue_43102(self)
 obj = namedtuple("C", ())
 new_func = obj.__new__
 @test (new_func.__globals__["__builtins__"] == Dict())
 @test (new_func.__builtins__ == Dict())
 end
 
-function test_match_args(self::TestNamedTuple)
+function test_match_args(self)
 Point = namedtuple("Point", "x y")
 @test (Point.__match_args__ == ("x", "y"))
 end
@@ -726,7 +726,7 @@ __rxor__
                     ABCTestCase(right_side::Bool, __ge__ = __eq__, __gt__ = __eq__, __le__ = __eq__, __lt__ = __eq__, __ne__ = __eq__, __rand__ = __eq__, __ror__ = __eq__, __rsub__ = __eq__, __rxor__ = __eq__) =
                         new(right_side, __ge__, __gt__, __le__, __lt__, __ne__, __rand__, __ror__, __rsub__, __rxor__)
 end
-function validate_abstract_methods(self::ABCTestCase, abc)
+function validate_abstract_methods(self, abc)
 methodstubs = fromkeys(dict, names, (s) -> 0)
 C = type_("C", (abc,), methodstubs)
 C()
@@ -739,7 +739,7 @@ C = type_("C", (abc,), stubs)
 end
 end
 
-function validate_isinstance(self::ABCTestCase, abc, name)
+function validate_isinstance(self, abc, name)
 stub = (s) -> 0
 C = type_("C", (object,), Dict("__hash__" => nothing))
 setattr(C, name, stub)
@@ -750,7 +750,7 @@ assertNotIsInstance(self, C(), abc)
 @test !(C <: abc)
 end
 
-function validate_comparison(self::Other, instance)
+function validate_comparison(self, instance)
 ops = ["lt", "gt", "le", "ge", "ne", "or", "and", "xor", "sub"]
 operators = OrderedDict()
 for op in ops
@@ -772,7 +772,7 @@ __rxor__
                     Other(right_side::Bool, __ge__ = __eq__, __gt__ = __eq__, __le__ = __eq__, __lt__ = __eq__, __ne__ = __eq__, __rand__ = __eq__, __ror__ = __eq__, __rsub__ = __eq__, __rxor__ = __eq__) =
                         new(right_side, __ge__, __gt__, __le__, __lt__, __ne__, __rand__, __ror__, __rsub__, __rxor__)
 end
-function __eq__(self::Other, other)::Bool
+function __eq__(self, other)::Bool
 self.right_side = true
 return true
 end
@@ -801,7 +801,7 @@ __reversed__
                     TestOneTrickPonyABCs(__contains__ = nothing, __hash__ = nothing, __iter__ = nothing, __len__ = nothing, __reversed__ = nothing) =
                         new(__contains__, __hash__, __iter__, __len__, __reversed__)
 end
-function test_Awaitable(self::CoroLike)
+function test_Awaitable(self)
 Channel() do ch_test_Awaitable 
 @resumable function gen()
 @yield
@@ -817,22 +817,22 @@ end
 mutable struct Bar <: AbstractBar
 
 end
-@resumable function __await__(self::Bar)
+@resumable function __await__(self)
 @yield
 end
 
 mutable struct MinimalCoro <: AbstractMinimalCoro
 
 end
-function send(self::MinimalCoro, value)
+function send(self, value)
 return value
 end
 
-function throw(self::MinimalCoro, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 throw(super(), typ, val, tb)
 end
 
-@resumable function __await__(self::MinimalCoro)
+@resumable function __await__(self)
 @yield
 end
 
@@ -863,7 +863,7 @@ gc_collect()
 end
 end
 
-function test_Coroutine(self::CoroLike)
+function test_Coroutine(self)
 Channel() do ch_test_Coroutine 
 @resumable function gen()
 @yield
@@ -879,22 +879,22 @@ end
 mutable struct Bar <: AbstractBar
 
 end
-@resumable function __await__(self::Bar)
+@resumable function __await__(self)
 @yield
 end
 
 mutable struct MinimalCoro <: AbstractMinimalCoro
 
 end
-function send(self::MinimalCoro, value)
+function send(self, value)
 return value
 end
 
-function throw(self::MinimalCoro, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 throw(super(), typ, val, tb)
 end
 
-@resumable function __await__(self::MinimalCoro)
+@resumable function __await__(self)
 @yield
 end
 
@@ -916,19 +916,19 @@ close(c)
 mutable struct CoroLike <: AbstractCoroLike
 
 end
-function send(self::CoroLike, value)
+function send(self, value)
 #= pass =#
 end
 
-function throw(self::CoroLike, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
-function close(self::CoroLike)
+function close(self)
 #= pass =#
 end
 
-function __await__(self::CoroLike)
+function __await__(self)
 #= pass =#
 end
 
@@ -937,15 +937,15 @@ assertTrue(self, CoroLike <: Coroutine)
 mutable struct CoroLike <: AbstractCoroLike
 
 end
-function send(self::CoroLike, value)
+function send(self, value)
 #= pass =#
 end
 
-function close(self::CoroLike)
+function close(self)
 #= pass =#
 end
 
-function __await__(self::CoroLike)
+function __await__(self)
 #= pass =#
 end
 
@@ -954,7 +954,7 @@ assertFalse(self, CoroLike <: Coroutine)
 end
 end
 
-function test_Hashable(self::H)
+function test_Hashable(self)
 non_samples = [Vector{UInt8}(), Vector(), set(), dict()]
 for x in non_samples
 assertNotIsInstance(self, x, Hashable)
@@ -969,7 +969,7 @@ assertRaises(self, TypeError, Hashable)
 mutable struct H <: AbstractH
 
 end
-function __hash__(self::H)
+function __hash__(self)
 return __hash__(super())
 end
 
@@ -979,11 +979,11 @@ validate_abstract_methods(self, Hashable, "__hash__")
 validate_isinstance(self, Hashable, "__hash__")
 end
 
-function test_AsyncIterable(self::AI)
+function test_AsyncIterable(self)
 mutable struct AI <: AbstractAI
 
 end
-function __aiter__(self::AI)
+function __aiter__(self)
 return self
 end
 
@@ -998,11 +998,11 @@ validate_abstract_methods(self, AsyncIterable, "__aiter__")
 validate_isinstance(self, AsyncIterable, "__aiter__")
 end
 
-function test_AsyncIterator(self::AnextOnly)
+function test_AsyncIterator(self)
 mutable struct AI <: AbstractAI
 
 end
-function __aiter__(self::AI)
+function __aiter__(self)
 return self
 end
 
@@ -1021,7 +1021,7 @@ assertNotIsInstance(self, AnextOnly(), AsyncIterator)
 validate_abstract_methods(self, AsyncIterator, "__anext__", "__aiter__")
 end
 
-function test_Iterable(self::ItBlocked)
+function test_Iterable(self)
 non_samples = [nothing, 42, 3.14, 1im]
 for x in non_samples
 assertNotIsInstance(self, x, Iterable)
@@ -1035,7 +1035,7 @@ end
 mutable struct I <: AbstractI
 
 end
-function __iter__(self::I)
+function __iter__(self)
 return __iter__(super())
 end
 
@@ -1046,7 +1046,7 @@ validate_isinstance(self, Iterable, "__iter__")
 mutable struct It <: AbstractIt
 
 end
-function __iter__(self::It)
+function __iter__(self)
 return (x for x in [])
 end
 
@@ -1063,7 +1063,7 @@ assertFalse(self, ItBlocked <: Iterable)
 assertFalse(self, isa(ItBlocked(), Iterable))
 end
 
-function test_Reversible(self::RevRevBlocked)
+function test_Reversible(self)
 non_samples = [nothing, 42, 3.14, 1im, set(), frozenset()]
 for x in non_samples
 assertNotIsInstance(self, x, Reversible)
@@ -1085,11 +1085,11 @@ assertFalse(self, MutableMapping <: Reversible, repr(MutableMapping))
 mutable struct R <: AbstractR
 
 end
-function __iter__(self::R)
+function __iter__(self)
 return (x for x in Vector())
 end
 
-function __reversed__(self::R)
+function __reversed__(self)
 return (x for x in Vector())
 end
 
@@ -1099,14 +1099,14 @@ validate_abstract_methods(self, Reversible, "__reversed__", "__iter__")
 mutable struct RevNoIter <: AbstractRevNoIter
 
 end
-function __reversed__(self::RevNoIter)
+function __reversed__(self)
 return reversed([])
 end
 
 mutable struct RevPlusIter <: AbstractRevPlusIter
 
 end
-function __iter__(self::RevPlusIter)
+function __iter__(self)
 return (x for x in [])
 end
 
@@ -1117,11 +1117,11 @@ assertTrue(self, isa(RevPlusIter(), Reversible))
 mutable struct Rev <: AbstractRev
 
 end
-function __iter__(self::Rev)
+function __iter__(self)
 return (x for x in [])
 end
 
-function __reversed__(self::Rev)
+function __reversed__(self)
 return reversed([])
 end
 
@@ -1147,7 +1147,7 @@ assertFalse(self, RevRevBlocked <: Reversible)
 assertFalse(self, isa(RevRevBlocked(), Reversible))
 end
 
-function test_Collection(self::NonCol)
+function test_Collection(self)
 non_collections = [nothing, 42, 3.14, 1im, (x) -> 2*x]
 for x in non_collections
 assertNotIsInstance(self, x, Collection)
@@ -1172,15 +1172,15 @@ assertTrue(self, Sequence <: Collection, repr(MutableSet))
 mutable struct Col <: AbstractCol
 
 end
-function __iter__(self::Col)
+function __iter__(self)
 return (x for x in Vector())
 end
 
-function __len__(self::Col)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __contains__(self::Col, item)::Bool
+function __contains__(self, item)::Bool
 return false
 end
 
@@ -1200,33 +1200,33 @@ validate_abstract_methods(self, Collection, "__len__", "__iter__", "__contains__
 mutable struct ColNoIter <: AbstractColNoIter
 
 end
-function __len__(self::ColNoIter)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __contains__(self::ColNoIter, item)::Bool
+function __contains__(self, item)::Bool
 return false
 end
 
 mutable struct ColNoSize <: AbstractColNoSize
 
 end
-function __iter__(self::ColNoSize)
+function __iter__(self)
 return (x for x in [])
 end
 
-function __contains__(self::ColNoSize, item)::Bool
+function __contains__(self, item)::Bool
 return false
 end
 
 mutable struct ColNoCont <: AbstractColNoCont
 
 end
-function __iter__(self::ColNoCont)
+function __iter__(self)
 return (x for x in [])
 end
 
-function __len__(self::ColNoCont)::Int64
+function __len__(self)::Int64
 return 0
 end
 
@@ -1242,11 +1242,11 @@ __len__
                     SizeBlock(__len__ = nothing) =
                         new(__len__)
 end
-function __iter__(self::SizeBlock)
+function __iter__(self)
 return (x for x in [])
 end
 
-function __contains__(self::SizeBlock)::Bool
+function __contains__(self)::Bool
 return false
 end
 
@@ -1256,11 +1256,11 @@ __iter__
                     IterBlock(__iter__ = nothing) =
                         new(__iter__)
 end
-function __len__(self::IterBlock)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __contains__(self::IterBlock)::Bool
+function __contains__(self)::Bool
 return true
 end
 
@@ -1271,15 +1271,15 @@ assertFalse(self, isa(IterBlock(), Collection))
 mutable struct ColImpl <: AbstractColImpl
 
 end
-function __iter__(self::ColImpl)
+function __iter__(self)
 return (x for x in Vector())
 end
 
-function __len__(self::ColImpl)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __contains__(self::ColImpl, item)::Bool
+function __contains__(self, item)::Bool
 return false
 end
 
@@ -1294,7 +1294,7 @@ assertFalse(self, NonCol <: Collection)
 assertFalse(self, isa(NonCol(), Collection))
 end
 
-function test_Iterator(self::NextOnly)
+function test_Iterator(self)
 Channel() do ch_test_Iterator 
 non_samples = [nothing, 42, 3.14, 1im, b"", "", (), [], Dict(), set()]
 for x in non_samples
@@ -1310,7 +1310,7 @@ validate_abstract_methods(self, Iterator, "__next__", "__iter__")
 mutable struct NextOnly <: AbstractNextOnly
 
 end
-@resumable function __next__(self::NextOnly)
+@resumable function __next__(self)
 @yield 1
 return
 end
@@ -1319,57 +1319,57 @@ assertNotIsInstance(self, NextOnly(), Iterator)
 end
 end
 
-@resumable function test_Generator(self::IgnoreGeneratorExit)
+@resumable function test_Generator(self)
 mutable struct NonGen1 <: AbstractNonGen1
 
 end
-function __iter__(self::NonGen1)
+function __iter__(self)
 return self
 end
 
-function __next__(self::NonGen1)
+function __next__(self)
 return nothing
 end
 
-function close(self::NonGen1)
+function close(self)
 #= pass =#
 end
 
-function throw(self::NonGen1, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
 mutable struct NonGen2 <: AbstractNonGen2
 
 end
-function __iter__(self::NonGen2)
+function __iter__(self)
 return self
 end
 
-function __next__(self::NonGen2)
+function __next__(self)
 return nothing
 end
 
-function close(self::NonGen2)
+function close(self)
 #= pass =#
 end
 
-function send(self::NonGen2, value)
+function send(self, value)
 return value
 end
 
 mutable struct NonGen3 <: AbstractNonGen3
 
 end
-function close(self::NonGen3)
+function close(self)
 #= pass =#
 end
 
-function send(self::NonGen3, value)
+function send(self, value)
 return value
 end
 
-function throw(self::NonGen3, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
@@ -1381,34 +1381,34 @@ end
 mutable struct Gen <: AbstractGen
 
 end
-function __iter__(self::Gen)
+function __iter__(self)
 return self
 end
 
-function __next__(self::Gen)
+function __next__(self)
 return nothing
 end
 
-function close(self::Gen)
+function close(self)
 #= pass =#
 end
 
-function send(self::Gen, value)
+function send(self, value)
 return value
 end
 
-function throw(self::Gen, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
 mutable struct MinimalGen <: AbstractMinimalGen
 
 end
-function send(self::MinimalGen, value)
+function send(self, value)
 return value
 end
 
-function throw(self::MinimalGen, typ, val = nothing, tb = nothing)
+function throw(self, typ, val = nothing, tb = nothing)
 throw(super(), typ, val, tb)
 end
 
@@ -1430,11 +1430,11 @@ assertRaises(self, StopIteration, mgen.throw, StopIteration())
 mutable struct FailOnClose <: AbstractFailOnClose
 
 end
-function send(self::FailOnClose, value)
+function send(self, value)
 return value
 end
 
-function throw(self::FailOnClose)
+function throw(self)
 throw(ValueError)
 end
 
@@ -1442,69 +1442,69 @@ assertRaises(self, ValueError, FailOnClose().close)
 mutable struct IgnoreGeneratorExit <: AbstractIgnoreGeneratorExit
 
 end
-function send(self::IgnoreGeneratorExit, value)
+function send(self, value)
 return value
 end
 
-function throw(self::IgnoreGeneratorExit)
+function throw(self)
 #= pass =#
 end
 
 assertRaises(self, RuntimeError, IgnoreGeneratorExit().close)
 end
 
-function test_AsyncGenerator(self::IgnoreGeneratorExit)
+function test_AsyncGenerator(self)
 Channel() do ch_test_AsyncGenerator 
 mutable struct NonAGen1 <: AbstractNonAGen1
 
 end
-function __aiter__(self::NonAGen1)
+function __aiter__(self)
 return self
 end
 
-function __anext__(self::NonAGen1)
+function __anext__(self)
 return nothing
 end
 
-function aclose(self::NonAGen1)
+function aclose(self)
 #= pass =#
 end
 
-function athrow(self::NonAGen1, typ, val = nothing, tb = nothing)
+function athrow(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
 mutable struct NonAGen2 <: AbstractNonAGen2
 
 end
-function __aiter__(self::NonAGen2)
+function __aiter__(self)
 return self
 end
 
-function __anext__(self::NonAGen2)
+function __anext__(self)
 return nothing
 end
 
-function aclose(self::NonAGen2)
+function aclose(self)
 #= pass =#
 end
 
-function asend(self::NonAGen2, value)
+function asend(self, value)
 return value
 end
 
 mutable struct NonAGen3 <: AbstractNonAGen3
 
 end
-function aclose(self::NonAGen3)
+function aclose(self)
 #= pass =#
 end
 
-function asend(self::NonAGen3, value)
+function asend(self, value)
 return value
 end
 
-function athrow(self::NonAGen3, typ, val = nothing, tb = nothing)
+function athrow(self, typ, val = nothing, tb = nothing)
 #= pass =#
 end
 
@@ -1516,7 +1516,7 @@ end
 mutable struct Gen <: AbstractGen
 
 end
-function __aiter__(self::Gen)
+function __aiter__(self)
 return self
 end
 
@@ -1576,7 +1576,7 @@ end
 end
 end
 
-function test_Sized(self::TestOneTrickPonyABCs)
+function test_Sized(self)
 non_samples = [nothing, 42, 3.14, 1im, _test_gen(), (x for x in [])]
 for x in non_samples
 assertNotIsInstance(self, x, Sized)
@@ -1591,7 +1591,7 @@ validate_abstract_methods(self, Sized, "__len__")
 validate_isinstance(self, Sized, "__len__")
 end
 
-function test_Container(self::TestOneTrickPonyABCs)
+function test_Container(self)
 non_samples = [nothing, 42, 3.14, 1im, _test_gen(), (x for x in [])]
 for x in non_samples
 assertNotIsInstance(self, x, Container)
@@ -1606,7 +1606,7 @@ validate_abstract_methods(self, Container, "__contains__")
 validate_isinstance(self, Container, "__contains__")
 end
 
-function test_Callable(self::TestOneTrickPonyABCs)
+function test_Callable(self)
 non_samples = [nothing, 42, 3.14, 1im, "", b"", (), [], Dict(), set(), _test_gen(), (x for x in [])]
 for x in non_samples
 assertNotIsInstance(self, x, Callable)
@@ -1621,7 +1621,7 @@ validate_abstract_methods(self, Callable, "__call__")
 validate_isinstance(self, Callable, "__call__")
 end
 
-function test_direct_subclassing(self::C)
+function test_direct_subclassing(self)
 for B in (Hashable, Iterable, Iterator, Reversible, Sized, Container, Callable)
 mutable struct C <: AbstractC
 
@@ -1632,7 +1632,7 @@ assertFalse(self, Int64 <: C)
 end
 end
 
-function test_registration(self::C)
+function test_registration(self)
 for B in (Hashable, Iterable, Iterator, Reversible, Sized, Container, Callable)
 mutable struct C <: AbstractC
 __hash__
@@ -1654,23 +1654,23 @@ it::Tuple
                     WithSet(data, it::Tuple = ()) =
                         new(data, it)
 end
-function __len__(self::WithSet)::Int64
+function __len__(self)::Int64
 return length(self.data)
 end
 
-function __iter__(self::WithSet)
+function __iter__(self)
 return (x for x in self.data)
 end
 
-function __contains__(self::WithSet, item)::Bool
+function __contains__(self, item)::Bool
 return item ∈ self.data
 end
 
-function add(self::WithSet, item)
+function add(self, item)
 add(self.data, item)
 end
 
-function discard(self::WithSet, item)
+function discard(self, item)
 discard(self.data, item)
 end
 
@@ -1691,7 +1691,7 @@ items
                     TestCollectionABCs(__s, _seq, _values, contents::Vector{Int64}, created_by, data::Vector, lst::Vector, seq, __abc_tpflags__ = Sequence.__flags__ | Mapping.__flags__, __slots__::Vector{String} = ["__s"], elements::Tuple = (), items = nothing) =
                         new(__s, _seq, _values, contents, created_by, data, lst, seq, __abc_tpflags__, __slots__, elements, items)
 end
-function test_Set(self::MySet)
+function test_Set(self)
 for sample in [set, frozenset]
 assertIsInstance(self, sample(), Set)
 assertTrue(self, sample <: Set)
@@ -1700,38 +1700,38 @@ validate_abstract_methods(self, Set, "__contains__", "__iter__", "__len__")
 mutable struct MySet <: AbstractMySet
 
 end
-function __contains__(self::MySet, x)::Bool
+function __contains__(self, x)::Bool
 return false
 end
 
-function __len__(self::MySet)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __iter__(self::MySet)
+function __iter__(self)
 return (x for x in [])
 end
 
 validate_comparison(self, MySet())
 end
 
-function test_hash_Set(self::OneTwoThreeSet)
+function test_hash_Set(self)
 mutable struct OneTwoThreeSet <: AbstractOneTwoThreeSet
 contents::Vector{Int64}
 end
-function __contains__(self::OneTwoThreeSet, x)::Bool
+function __contains__(self, x)::Bool
 return x ∈ self.contents
 end
 
-function __len__(self::OneTwoThreeSet)::Int64
+function __len__(self)::Int64
 return length(self.contents)
 end
 
-function __iter__(self::OneTwoThreeSet)
+function __iter__(self)
 return (x for x in self.contents)
 end
 
-function __hash__(self::OneTwoThreeSet)
+function __hash__(self)
 return _hash(self)
 end
 
@@ -1739,19 +1739,19 @@ a, b = (OneTwoThreeSet(), OneTwoThreeSet())
 assertTrue(self, hash(a) == hash(b))
 end
 
-function test_isdisjoint_Set(self::MySet)
+function test_isdisjoint_Set(self)
 mutable struct MySet <: AbstractMySet
 contents
 end
-function __contains__(self::MySet, x)::Bool
+function __contains__(self, x)::Bool
 return x ∈ self.contents
 end
 
-function __iter__(self::MySet)
+function __iter__(self)
 return (x for x in self.contents)
 end
 
-function __len__(self::MySet)::Int64
+function __len__(self)::Int64
 return length([x for x in self.contents])
 end
 
@@ -1762,19 +1762,19 @@ assertTrue(self, isdisjoint(s1, s2))
 assertFalse(self, isdisjoint(s1, s3))
 end
 
-function test_equality_Set(self::MySet)
+function test_equality_Set(self)
 mutable struct MySet <: AbstractMySet
 contents
 end
-function __contains__(self::MySet, x)::Bool
+function __contains__(self, x)::Bool
 return x ∈ self.contents
 end
 
-function __iter__(self::MySet)
+function __iter__(self)
 return (x for x in self.contents)
 end
 
-function __len__(self::MySet)::Int64
+function __len__(self)::Int64
 return length([x for x in self.contents])
 end
 
@@ -1791,19 +1791,19 @@ assertEqual(self, s3, s4)
 assertNotEqual(self, s2, s3)
 end
 
-function test_arithmetic_Set(self::MySet)
+function test_arithmetic_Set(self)
 mutable struct MySet <: AbstractMySet
 contents
 end
-function __contains__(self::MySet, x)::Bool
+function __contains__(self, x)::Bool
 return x ∈ self.contents
 end
 
-function __iter__(self::MySet)
+function __iter__(self)
 return (x for x in self.contents)
 end
 
-function __len__(self::MySet)::Int64
+function __len__(self)::Int64
 return length([x for x in self.contents])
 end
 
@@ -1813,7 +1813,7 @@ s3 = __and__(s1, s2)
 assertEqual(self, s3, MySet((3,)))
 end
 
-function test_MutableSet(self::TestCollectionABCs)
+function test_MutableSet(self)
 assertIsInstance(self, set(), MutableSet)
 assertTrue(self, set <: MutableSet)
 assertNotIsInstance(self, frozenset(), MutableSet)
@@ -1821,13 +1821,13 @@ assertFalse(self, pset <: MutableSet)
 validate_abstract_methods(self, MutableSet, "__contains__", "__iter__", "__len__", "add", "discard")
 end
 
-function test_issue_5647(self::TestCollectionABCs)
+function test_issue_5647(self)
 s = WithSet("abcd")
 s = __and__(s, WithSet("cdef"))
 assertEqual(self, set(s), set("cd"))
 end
 
-function test_issue_4920(self::MySet)
+function test_issue_4920(self)
 mutable struct MySet <: AbstractMySet
 __s
 __slots__::Vector{String}
@@ -1840,31 +1840,31 @@ end
                 new(items , __slots__)
             end
 end
-function __contains__(self::MySet, v)::Bool
+function __contains__(self, v)::Bool
 return v ∈ self.__s
 end
 
-function __iter__(self::MySet)
+function __iter__(self)
 return (x for x in self.__s)
 end
 
-function __len__(self::MySet)::Int64
+function __len__(self)::Int64
 return length(self.__s)
 end
 
-function add(self::MySet, v)::Bool
+function add(self, v)::Bool
 result = v ∉ self.__s
 add(self.__s, v)
 return result
 end
 
-function discard(self::MySet, v)::Bool
+function discard(self, v)::Bool
 result = v ∈ self.__s
 discard(self.__s, v)
 return result
 end
 
-function __repr__(self::MySet)::String
+function __repr__(self)::String
 return "MySet(%s)" % repr(collect(self))
 end
 
@@ -1876,7 +1876,7 @@ assertNotIn(self, r, s)
 assertIn(self, r, items)
 end
 
-function test_issue8750(self::TestCollectionABCs)
+function test_issue8750(self)
 empty = WithSet()
 full = WithSet(0:9)
 s = WithSet(full)
@@ -1892,42 +1892,42 @@ s = __or__(s, s)
 assertEqual(self, s, full)
 end
 
-function test_issue16373(self::MyNonComparableSet)
+function test_issue16373(self)
 mutable struct MyComparableSet <: AbstractMyComparableSet
 
 end
-function __contains__(self::MyComparableSet, x)::Bool
+function __contains__(self, x)::Bool
 return false
 end
 
-function __len__(self::MyComparableSet)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __iter__(self::MyComparableSet)
+function __iter__(self)
 return (x for x in [])
 end
 
 mutable struct MyNonComparableSet <: AbstractMyNonComparableSet
 
 end
-function __contains__(self::MyNonComparableSet, x)::Bool
+function __contains__(self, x)::Bool
 return false
 end
 
-function __len__(self::MyNonComparableSet)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __iter__(self::MyNonComparableSet)
+function __iter__(self)
 return (x for x in [])
 end
 
-function __le__(self::MyNonComparableSet, x)
+function __le__(self, x)
 return NotImplemented
 end
 
-function __lt__(self::MyNonComparableSet, x)
+function __lt__(self, x)
 return NotImplemented
 end
 
@@ -1939,15 +1939,15 @@ assertFalse(self, ncs > cs)
 assertTrue(self, ncs >= cs)
 end
 
-function test_issue26915(self::CustomSequence)
+function test_issue26915(self)
 mutable struct CustomSequence <: AbstractCustomSequence
 _seq
 end
-function __getitem__(self::CustomSequence, index)
+function __getitem__(self, index)
 return self._seq[index + 1]
 end
 
-function __len__(self::CustomSequence)::Int64
+function __len__(self)::Int64
 return length(self._seq)
 end
 
@@ -1966,11 +1966,11 @@ assertEqual(self, count(seq, nan), 2)
 assertEqual(self, count(seq, obj), 1)
 end
 
-function assertSameSet(self::TestCollectionABCs, s1, s2)
+function assertSameSet(self, s1, s2)
 assertSetEqual(self, set(s1), set(s2))
 end
 
-function test_Set_from_iterable(self::SetUsingInstanceFromIterable)
+function test_Set_from_iterable(self)
 #= Verify _from_iterable overridden to an instance method works. =#
 Channel() do ch_test_Set_from_iterable 
 mutable struct SetUsingInstanceFromIterable <: AbstractSetUsingInstanceFromIterable
@@ -1984,30 +1984,30 @@ end
                 new(values, created_by)
             end
 end
-function _from_iterable(self::SetUsingInstanceFromIterable, values)
+function _from_iterable(self, values)
 return type_(self)(values, "from_iterable")
 end
 
-function __contains__(self::SetUsingInstanceFromIterable, value)::Bool
+function __contains__(self, value)::Bool
 return value ∈ self._values
 end
 
-function __iter__(self::SetUsingInstanceFromIterable)
+function __iter__(self)
 Channel() do ch___iter__ 
 # Unsupported
 @yield_from self._values
 end
 end
 
-function __len__(self::SetUsingInstanceFromIterable)::Int64
+function __len__(self)::Int64
 return length(self._values)
 end
 
-function add(self::SetUsingInstanceFromIterable, value)
+function add(self, value)
 add(self._values, value)
 end
 
-function discard(self::SetUsingInstanceFromIterable, value)
+function discard(self, value)
 discard(self._values, value)
 end
 
@@ -2035,7 +2035,7 @@ assertEqual(self, Set([1, 2, 4]), impl)
 end
 end
 
-function test_Set_interoperability_with_real_sets(self::ListSet)
+function test_Set_interoperability_with_real_sets(self)
 mutable struct ListSet <: AbstractListSet
 data::Vector
 elements::Tuple
@@ -2049,19 +2049,19 @@ end
                 new(elements )
             end
 end
-function __contains__(self::ListSet, elem)::Bool
+function __contains__(self, elem)::Bool
 return elem ∈ self.data
 end
 
-function __iter__(self::ListSet)
+function __iter__(self)
 return (x for x in self.data)
 end
 
-function __len__(self::ListSet)::Int64
+function __len__(self)::Int64
 return length(self.data)
 end
 
-function __repr__(self::ListSet)
+function __repr__(self)
 return "Set($(!r))"
 end
 
@@ -2191,15 +2191,15 @@ assertTrue(self, f1 != l1)
 assertTrue(self, f1 != l2)
 end
 
-function test_Set_hash_matches_frozenset(self::TestCollectionABCs)
+function test_Set_hash_matches_frozenset(self)
 sets = [Dict(), Set([1]), Set([nothing]), Set([-1]), Set([0.0]), Set(["abc"]), Set([1, 2, 3]), Set([10^100, 10^101]), Set(["a", "b", "ab", ""]), Set([false, true]), Set([object(), object(), object()]), Set([float("nan")]), Set([frozenset()]), Set([0:999...]), Set([0:999...]) - Set([100, 200, 300]), Set([sys.maxsize - 10:sys.maxsize + 9...])]
 for s in sets
 fs = frozenset(s)
-assertEqual(self, hash(fs), _hash(fs), s)
+assertEqual(self, hash(fs), _hash(fs), msg = s)
 end
 end
 
-function test_Mapping(self::MyMapping)
+function test_Mapping(self)
 for sample in [dict]
 assertIsInstance(self, sample(), Mapping)
 assertTrue(self, sample <: Mapping)
@@ -2208,15 +2208,15 @@ validate_abstract_methods(self, Mapping, "__contains__", "__iter__", "__len__", 
 mutable struct MyMapping <: AbstractMyMapping
 
 end
-function __len__(self::MyMapping)::Int64
+function __len__(self)::Int64
 return 0
 end
 
-function __getitem__(self::MyMapping, i)
+function __getitem__(self, i)
 throw(IndexError)
 end
 
-function __iter__(self::MyMapping)
+function __iter__(self)
 return (x for x in ())
 end
 
@@ -2224,7 +2224,7 @@ validate_comparison(self, MyMapping())
 assertRaises(self, TypeError, reversed, MyMapping())
 end
 
-function test_MutableMapping(self::TestCollectionABCs)
+function test_MutableMapping(self)
 for sample in [dict]
 assertIsInstance(self, sample(), MutableMapping)
 assertTrue(self, sample <: MutableMapping)
@@ -2232,7 +2232,7 @@ end
 validate_abstract_methods(self, MutableMapping, "__contains__", "__iter__", "__len__", "__getitem__", "__setitem__", "__delitem__")
 end
 
-function test_MutableMapping_subclass(self::TestCollectionABCs)
+function test_MutableMapping_subclass(self)
 mymap = UserDict()
 mymap["red"] = 5
 assertIsInstance(self, keys(mymap), Set)
@@ -2255,7 +2255,7 @@ mymap["blue"] = 7
 assertEqual(self, z, Set([("orange", 3), ("red", 5)]))
 end
 
-function test_Sequence(self::TestCollectionABCs)
+function test_Sequence(self)
 for sample in [tuple, list, bytes, str]
 assertIsInstance(self, sample(), Sequence)
 assertTrue(self, sample <: Sequence)
@@ -2268,15 +2268,15 @@ assertTrue(self, String <: Sequence)
 validate_abstract_methods(self, Sequence, "__contains__", "__iter__", "__len__", "__getitem__")
 end
 
-function test_Sequence_mixins(self::SequenceSubclass)
+function test_Sequence_mixins(self)
 mutable struct SequenceSubclass <: AbstractSequenceSubclass
 seq
 end
-function __getitem__(self::SequenceSubclass, index)
+function __getitem__(self, index)
 return self.seq[index + 1]
 end
 
-function __len__(self::SequenceSubclass)::Int64
+function __len__(self)::Int64
 return length(self.seq)
 end
 
@@ -2308,7 +2308,7 @@ end
 end
 end
 
-function test_ByteString(self::TestCollectionABCs)
+function test_ByteString(self)
 for sample in [bytes, bytearray]
 assertIsInstance(self, sample(), ByteString)
 assertTrue(self, sample <: ByteString)
@@ -2321,7 +2321,7 @@ assertNotIsInstance(self, memoryview(b""), ByteString)
 assertFalse(self, memoryview <: ByteString)
 end
 
-function test_MutableSequence(self::TestCollectionABCs)
+function test_MutableSequence(self)
 for sample in [tuple, str, bytes]
 assertNotIsInstance(self, sample(), MutableSequence)
 assertFalse(self, sample <: MutableSequence)
@@ -2334,28 +2334,28 @@ assertFalse(self, String <: MutableSequence)
 validate_abstract_methods(self, MutableSequence, "__contains__", "__iter__", "__len__", "__getitem__", "__setitem__", "__delitem__", "insert")
 end
 
-function test_MutableSequence_mixins(self::MutableSequenceSubclass)
+function test_MutableSequence_mixins(self)
 mutable struct MutableSequenceSubclass <: AbstractMutableSequenceSubclass
 lst::Vector
 end
-function __setitem__(self::MutableSequenceSubclass, index, value)
+function __setitem__(self, index, value)
 self.lst[index + 1] = value
 end
 
-function __getitem__(self::MutableSequenceSubclass, index)::Vector
+function __getitem__(self, index)::Vector
 return self.lst[index + 1]
 end
 
-function __len__(self::MutableSequenceSubclass)::Int64
+function __len__(self)::Int64
 return length(self.lst)
 end
 
-function __delitem__(self::MutableSequenceSubclass, index)
+function __delitem__(self, index)
 #Delete Unsupported
 del(self.lst)
 end
 
-function insert(self::MutableSequenceSubclass, index, value)
+function insert(self, index, value)
 insert(self.lst, index, value)
 end
 
@@ -2385,7 +2385,7 @@ assertEqual(self, length(mss), length(mss2))
 assertEqual(self, collect(mss), collect(mss2))
 end
 
-function test_illegal_patma_flags(self::Both)
+function test_illegal_patma_flags(self)
 assertRaises(self, TypeError) do 
 mutable struct Both <: AbstractBoth
 __abc_tpflags__
@@ -2401,11 +2401,11 @@ mutable struct CounterSubclassWithSetItem <: AbstractCounterSubclassWithSetItem
 called::Bool
 
             CounterSubclassWithSetItem() = begin
-                Counter.__init__(self, args..., kwds)
+                Counter.__init__(self, args..., None = kwds)
                 new()
             end
 end
-function __setitem__(self::CounterSubclassWithSetItem, key, value)
+function __setitem__(self, key, value)
 self.called = true
 __setitem__(self, key, value)
 end
@@ -2414,11 +2414,11 @@ mutable struct CounterSubclassWithGet <: AbstractCounterSubclassWithGet
 called::Bool
 
             CounterSubclassWithGet() = begin
-                Counter.__init__(self, args..., kwds)
+                Counter.__init__(self, args..., None = kwds)
                 new()
             end
 end
-function get(self::CounterSubclassWithGet, key, default)
+function get(self, key, default)
 self.called = true
 return get(self, key, default)
 end
@@ -2426,10 +2426,10 @@ end
 mutable struct TestCounter <: AbstractTestCounter
 
 end
-function test_basics(self::TestCounter)
+function test_basics(self)
 c = Counter("abcaba")
 @test (c == Counter(Dict("a" => 3, "b" => 2, "c" => 1)))
-@test (c == Counter(3, 2, 1))
+@test (c == Counter(a = 3, b = 2, c = 1))
 @test isa(self, c)
 @test isa(self, c)
 @test Counter <: dict
@@ -2446,7 +2446,7 @@ c = Counter("abcaba")
 @test (__contains__(c, "z") == false_)
 @test (get(c, "b", 10) == 2)
 @test (get(c, "z", 10) == 10)
-@test (c == dict(3, 2, 1))
+@test (c == dict(a = 3, b = 2, c = 1))
 @test (repr(c) == "Counter({\'a\': 3, \'b\': 2, \'c\': 1})")
 @test (most_common(c) == [("a", 3), ("b", 2), ("c", 1)])
 for i in 0:4
@@ -2462,7 +2462,7 @@ del(c)
 c["d"] -= 2
 c["e"] = -5
 c["f"] += 4
-@test (c == dict(4, 0, -2, -5, 4))
+@test (c == dict(a = 4, b = 0, d = -2, e = -5, f = 4))
 @test (join(elements(c), "") == "aaaaffff")
 @test (pop(c, "f") == 4)
 assertNotIn(self, "f", c)
@@ -2475,35 +2475,35 @@ clear(c)
 @test (repr(c) == "Counter()")
 @test_throws NotImplementedError Counter.fromkeys("abc")
 @test_throws TypeError hash(c)
-update(c, dict(5, 3))
-update(c, 1)
+update(c, dict(a = 5, b = 3))
+update(c, c = 1)
 update(c, Counter(repeat("a",50) * repeat("b",30)))
 update(c)
 __init__(c, repeat("a",500) * repeat("b",300))
 __init__(c, "cdc")
 __init__(c)
-@test (c == dict(555, 333, 3, 1))
+@test (c == dict(a = 555, b = 333, c = 3, d = 1))
 @test (setdefault(c, "d", 5) == 1)
 @test (c["d"] == 1)
 @test (setdefault(c, "e", 5) == 5)
 @test (c["e"] == 5)
 end
 
-function test_init(self::TestCounter)
-@test (collect(items(Counter(42))) == [("self", 42)])
-@test (collect(items(Counter(42))) == [("iterable", 42)])
-@test (collect(items(Counter(nothing))) == [("iterable", nothing)])
+function test_init(self)
+@test (collect(items(Counter(self = 42))) == [("self", 42)])
+@test (collect(items(Counter(iterable = 42))) == [("iterable", 42)])
+@test (collect(items(Counter(iterable = nothing))) == [("iterable", nothing)])
 @test_throws TypeError Counter(42)
 @test_throws TypeError Counter((), ())
 @test_throws TypeError Counter.__init__()
 end
 
-function test_total(self::TestCounter)
-c = Counter(10, 5, 0)
+function test_total(self)
+c = Counter(a = 10, b = 5, c = 0)
 @test (total(c) == 15)
 end
 
-function test_order_preservation(self::TestCounter)
+function test_order_preservation(self)
 @test (collect(items(Counter("abracadabra"))) == [("a", 5), ("b", 2), ("r", 2), ("c", 1), ("d", 1)])
 @test (collect(items(Counter("xyzpdqqdpzyx"))) == [("x", 2), ("y", 2), ("z", 2), ("p", 2), ("d", 2), ("q", 2)])
 @test (collect(elements(Counter("abracadabra simsalabim"))) == ["a", "a", "a", "a", "a", "a", "a", "b", "b", "b", "r", "r", "c", "d", " ", "s", "s", "i", "i", "m", "m", "l"])
@@ -2543,22 +2543,22 @@ subtract(p, q)
 @test correctly_ordered(p)
 end
 
-function test_update(self::TestCounter)
+function test_update(self)
 c = Counter()
-update(c, 42)
+update(c, self = 42)
 @test (collect(items(c)) == [("self", 42)])
 c = Counter()
-update(c, 42)
+update(c, iterable = 42)
 @test (collect(items(c)) == [("iterable", 42)])
 c = Counter()
-update(c, nothing)
+update(c, iterable = nothing)
 @test (collect(items(c)) == [("iterable", nothing)])
 @test_throws TypeError Counter().update(42)
 @test_throws TypeError Counter().update(Dict(), Dict())
 @test_throws TypeError Counter.update()
 end
 
-function test_copying(self::TestCounter)
+function test_copying(self)
 words = Counter(split("which witch had which witches wrist watch"))
 function check(dup)
 msg = "\ncopy: %s\nwords: %s" % (dup, words)
@@ -2570,7 +2570,7 @@ check(copy(words))
 check(copy(words))
 check(deepcopy(words))
 for proto in 0:pickle.HIGHEST_PROTOCOL
-subTest(self, proto) do 
+subTest(self, proto = proto) do 
 check(loads(dumps(words, proto)))
 end
 end
@@ -2581,7 +2581,7 @@ check(update_test)
 check(Counter(words))
 end
 
-function test_copy_subclass(self::MyCounter)
+function test_copy_subclass(self)
 mutable struct MyCounter <: AbstractMyCounter
 
 end
@@ -2593,7 +2593,7 @@ assertEqual(self, length(d), length(c))
 assertEqual(self, type_(d), type_(c))
 end
 
-function test_conversions(self::TestCounter)
+function test_conversions(self)
 s = "she sells sea shells by the sea shore"
 @test (sorted(elements(Counter(s))) == sorted(s))
 @test (sorted(Counter(s)) == sorted(set(s)))
@@ -2601,23 +2601,23 @@ s = "she sells sea shells by the sea shore"
 @test (set(Counter(s)) == set(s))
 end
 
-function test_invariant_for_the_in_operator(self::TestCounter)
-c = Counter(10, -2, 0)
+function test_invariant_for_the_in_operator(self)
+c = Counter(a = 10, b = -2, c = 0)
 for elem in c
 @test elem ∈ c
 assertIn(self, elem, c)
 end
 end
 
-function test_multiset_operations(self::TestCounter)
-c = Counter(10, -2, 0) + Counter()
-@test (dict(c) == dict(10))
+function test_multiset_operations(self)
+c = Counter(a = 10, b = -2, c = 0) + Counter()
+@test (dict(c) == dict(a = 10))
 elements = "abcd"
 for i in 0:999
 p = Counter(dict(((elem, randrange(-2, 4)) for elem in elements)))
-update(p, 1, -1, 0)
+update(p, e = 1, f = -1, g = 0)
 q = Counter(dict(((elem, randrange(-2, 4)) for elem in elements)))
-update(q, 1, -1, 0)
+update(q, h = 1, i = -1, j = 0)
 for (counterop, numberop) in [(Counter.__add__, (x, y) -> max(0, x + y)), (Counter.__sub__, (x, y) -> max(0, x - y)), (Counter.__or__, (x, y) -> max(0, x, y)), (Counter.__and__, (x, y) -> max(0, min(x, y)))]
 result = counterop(p, q)
 for x in elements
@@ -2638,13 +2638,13 @@ end
 end
 end
 
-function test_inplace_operations(self::TestCounter)
+function test_inplace_operations(self)
 elements = "abcd"
 for i in 0:999
 p = Counter(dict(((elem, randrange(-2, 4)) for elem in elements)))
-update(p, 1, -1, 0)
+update(p, e = 1, f = -1, g = 0)
 q = Counter(dict(((elem, randrange(-2, 4)) for elem in elements)))
-update(q, 1, -1, 0)
+update(q, h = 1, i = -1, j = 0)
 for (inplace_op, regular_op) in [(Counter.__iadd__, Counter.__add__), (Counter.__isub__, Counter.__sub__), (Counter.__ior__, Counter.__or__), (Counter.__iand__, Counter.__and__)]
 c = copy(p)
 c_id = id(c)
@@ -2656,41 +2656,41 @@ end
 end
 end
 
-function test_subtract(self::TestCounter)
-c = Counter(-5, 0, 5, 10, 15, 40)
-subtract(c, 1, 2, -3, 10, 20, 30, -50)
-@test (c == Counter(-6, -2, 8, 0, -5, -30, 40, 50))
-c = Counter(-5, 0, 5, 10, 15, 40)
-subtract(c, Counter(1, 2, -3, 10, 20, 30, -50))
-@test (c == Counter(-6, -2, 8, 0, -5, -30, 40, 50))
+function test_subtract(self)
+c = Counter(a = -5, b = 0, c = 5, d = 10, e = 15, g = 40)
+subtract(c, a = 1, b = 2, c = -3, d = 10, e = 20, f = 30, h = -50)
+@test (c == Counter(a = -6, b = -2, c = 8, d = 0, e = -5, f = -30, g = 40, h = 50))
+c = Counter(a = -5, b = 0, c = 5, d = 10, e = 15, g = 40)
+subtract(c, Counter(a = 1, b = 2, c = -3, d = 10, e = 20, f = 30, h = -50))
+@test (c == Counter(a = -6, b = -2, c = 8, d = 0, e = -5, f = -30, g = 40, h = 50))
 c = Counter("aaabbcd")
 subtract(c, "aaaabbcce")
-@test (c == Counter(-1, 0, -1, 1, -1))
+@test (c == Counter(a = -1, b = 0, c = -1, d = 1, e = -1))
 c = Counter()
-subtract(c, 42)
+subtract(c, self = 42)
 @test (collect(items(c)) == [("self", -42)])
 c = Counter()
-subtract(c, 42)
+subtract(c, iterable = 42)
 @test (collect(items(c)) == [("iterable", -42)])
 @test_throws TypeError Counter().subtract(42)
 @test_throws TypeError Counter().subtract(Dict(), Dict())
 @test_throws TypeError Counter.subtract()
 end
 
-function test_unary(self::TestCounter)
-c = Counter(-5, 0, 5, 10, 15, 40)
-@test (dict(+(c)) == dict(5, 10, 15, 40))
-@test (dict(-(c)) == dict(5))
+function test_unary(self)
+c = Counter(a = -5, b = 0, c = 5, d = 10, e = 15, g = 40)
+@test (dict(+(c)) == dict(c = 5, d = 10, e = 15, g = 40))
+@test (dict(-(c)) == dict(a = 5))
 end
 
-function test_repr_nonsortable(self::TestCounter)
-c = Counter(2, nothing)
+function test_repr_nonsortable(self)
+c = Counter(a = 2, b = nothing)
 r = repr(c)
 assertIn(self, "\'a\': 2", r)
 assertIn(self, "\'b\': None", r)
 end
 
-function test_helper_function(self::TestCounter)
+function test_helper_function(self)
 elems = collect("abracadabra")
 d = dict()
 _count_elements(d, elems)
@@ -2706,11 +2706,11 @@ c = CounterSubclassWithGet("abracadabra")
 @test (dict(c) == Dict("a" => 5, "b" => 2, "c" => 1, "d" => 1, "r" => 2))
 end
 
-function test_multiset_operations_equivalent_to_set_operations(self::TestCounter)
+function test_multiset_operations_equivalent_to_set_operations(self)
 s = collect(product(("a", "b", "c"), 0:1))
 powerset = from_iterable((combinations(s, r) for r in 0:length(s)))
 counters = [Counter(dict(groups)) for groups in powerset]
-for (cp, cq) in product(counters, 2)
+for (cp, cq) in product(counters, repeat = 2)
 sp = set(elements(cp))
 sq = set(elements(cq))
 @test (set(cp + cq) == sp | sq)
@@ -2726,33 +2726,33 @@ sq = set(elements(cq))
 end
 end
 
-function test_eq(self::TestCounter)
-@test (Counter(3, 2, 0) == Counter("ababa"))
-assertNotEqual(self, Counter(3, 2), Counter("babab"))
+function test_eq(self)
+@test (Counter(a = 3, b = 2, c = 0) == Counter("ababa"))
+assertNotEqual(self, Counter(a = 3, b = 2), Counter("babab"))
 end
 
-function test_le(self::TestCounter)
-@test Counter(3, 2, 0) <= Counter("ababa")
-@test !(Counter(3, 2) <= Counter("babab"))
+function test_le(self)
+@test Counter(a = 3, b = 2, c = 0) <= Counter("ababa")
+@test !(Counter(a = 3, b = 2) <= Counter("babab"))
 end
 
-function test_lt(self::TestCounter)
-@test Counter(3, 1, 0) < Counter("ababa")
-@test !(Counter(3, 2, 0) < Counter("ababa"))
+function test_lt(self)
+@test Counter(a = 3, b = 1, c = 0) < Counter("ababa")
+@test !(Counter(a = 3, b = 2, c = 0) < Counter("ababa"))
 end
 
-function test_ge(self::TestCounter)
-@test Counter(2, 1, 0) >= Counter("aab")
-@test !(Counter(3, 2, 0) >= Counter("aabd"))
+function test_ge(self)
+@test Counter(a = 2, b = 1, c = 0) >= Counter("aab")
+@test !(Counter(a = 3, b = 2, c = 0) >= Counter("aabd"))
 end
 
-function test_gt(self::TestCounter)
-@test Counter(3, 2, 0) > Counter("aab")
-@test !(Counter(2, 1, 0) > Counter("aab"))
+function test_gt(self)
+@test Counter(a = 3, b = 2, c = 0) > Counter("aab")
+@test !(Counter(a = 2, b = 1, c = 0) > Counter("aab"))
 end
 
 function test_main(verbose = nothing)
-NamedTupleDocs = DocTestSuite(collections)
+NamedTupleDocs = DocTestSuite(module_ = collections)
 test_classes = [TestNamedTuple, NamedTupleDocs, TestOneTrickPonyABCs, TestCollectionABCs, TestCounter, TestChainMap, TestUserObjects]
 run_unittest(test_classes...)
 run_doctest(collections, verbose)

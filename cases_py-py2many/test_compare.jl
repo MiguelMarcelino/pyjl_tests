@@ -6,31 +6,31 @@ abstract type AbstractDerived <: AbstractBase end
 mutable struct Empty <: AbstractEmpty
 
 end
-function __repr__(self::Empty)::String
+function __repr__(self)::String
 return "<Empty>"
 end
 
 mutable struct Cmp <: AbstractCmp
 arg
 end
-function __repr__(self::Cmp)::String
+function __repr__(self)::String
 return "<Cmp %s>" % self.arg
 end
 
-function __eq__(self::Cmp, other)::Bool
+function __eq__(self, other)::Bool
 return self.arg == other
 end
 
 mutable struct ComparisonTest <: AbstractComparisonTest
 __ne__
-candidates::Vector{Union{Complex, Cmp, Float64, Int64}}
-set1::Vector{Union{Complex, Cmp, Float64, Int64}}
-set2::Vector{Union{Vector{Int64}, Empty, Tuple{Int64}}}
+candidates
+set1
+set2
 
-                    ComparisonTest(__ne__ = unexpected, candidates::Vector{Union{Complex, Cmp, Float64, Int64}} = append!(set1, set2), set1::Vector{Union{Complex, Cmp, Float64, Int64}} = [2, 2.0, 2, 2 + 0im, Cmp(2.0)], set2::Vector{Union{Vector{Int64}, Empty, Tuple{Int64}}} = [[1], (3,), nothing, Empty()]) =
+                    ComparisonTest(__ne__ = unexpected, candidates = set1 + set2, set1 = [2, 2.0, 2, 2 + 0im, Cmp(2.0)], set2 = [[1], (3,), nothing, Empty()]) =
                         new(__ne__, candidates, set1, set2)
 end
-function test_comparisons(self::ComparisonTest)
+function test_comparisons(self)
 for a in self.candidates
 for b in self.candidates
 if a ∈ self.set1 && b ∈ self.set1 || a === b
@@ -42,7 +42,7 @@ end
 end
 end
 
-function test_id_comparisons(self::ComparisonTest)
+function test_id_comparisons(self)
 L = []
 for i in 0:9
 insert(L, length(L) ÷ 2, Empty())
@@ -54,7 +54,7 @@ end
 end
 end
 
-function test_ne_defaults_to_not_eq(self::ComparisonTest)
+function test_ne_defaults_to_not_eq(self)
 a = Cmp(1)
 b = Cmp(1)
 c = Cmp(2)
@@ -63,7 +63,7 @@ assertIs(self, a != b, false)
 assertIs(self, a != c, true)
 end
 
-function test_ne_high_priority(self::Right)
+function test_ne_high_priority(self)
 #= object.__ne__() should allow reflected __ne__() to be tried =#
 calls = []
 mutable struct Left <: AbstractLeft
@@ -91,7 +91,7 @@ Left() != Right()
 assertSequenceEqual(self, calls, ["Left.__eq__", "Right.__ne__"])
 end
 
-function test_ne_low_priority(self::Derived)
+function test_ne_low_priority(self)
 #= object.__ne__() should not invoke reflected __eq__() =#
 calls = []
 mutable struct Base <: AbstractBase
@@ -119,7 +119,7 @@ Base() != Derived()
 assertSequenceEqual(self, calls, ["Derived.__ne__", "Base.__eq__"])
 end
 
-function test_other_delegation(self::C)
+function test_other_delegation(self)
 #= No default delegation between operations except __ne__() =#
 ops = (("__eq__", (a, b) -> a == b), ("__lt__", (a, b) -> a < b), ("__le__", (a, b) -> a <= b), ("__gt__", (a, b) -> a > b), ("__ge__", (a, b) -> a >= b))
 for (name, func) in ops
@@ -149,7 +149,7 @@ end
 end
 end
 
-function test_issue_1393(self::ComparisonTest)
+function test_issue_1393(self)
 x = () -> nothing
 @test (x == ALWAYS_EQ)
 @test (ALWAYS_EQ == x)

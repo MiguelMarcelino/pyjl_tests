@@ -57,30 +57,30 @@ end
 mutable struct MyIndexable <: AbstractMyIndexable
 value
 end
-function __index__(self::MyIndexable)
+function __index__(self)
 return self.value
 end
 
 mutable struct SliceTest <: AbstractSliceTest
 
 end
-function test_constructor(self::SliceTest)
+function test_constructor(self)
 @test_throws TypeError slice()
 @test_throws TypeError slice(1, 2, 3, 4)
 end
 
-function test_repr(self::SliceTest)
+function test_repr(self)
 @test (repr((1:2)) == "slice(1, 2, 3)")
 end
 
-function test_hash(self::SliceTest)
+function test_hash(self)
 @test_throws TypeError hash(slice(5))
 assertRaises(self, TypeError) do 
 __hash__(slice(5))
 end
 end
 
-function test_cmp(self::BadCmp)
+function test_cmp(self)
 s1 = (1:2)
 s2 = (1:2)
 s3 = (1:2)
@@ -96,7 +96,7 @@ end
 mutable struct BadCmp <: AbstractBadCmp
 
 end
-function __eq__(self::BadCmp, other)
+function __eq__(self, other)
 throw(Exc)
 end
 
@@ -114,7 +114,7 @@ assertEqual(self, s1, s1)
 assertRaises(self, Exc, () -> s1 === s2)
 end
 
-function test_members(self::AnyClass)
+function test_members(self)
 s = slice(1)
 assertEqual(self, s.start, nothing)
 assertEqual(self, s.stop, 1)
@@ -136,7 +136,7 @@ s = slice(obj)
 assertTrue(self, s.stop === obj)
 end
 
-function check_indices(self::SliceTest, slice, length)
+function check_indices(self, slice, length)
 try
 actual = indices(slice, length)
 catch exn
@@ -159,7 +159,7 @@ expected = 0:length - 1[slice + 1]
 end
 end
 
-function test_indices(self::SliceTest)
+function test_indices(self)
 @test (indices(slice(nothing), 10) == (0, 10, 1))
 @test (indices((nothing:nothing), 10) == (0, 10, 2))
 @test (indices((1:nothing), 10) == (1, 10, 2))
@@ -184,7 +184,7 @@ function test_indices(self::SliceTest)
 @test (collect(0:9)[end:sys.maxsize - 1:begin] == [0])
 vals = [nothing, -(2^100), -(2^30), -53, -7, -1, 0, 1, 7, 53, 2^30, 2^100]
 lengths = [0, 1, 7, 53, 2^30, 2^100]
-for slice_args in product(vals, 3)
+for slice_args in product(vals, repeat = 3)
 s = slice(slice_args...)
 for length in lengths
 check_indices(self, s, length)
@@ -216,12 +216,12 @@ end
 @test (indices((0:10), MyIndexable(5)) == (0, 5, 1))
 end
 
-function test_setslice_without_getslice(self::X)
+function test_setslice_without_getslice(self)
 tmp = []
 mutable struct X <: AbstractX
 
 end
-function __setitem__(self::X, i, k)
+function __setitem__(self, i, k)
 push!(tmp, (i, k))
 end
 
@@ -230,7 +230,7 @@ x[2:2] = 42
 assertEqual(self, tmp, [((1:2), 42)])
 end
 
-function test_pickle(self::SliceTest)
+function test_pickle(self)
 s = (10:20)
 for protocol in (0, 1, 2)
 t = loads(dumps(s, protocol))
@@ -240,7 +240,7 @@ assertNotEqual(self, id(s), id(t))
 end
 end
 
-function test_cycle(self::myobj)
+function test_cycle(self)
 mutable struct myobj <: Abstractmyobj
 
 end

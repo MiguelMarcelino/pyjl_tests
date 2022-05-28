@@ -11,7 +11,7 @@ type2test
                     ListTest(type2test = list) =
                         new(type2test)
 end
-function test_basic(self::ListTest)
+function test_basic(self)
 assertEqual(self, collect([]), [])
 l0_3 = [0, 1, 2, 3]
 l0_3_bis = collect(l0_3)
@@ -30,30 +30,30 @@ append!(x, (-(y) for y in x))
 assertEqual(self, x, [])
 end
 
-function test_keyword_args(self::ListTest)
+function test_keyword_args(self)
 assertRaisesRegex(self, TypeError, "keyword argument") do 
-collect([])
+collect(sequence = [])
 end
 end
 
-function test_truth(self::ListTest)
+function test_truth(self)
 test_truth(super())
 assertTrue(self, !([]))
 assertTrue(self, [42])
 end
 
-function test_identity(self::ListTest)
+function test_identity(self)
 assertTrue(self, [] !== [])
 end
 
-function test_len(self::ListTest)
+function test_len(self)
 test_len(super())
 assertEqual(self, length([]), 0)
 assertEqual(self, length([0]), 1)
 assertEqual(self, length([0, 1, 2]), 3)
 end
 
-function test_overflow(self::ListTest)
+function test_overflow(self)
 lst = [4, 5, 6, 7]
 n = Int((sys.maxsize*2 + 2) ÷ length(lst))
 function mul(a, b)::Any
@@ -68,7 +68,7 @@ assertRaises(self, (MemoryError, OverflowError), mul, lst, n)
 assertRaises(self, (MemoryError, OverflowError), imul, lst, n)
 end
 
-function test_repr_large(self::ListTest)
+function test_repr_large(self)
 function check(n)
 l = [0]*n
 s = repr(l)
@@ -79,7 +79,7 @@ check(10)
 check(1000000)
 end
 
-function test_iterator_pickle(self::ListTest)
+function test_iterator_pickle(self)
 orig = type2test(self, [4, 5, 6, 7])
 data = [10, 11, 12, 13, 14, 15]
 for proto in 0:pickle.HIGHEST_PROTOCOL
@@ -111,7 +111,7 @@ assertEqual(self, collect(it), [])
 end
 end
 
-function test_reversed_pickle(self::ListTest)
+function test_reversed_pickle(self)
 orig = type2test(self, [4, 5, 6, 7])
 data = [10, 11, 12, 13, 14, 15]
 for proto in 0:pickle.HIGHEST_PROTOCOL
@@ -143,13 +143,13 @@ assertEqual(self, collect(it), [])
 end
 end
 
-function test_step_overflow(self::ListTest)
+function test_step_overflow(self)
 a = [0, 1, 2, 3, 4]
 a[end:sys.maxsize:2] = [0]
 assertEqual(self, a[end:sys.maxsize:4], [3])
 end
 
-function test_no_comdat_folding(self::L)
+function test_no_comdat_folding(self)
 mutable struct L <: AbstractL
 
 end
@@ -159,11 +159,11 @@ assertRaises(self, TypeError) do
 end
 end
 
-function test_equal_operator_modifying_operand(self::Z)
+function test_equal_operator_modifying_operand(self)
 mutable struct X <: AbstractX
 
 end
-function __eq__(self::X, other)
+function __eq__(self, other)
 empty!(list2)
 return NotImplemented
 end
@@ -171,7 +171,7 @@ end
 mutable struct Y <: AbstractY
 
 end
-function __eq__(self::Y, other)
+function __eq__(self, other)
 empty!(list1)
 return NotImplemented
 end
@@ -179,7 +179,7 @@ end
 mutable struct Z <: AbstractZ
 
 end
-function __eq__(self::Z, other)
+function __eq__(self, other)
 empty!(list3)
 return NotImplemented
 end
@@ -192,18 +192,18 @@ list4 = [1]
 assertFalse(self, list3 == list4)
 end
 
-function test_preallocation(self::ListTest)
+function test_preallocation(self)
 iterable = repeat([0],10)
 iter_size = getsizeof(iterable)
 assertEqual(self, iter_size, getsizeof(collect(repeat([0],10))))
 assertEqual(self, iter_size, getsizeof(collect(0:9)))
 end
 
-function test_count_index_remove_crashes(self::L)
+function test_count_index_remove_crashes(self)
 mutable struct X <: AbstractX
 
 end
-function __eq__(self::X, other)
+function __eq__(self, other)
 empty!(lst)
 return NotImplemented
 end
@@ -215,7 +215,7 @@ end
 mutable struct L <: AbstractL
 
 end
-function __eq__(self::L, other)
+function __eq__(self, other)
 string(other)
 return NotImplemented
 end

@@ -4,7 +4,7 @@ abstract type AbstractLongExpText end
 mutable struct LongExpText <: AbstractLongExpText
 
 end
-function test_longexp(self::LongExpText)
+function test_longexp(self)
 REPS = 65580
 l = eval("[" * repeat("2,",REPS) * "]")
 @test (length(l) == REPS)

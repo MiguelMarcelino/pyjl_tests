@@ -21,7 +21,7 @@ mutable struct BasicIterClass <: AbstractBasicIterClass
 n
 i::Int64
 end
-function __next__(self::BasicIterClass)::Int64
+function __next__(self)::Int64
 res = self.i
 if res >= self.n
 throw(StopIteration)
@@ -30,32 +30,32 @@ self.i = res + 1
 return res
 end
 
-function __iter__(self::BasicIterClass)
+function __iter__(self)
 return self
 end
 
 mutable struct IteratingSequenceClass <: AbstractIteratingSequenceClass
 n
 end
-function __iter__(self::IteratingSequenceClass)::BasicIterClass
+function __iter__(self)::BasicIterClass
 return BasicIterClass(self.n)
 end
 
 mutable struct IteratorProxyClass <: AbstractIteratorProxyClass
 i
 end
-function __next__(self::IteratorProxyClass)
+function __next__(self)
 return next(self.i)
 end
 
-function __iter__(self::IteratorProxyClass)
+function __iter__(self)
 return self
 end
 
 mutable struct SequenceClass <: AbstractSequenceClass
 n
 end
-function __getitem__(self::SequenceClass, i)
+function __getitem__(self, i)
 if 0 <= i < self.n
 return i
 else
@@ -66,14 +66,14 @@ end
 mutable struct SequenceProxyClass <: AbstractSequenceProxyClass
 s
 end
-function __getitem__(self::SequenceProxyClass, i)
+function __getitem__(self, i)
 return self.s[i + 1]
 end
 
 mutable struct UnlimitedSequenceClass <: AbstractUnlimitedSequenceClass
 
 end
-function __getitem__(self::UnlimitedSequenceClass, i)
+function __getitem__(self, i)
 return i
 end
 
@@ -87,14 +87,14 @@ __iter__
                     NoIterClass(__iter__ = nothing) =
                         new(__iter__)
 end
-function __getitem__(self::NoIterClass, i)
+function __getitem__(self, i)
 return i
 end
 
 mutable struct BadIterableClass <: AbstractBadIterableClass
 
 end
-function __iter__(self::BadIterableClass)
+function __iter__(self)
 throw(ZeroDivisionError)
 end
 
@@ -110,7 +110,7 @@ count::Int64
                     TestCase(finish, i::Int64, it, start, truth, vals, count::Int64 = 0) =
                         new(finish, i, it, start, truth, vals, count)
 end
-function check_iterator(self::TestCase, it, seq, pickle = true)
+function check_iterator(self, it, seq, pickle = true)
 if pickle
 check_pickle(self, it, seq)
 end
@@ -128,7 +128,7 @@ end
 @test (res == seq)
 end
 
-function check_for_loop(self::TestCase, expr, seq, pickle = true)
+function check_for_loop(self, expr, seq, pickle = true)
 if pickle
 check_pickle(self, (x for x in expr), seq)
 end
@@ -139,7 +139,7 @@ end
 @test (res == seq)
 end
 
-function check_pickle(self::TestCase, itorg, seq)
+function check_pickle(self, itorg, seq)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 d = dumps(itorg, proto)
 it = loads(d)
@@ -159,22 +159,22 @@ it = loads(d)
 end
 end
 
-function test_iter_basic(self::TestCase)
+function test_iter_basic(self)
 check_iterator(self, (x for x in 0:9), collect(0:9))
 end
 
-function test_iter_idempotency(self::TestCase)
+function test_iter_idempotency(self)
 seq = collect(0:9)
 it = (x for x in seq)
 it2 = (x for x in it)
 @test it === it2
 end
 
-function test_iter_for_loop(self::TestCase)
+function test_iter_for_loop(self)
 check_for_loop(self, (x for x in 0:9), collect(0:9))
 end
 
-function test_iter_independence(self::TestCase)
+function test_iter_independence(self)
 seq = 0:2
 res = []
 for i in (x for x in seq)
@@ -187,35 +187,35 @@ end
 @test (res == TRIPLETS)
 end
 
-function test_nested_comprehensions_iter(self::TestCase)
+function test_nested_comprehensions_iter(self)
 seq = 0:2
 res = [(i, j, k) for i in (x for x in seq) for j in (x for x in seq) for k in (x for x in seq)]
 @test (res == TRIPLETS)
 end
 
-function test_nested_comprehensions_for(self::TestCase)
+function test_nested_comprehensions_for(self)
 seq = 0:2
 res = [(i, j, k) for i in seq for j in seq for k in seq]
 @test (res == TRIPLETS)
 end
 
-function test_iter_class_for(self::TestCase)
+function test_iter_class_for(self)
 check_for_loop(self, IteratingSequenceClass(10), collect(0:9))
 end
 
-function test_iter_class_iter(self::TestCase)
+function test_iter_class_iter(self)
 check_iterator(self, (x for x in IteratingSequenceClass(10)), collect(0:9))
 end
 
-function test_seq_class_for(self::TestCase)
+function test_seq_class_for(self)
 check_for_loop(self, SequenceClass(10), collect(0:9))
 end
 
-function test_seq_class_iter(self::TestCase)
+function test_seq_class_iter(self)
 check_iterator(self, (x for x in SequenceClass(10)), collect(0:9))
 end
 
-function test_mutating_seq_class_iter_pickle(self::TestCase)
+function test_mutating_seq_class_iter_pickle(self)
 orig = SequenceClass(5)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 itorig = (x for x in orig)
@@ -247,7 +247,7 @@ seq.n = 7
 end
 end
 
-function test_mutating_seq_class_exhausted_iter(self::TestCase)
+function test_mutating_seq_class_exhausted_iter(self)
 a = SequenceClass(5)
 exhit = (x for x in a)
 empit = (x for x in a)
@@ -260,22 +260,22 @@ a.n = 7
 @test (collect(a) == [0, 1, 2, 3, 4, 5, 6])
 end
 
-function test_new_style_iter_class(self::IterClass)
+function test_new_style_iter_class(self)
 mutable struct IterClass <: AbstractIterClass
 
 end
-function __iter__(self::IterClass)
+function __iter__(self)
 return self
 end
 
 assertRaises(self, TypeError, iter, IterClass())
 end
 
-function test_iter_callable(self::C)
+function test_iter_callable(self)
 mutable struct C <: AbstractC
 i::Int64
 end
-function __call__(self::C)::Int64
+function __call__(self)::Int64
 i = self.i
 self.i = i + 1
 if i > 100
@@ -287,7 +287,7 @@ end
 check_iterator(self, (x for x in C()), collect(0:9))
 end
 
-function test_iter_function(self::TestCase)
+function test_iter_function(self)
 function spam(state = [0])
 i = state[1]
 state[1] = i + 1
@@ -297,7 +297,7 @@ end
 check_iterator(self, (x for x in spam), collect(0:9))
 end
 
-function test_iter_function_stop(self::TestCase)
+function test_iter_function_stop(self)
 function spam(state = [0])
 i = state[1]
 if i == 10
@@ -310,7 +310,7 @@ end
 check_iterator(self, (x for x in spam), collect(0:9))
 end
 
-function test_exception_function(self::TestCase)
+function test_exception_function(self)
 function spam(state = [0])
 i = state[1]
 state[1] = i + 1
@@ -332,11 +332,11 @@ end
 end
 end
 
-function test_exception_sequence(self::MySequenceClass)
+function test_exception_sequence(self)
 mutable struct MySequenceClass <: AbstractMySequenceClass
 
 end
-function __getitem__(self::MySequenceClass, i)
+function __getitem__(self, i)
 if i == 10
 throw(RuntimeError)
 end
@@ -355,11 +355,11 @@ end
 end
 end
 
-function test_stop_sequence(self::MySequenceClass)
+function test_stop_sequence(self)
 mutable struct MySequenceClass <: AbstractMySequenceClass
 
 end
-function __getitem__(self::MySequenceClass, i)
+function __getitem__(self, i)
 if i == 10
 throw(StopIteration)
 end
@@ -369,27 +369,27 @@ end
 check_for_loop(self, MySequenceClass(20), collect(0:9))
 end
 
-function test_iter_big_range(self::TestCase)
+function test_iter_big_range(self)
 check_for_loop(self, (x for x in 0:9999), collect(0:9999))
 end
 
-function test_iter_empty(self::TestCase)
+function test_iter_empty(self)
 check_for_loop(self, (x for x in []), [])
 end
 
-function test_iter_tuple(self::TestCase)
+function test_iter_tuple(self)
 check_for_loop(self, (x for x in (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)), collect(0:9))
 end
 
-function test_iter_range(self::TestCase)
+function test_iter_range(self)
 check_for_loop(self, (x for x in 0:9), collect(0:9))
 end
 
-function test_iter_string(self::TestCase)
+function test_iter_string(self)
 check_for_loop(self, (x for x in "abcde"), ["a", "b", "c", "d", "e"])
 end
 
-function test_iter_dict(self::TestCase)
+function test_iter_dict(self)
 dict = Dict()
 for i in 0:9
 dict[i] = nothing
@@ -397,7 +397,7 @@ end
 check_for_loop(self, dict, collect(keys(dict)))
 end
 
-function test_iter_file(self::TestCase)
+function test_iter_file(self)
 f = readline(TESTFN)
 try
 for i in 0:4
@@ -422,7 +422,7 @@ end
 end
 end
 
-function test_builtin_list(self::TestCase)
+function test_builtin_list(self)
 @test (collect(SequenceClass(5)) == collect(0:4))
 @test (collect(SequenceClass(0)) == [])
 @test (collect(()) == [])
@@ -455,7 +455,7 @@ end
 end
 end
 
-function test_builtin_tuple(self::TestCase)
+function test_builtin_tuple(self)
 @test (tuple(SequenceClass(5)) == (0, 1, 2, 3, 4))
 @test (tuple(SequenceClass(0)) == ())
 @test (tuple([]) == ())
@@ -490,7 +490,7 @@ end
 end
 end
 
-function test_builtin_filter(self::Seq)
+function test_builtin_filter(self)
 assertEqual(self, collect(filter(nothing, SequenceClass(5))), collect(1:4))
 assertEqual(self, collect(filter(nothing, SequenceClass(0))), [])
 assertEqual(self, collect(filter(nothing, ())), [])
@@ -502,7 +502,7 @@ assertRaises(self, TypeError, filter, nothing, 42)
 mutable struct Boolean <: AbstractBoolean
 truth
 end
-function __bool__(self::Boolean)
+function __bool__(self)
 return self.truth
 end
 
@@ -512,16 +512,16 @@ mutable struct Seq <: AbstractSeq
 i::Int64
 vals
 end
-function __iter__(self::SeqIter)::SeqIter
+function __iter__(self)::SeqIter
 mutable struct SeqIter <: AbstractSeqIter
 i::Int64
 vals
 end
-function __iter__(self::SeqIter)
+function __iter__(self)
 return self
 end
 
-function __next__(self::SeqIter)
+function __next__(self)
 i = self.i
 self.i = i + 1
 if i < length(self.vals)
@@ -539,7 +539,7 @@ assertEqual(self, collect(filter((x) -> !(x), seq)), repeat([bFalse],25))
 assertEqual(self, collect(filter((x) -> !(x), (x for x in seq))), repeat([bFalse],25))
 end
 
-function test_builtin_max_min(self::TestCase)
+function test_builtin_max_min(self)
 @test (max(SequenceClass(5)) == 4)
 @test (min(SequenceClass(5)) == 0)
 @test (max(8, -1) == 8)
@@ -574,7 +574,7 @@ end
 end
 end
 
-function test_builtin_map(self::TestCase)
+function test_builtin_map(self)
 @test (collect(map((x) -> x + 1, SequenceClass(5))) == collect(1:5))
 d = OrderedDict("one" => 1, "two" => 2, "three" => 3)
 @test (collect(map((k, d) -> (k, d[k]), d)) == collect(collect(d)))
@@ -603,7 +603,7 @@ end
 end
 end
 
-function test_builtin_zip(self::Guess30Len5)
+function test_builtin_zip(self)
 assertEqual(self, collect(zip()), [])
 assertEqual(self, collect(zip([]...)), [])
 assertEqual(self, collect(zip([(1, 2), "ab"]...)), [(1, "a"), (2, "b")])
@@ -617,11 +617,11 @@ assertEqual(self, collect(collect(d)), collect(zip(d, values(d))))
 mutable struct IntsFrom <: AbstractIntsFrom
 i
 end
-function __iter__(self::IntsFrom)
+function __iter__(self)
 return self
 end
 
-function __next__(self::IntsFrom)
+function __next__(self)
 i = self.i
 self.i = i + 1
 return i
@@ -650,7 +650,7 @@ assertEqual(self, collect(zip(0:4)), [(i,) for i in 0:4])
 mutable struct NoGuessLen5 <: AbstractNoGuessLen5
 
 end
-function __getitem__(self::NoGuessLen5, i)
+function __getitem__(self, i)
 if i >= 5
 throw(IndexError)
 end
@@ -660,14 +660,14 @@ end
 mutable struct Guess3Len5 <: AbstractGuess3Len5
 
 end
-function __len__(self::Guess3Len5)::Int64
+function __len__(self)::Int64
 return 3
 end
 
 mutable struct Guess30Len5 <: AbstractGuess30Len5
 
 end
-function __len__(self::Guess30Len5)::Int64
+function __len__(self)::Int64
 return 30
 end
 
@@ -688,16 +688,16 @@ end
 end
 end
 
-function test_unicode_join_endcase(self::OhPhooey)
+function test_unicode_join_endcase(self)
 mutable struct OhPhooey <: AbstractOhPhooey
 i::Int64
 it
 end
-function __iter__(self::OhPhooey)
+function __iter__(self)
 return self
 end
 
-function __next__(self::OhPhooey)::String
+function __next__(self)::String
 i = self.i
 self.i = i + 1
 if i == 2
@@ -728,7 +728,7 @@ end
 end
 end
 
-function test_in_and_not_in(self::TestCase)
+function test_in_and_not_in(self)
 for sc5 in (IteratingSequenceClass(5), SequenceClass(5))
 for i in 0:4
 assertIn(self, i, sc5)
@@ -785,7 +785,7 @@ end
 end
 end
 
-function test_countOf(self::TestCase)
+function test_countOf(self)
 @test (countOf([1, 2, 2, 3, 2, 5], 2) == 3)
 @test (countOf((1, 2, 2, 3, 2, 5), 2) == 3)
 @test (countOf("122325", "2") == 3)
@@ -823,7 +823,7 @@ end
 end
 end
 
-function test_indexOf(self::TestCase)
+function test_indexOf(self)
 @test (indexOf([1, 2, 2, 3, 2, 5], 1) == 0)
 @test (indexOf((1, 2, 2, 3, 2, 5), 2) == 1)
 @test (indexOf((1, 2, 2, 3, 2, 5), 3) == 3)
@@ -866,7 +866,7 @@ end
 @test_throws ValueError indexOf(iclass, -1)
 end
 
-function test_writelines(self::Whatever)
+function test_writelines(self)
 f = readline(TESTFN)
 try
 assertRaises(self, TypeError, f.writelines, nothing)
@@ -880,7 +880,7 @@ start
 finish
 i
 end
-function __next__(self::Iterator)::String
+function __next__(self)::String
 if self.i >= self.finish
 throw(StopIteration)
 end
@@ -889,7 +889,7 @@ self.i += 1
 return result
 end
 
-function __iter__(self::Iterator)
+function __iter__(self)
 return self
 end
 
@@ -897,7 +897,7 @@ mutable struct Whatever <: AbstractWhatever
 start
 finish
 end
-function __iter__(self::Whatever)::Iterator
+function __iter__(self)::Iterator
 return Iterator(self.start, self.finish)
 end
 
@@ -918,7 +918,7 @@ end
 end
 end
 
-function test_unpack_iter(self::TestCase)
+function test_unpack_iter(self)
 a, b = (1, 2)
 @test ((a, b) == (1, 2))
 a, b, c = IteratingSequenceClass(3)
@@ -973,7 +973,7 @@ end
 @test ((a, b, c) == (0, 1, 42))
 end
 
-function test_ref_counting_behavior(self::C)
+function test_ref_counting_behavior(self)
 mutable struct C <: AbstractC
 count::Int64
 
@@ -985,7 +985,7 @@ cls.count += 1
 return __new__(object)
 end
 
-function __del__(self::C)
+function __del__(self)
 cls = self.__class__
 @assert(cls.count > 0)
 cls.count -= 1
@@ -1009,7 +1009,7 @@ empty!(l)
 assertEqual(self, C.count, 0)
 end
 
-function test_sinkstate_list(self::TestCase)
+function test_sinkstate_list(self)
 a = collect(0:4)
 b = (x for x in a)
 @test (collect(b) == collect(0:4))
@@ -1017,21 +1017,21 @@ append!(a, 5:9)
 @test (collect(b) == [])
 end
 
-function test_sinkstate_tuple(self::TestCase)
+function test_sinkstate_tuple(self)
 a = (0, 1, 2, 3, 4)
 b = (x for x in a)
 @test (collect(b) == collect(0:4))
 @test (collect(b) == [])
 end
 
-function test_sinkstate_string(self::TestCase)
+function test_sinkstate_string(self)
 a = "abcde"
 b = (x for x in a)
 @test (collect(b) == ["a", "b", "c", "d", "e"])
 @test (collect(b) == [])
 end
 
-function test_sinkstate_sequence(self::TestCase)
+function test_sinkstate_sequence(self)
 a = SequenceClass(5)
 b = (x for x in a)
 @test (collect(b) == collect(0:4))
@@ -1039,7 +1039,7 @@ a.n = 10
 @test (collect(b) == [])
 end
 
-function test_sinkstate_callable(self::TestCase)
+function test_sinkstate_callable(self)
 function spam(state = [0])
 i = state[1]
 state[1] = i + 1
@@ -1054,7 +1054,7 @@ b = (x for x in spam)
 @test (collect(b) == [])
 end
 
-function test_sinkstate_dict(self::TestCase)
+function test_sinkstate_dict(self)
 a = Dict(1 => 1, 2 => 2, 0 => 0, 4 => 4, 3 => 3)
 for b in ((x for x in a), keys(a), collect(a), values(a))
 b = (x for x in a)
@@ -1063,7 +1063,7 @@ b = (x for x in a)
 end
 end
 
-function test_sinkstate_yield(self::TestCase)
+function test_sinkstate_yield(self)
 Channel() do ch_test_sinkstate_yield 
 function gen()
 Channel() do ch_gen 
@@ -1079,14 +1079,14 @@ b = gen()
 end
 end
 
-function test_sinkstate_range(self::TestCase)
+function test_sinkstate_range(self)
 a = 0:4
 b = (x for x in a)
 @test (collect(b) == collect(0:4))
 @test (collect(b) == [])
 end
 
-function test_sinkstate_enumerate(self::TestCase)
+function test_sinkstate_enumerate(self)
 a = 0:4
 e = enumerate(a)
 b = (x for x in e)
@@ -1094,15 +1094,15 @@ b = (x for x in e)
 @test (collect(b) == [])
 end
 
-function test_3720(self::BadIterator)
+function test_3720(self)
 mutable struct BadIterator <: AbstractBadIterator
 
 end
-function __iter__(self::BadIterator)
+function __iter__(self)
 return self
 end
 
-function __next__(self::BadIterator)::Int64
+function __next__(self)::Int64
 #Delete Unsupported
 del(next(BadIterator))
 return 1
@@ -1119,7 +1119,7 @@ end
 end
 end
 
-function test_extending_list_with_iterator_does_not_segfault(self::TestCase)
+function test_extending_list_with_iterator_does_not_segfault(self)
 Channel() do ch_test_extending_list_with_iterator_does_not_segfault 
 function gen()
 Channel() do ch_gen 
@@ -1138,7 +1138,7 @@ append!(lst, gen())
 end
 end
 
-function test_iter_overflow(self::TestCase)
+function test_iter_overflow(self)
 it = (x for x in UnlimitedSequenceClass())
 __setstate__(it, sys.maxsize - 2)
 @test (next(it) == sys.maxsize - 2)
@@ -1151,18 +1151,18 @@ next(it)
 end
 end
 
-function test_iter_neg_setstate(self::TestCase)
+function test_iter_neg_setstate(self)
 it = (x for x in UnlimitedSequenceClass())
 __setstate__(it, -42)
 @test (next(it) == 0)
 @test (next(it) == 1)
 end
 
-function test_free_after_iterating(self::TestCase)
+function test_free_after_iterating(self)
 check_free_after_iterating(self, iter, SequenceClass, (0,))
 end
 
-function test_error_iter(self::TestCase)
+function test_error_iter(self)
 for typ in (DefaultIterClass, NoIterClass)
 @test_throws TypeError iter(typ())
 end

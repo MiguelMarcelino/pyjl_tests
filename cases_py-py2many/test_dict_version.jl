@@ -17,39 +17,39 @@ type2test
                     DictVersionTests(assertRaises, dict, seen_versions, type2test = dict) =
                         new(assertRaises, dict, seen_versions, type2test)
 end
-function setUp(self::DictVersionTests)
+function setUp(self)
 self.seen_versions = set()
 self.dict = nothing
 end
 
-function check_version_unique(self::DictVersionTests, mydict)
+function check_version_unique(self, mydict)
 version = dict_get_version(_testcapi, mydict)
 assertNotIn(self, version, self.seen_versions)
 add(self.seen_versions, version)
 end
 
-function check_version_changed(self::DictVersionTests, mydict, method)
-result = method(args..., kw)
+function check_version_changed(self, mydict, method)
+result = method(args..., None = kw)
 check_version_unique(self, mydict)
 return result
 end
 
-function check_version_dont_change(self::DictVersionTests, mydict, method)
+function check_version_dont_change(self, mydict, method)
 version1 = dict_get_version(_testcapi, mydict)
 add(self.seen_versions, version1)
-result = method(args..., kw)
+result = method(args..., None = kw)
 version2 = dict_get_version(_testcapi, mydict)
 @test (version2 == version1)
 return result
 end
 
-function new_dict(self::DictVersionTests)
-d = type2test(self, args..., kw)
+function new_dict(self)
+d = type2test(self, args..., None = kw)
 check_version_unique(self, d)
 return d
 end
 
-function test_constructor(self::DictVersionTests)
+function test_constructor(self)
 empty1 = new_dict(self)
 empty2 = new_dict(self)
 empty3 = new_dict(self)
@@ -57,13 +57,13 @@ nonempty1 = new_dict(self)
 nonempty2 = new_dict(self)
 end
 
-function test_copy(self::DictVersionTests)
+function test_copy(self)
 d = new_dict(self)
 d2 = check_version_dont_change(self, d, d.copy)
 check_version_unique(self, d2)
 end
 
-function test_setitem(self::DictVersionTests)
+function test_setitem(self)
 d = new_dict(self)
 check_version_changed(self, d, d.__setitem__)
 check_version_changed(self, d, d.__setitem__)
@@ -71,7 +71,7 @@ check_version_changed(self, d, d.__setitem__)
 check_version_changed(self, d, d.__setitem__)
 end
 
-function test_setitem_same_value(self::DictVersionTests)
+function test_setitem_same_value(self)
 value = object()
 d = new_dict(self)
 check_version_changed(self, d, d.__setitem__)
@@ -81,11 +81,11 @@ d2 = new_dict(self)
 check_version_dont_change(self, d, d.update)
 end
 
-function test_setitem_equal(self::AlwaysEqual)
+function test_setitem_equal(self)
 mutable struct AlwaysEqual <: AbstractAlwaysEqual
 
 end
-function __eq__(self::AlwaysEqual, other)::Bool
+function __eq__(self, other)::Bool
 return true
 end
 
@@ -106,31 +106,31 @@ check_version_changed(self, d, d.update)
 assertIs(self, d["key"], value2)
 end
 
-function test_setdefault(self::DictVersionTests)
+function test_setdefault(self)
 d = new_dict(self)
 check_version_changed(self, d, d.setdefault)
 check_version_dont_change(self, d, d.setdefault)
 end
 
-function test_delitem(self::DictVersionTests)
+function test_delitem(self)
 d = new_dict(self)
 check_version_changed(self, d, d.__delitem__)
 check_version_dont_change(self, d, self.assertRaises)
 end
 
-function test_pop(self::DictVersionTests)
+function test_pop(self)
 d = new_dict(self)
 check_version_changed(self, d, d.pop)
 check_version_dont_change(self, d, self.assertRaises)
 end
 
-function test_popitem(self::DictVersionTests)
+function test_popitem(self)
 d = new_dict(self)
 check_version_changed(self, d, d.popitem)
 check_version_dont_change(self, d, self.assertRaises)
 end
 
-function test_update(self::DictVersionTests)
+function test_update(self)
 d = new_dict(self)
 check_version_dont_change(self, d, d.update)
 check_version_changed(self, d, d.update)
@@ -138,7 +138,7 @@ d2 = new_dict(self)
 check_version_changed(self, d, d.update)
 end
 
-function test_clear(self::DictVersionTests)
+function test_clear(self)
 d = new_dict(self)
 check_version_changed(self, d, d.clear)
 check_version_dont_change(self, d, d.clear)

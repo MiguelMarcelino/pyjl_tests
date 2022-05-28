@@ -32,7 +32,7 @@ end
 mutable struct IntTestCases <: AbstractIntTestCases
 value
 end
-function test_basic(self::IntTestCases)
+function test_basic(self)
 @test (Int(314) == 314)
 @test (Int(floor(3.14)) == 3)
 @test (Int(floor(-3.14)) == -3)
@@ -185,7 +185,7 @@ x = parse(Int, repeat("1",600))
 @test (parse(Int, "1z141z5") == 4294967297)
 end
 
-function test_underscores(self::IntTestCases)
+function test_underscores(self)
 for lit in VALID_UNDERSCORE_LITERALS
 if any((ch ∈ lit for ch in ".eEjJ"))
 continue;
@@ -208,18 +208,18 @@ end
 @test_throws ValueError int("100_")
 end
 
-function test_small_ints(self::IntTestCases)
+function test_small_ints(self)
 assertIs(self, parse(Int, "10"), 10)
 assertIs(self, parse(Int, "-1"), -1)
 assertIs(self, parse(Int, b"10"), 10)
 assertIs(self, parse(Int, b"-1"), -1)
 end
 
-function test_no_args(self::IntTestCases)
+function test_no_args(self)
 @test (zero(Int) == 0)
 end
 
-function test_keyword_args(self::IntTestCases)
+function test_keyword_args(self)
 @test (parse(Int, "100") == 4)
 assertRaisesRegex(self, TypeError, "keyword argument") do 
 zero(Int)
@@ -227,11 +227,11 @@ end
 assertRaisesRegex(self, TypeError, "keyword argument") do 
 zero(Int)
 end
-@test_throws TypeError int(10)
-@test_throws TypeError int(0)
+@test_throws TypeError int(base = 10)
+@test_throws TypeError int(base = 0)
 end
 
-function test_int_base_limits(self::IntTestCases)
+function test_int_base_limits(self)
 #= Testing the supported limits of the int() base parameter. =#
 @test (parse(Int, "0") == 0)
 assertRaises(self, ValueError) do 
@@ -254,7 +254,7 @@ for base in 2:36
 end
 end
 
-function test_int_base_bad_types(self::IntTestCases)
+function test_int_base_bad_types(self)
 #= Not integer types are not valid bases; issue16772. =#
 assertRaises(self, TypeError) do 
 parse(Int, "0")
@@ -264,11 +264,11 @@ parse(Int, "0")
 end
 end
 
-function test_int_base_indexable(self::MyIndexable)
+function test_int_base_indexable(self)
 mutable struct MyIndexable <: AbstractMyIndexable
 value
 end
-function __index__(self::MyIndexable)
+function __index__(self)
 return self.value
 end
 
@@ -282,7 +282,7 @@ assertEqual(self, parse(Int, "101"), 101)
 assertEqual(self, parse(Int, "101"), 1 + 36^2)
 end
 
-function test_non_numeric_input_types(self::CustomByteArray)
+function test_non_numeric_input_types(self)
 mutable struct CustomStr <: AbstractCustomStr
 
 end
@@ -321,7 +321,7 @@ end
 end
 end
 
-function test_int_memoryview(self::IntTestCases)
+function test_int_memoryview(self)
 @test (parse(Int, memoryview(b"123")[2:3]) == 23)
 @test (parse(Int, memoryview(b"123\x00")[2:3]) == 23)
 @test (parse(Int, memoryview(b"123 ")[2:3]) == 23)
@@ -329,11 +329,11 @@ function test_int_memoryview(self::IntTestCases)
 @test (parse(Int, memoryview(b"1234")[2:3]) == 23)
 end
 
-function test_string_float(self::IntTestCases)
+function test_string_float(self)
 @test_throws ValueError int("1.2")
 end
 
-function test_intconversion(self::TruncReturnsBadInt)
+function test_intconversion(self)
 mutable struct ClassicMissingMethods <: AbstractClassicMissingMethods
 
 end
@@ -347,7 +347,7 @@ assertRaises(self, TypeError, int, MissingMethods())
 mutable struct Foo0 <: AbstractFoo0
 
 end
-function __int__(self::Foo0)::Int64
+function __int__(self)::Int64
 return 42
 end
 
@@ -360,11 +360,11 @@ for base in (object, Classic)
 mutable struct IntOverridesTrunc <: AbstractIntOverridesTrunc
 
 end
-function __int__(self::IntOverridesTrunc)::Int64
+function __int__(self)::Int64
 return 42
 end
 
-function __trunc__(self::IntOverridesTrunc)::Int64
+function __trunc__(self)::Int64
 return -12
 end
 
@@ -372,7 +372,7 @@ assertEqual(self, Int(IntOverridesTrunc()), 42)
 mutable struct JustTrunc <: AbstractJustTrunc
 
 end
-function __trunc__(self::JustTrunc)::Int64
+function __trunc__(self)::Int64
 return 42
 end
 
@@ -380,7 +380,7 @@ assertEqual(self, parse(Int, JustTrunc()), 42)
 mutable struct ExceptionalTrunc <: AbstractExceptionalTrunc
 
 end
-function __trunc__(self::ExceptionalTrunc)
+function __trunc__(self)
 1 / 0
 end
 
@@ -391,14 +391,14 @@ for trunc_result_base in (object, Classic)
 mutable struct Index <: AbstractIndex
 
 end
-function __index__(self::Index)::Int64
+function __index__(self)::Int64
 return 42
 end
 
 mutable struct TruncReturnsNonInt <: AbstractTruncReturnsNonInt
 
 end
-function __trunc__(self::TruncReturnsNonInt)::Index
+function __trunc__(self)::Index
 return Index()
 end
 
@@ -406,14 +406,14 @@ assertEqual(self, parse(Int, TruncReturnsNonInt()), 42)
 mutable struct Intable <: AbstractIntable
 
 end
-function __int__(self::Intable)::Int64
+function __int__(self)::Int64
 return 42
 end
 
 mutable struct TruncReturnsNonIndex <: AbstractTruncReturnsNonIndex
 
 end
-function __trunc__(self::TruncReturnsNonIndex)::Intable
+function __trunc__(self)::Intable
 return Intable()
 end
 
@@ -421,14 +421,14 @@ assertEqual(self, parse(Int, TruncReturnsNonInt()), 42)
 mutable struct NonIntegral <: AbstractNonIntegral
 
 end
-function __trunc__(self::NonIntegral)::NonIntegral
+function __trunc__(self)::NonIntegral
 return NonIntegral()
 end
 
 mutable struct TruncReturnsNonIntegral <: AbstractTruncReturnsNonIntegral
 
 end
-function __trunc__(self::TruncReturnsNonIntegral)::NonIntegral
+function __trunc__(self)::NonIntegral
 return NonIntegral()
 end
 
@@ -444,14 +444,14 @@ end
 mutable struct BadInt <: AbstractBadInt
 
 end
-function __int__(self::BadInt)::Float64
+function __int__(self)::Float64
 return 42.0
 end
 
 mutable struct TruncReturnsBadInt <: AbstractTruncReturnsBadInt
 
 end
-function __trunc__(self::TruncReturnsBadInt)::BadInt
+function __trunc__(self)::BadInt
 return BadInt()
 end
 
@@ -462,18 +462,18 @@ end
 end
 end
 
-function test_int_subclass_with_index(self::BadIndex)
+function test_int_subclass_with_index(self)
 mutable struct MyIndex <: AbstractMyIndex
 
 end
-function __index__(self::MyIndex)::Int64
+function __index__(self)::Int64
 return 42
 end
 
 mutable struct BadIndex <: AbstractBadIndex
 
 end
-function __index__(self::BadIndex)::Float64
+function __index__(self)::Float64
 return 42.0
 end
 
@@ -483,18 +483,18 @@ assertEqual(self, parse(Int, my_int), 7)
 assertEqual(self, parse(Int, BadIndex()), 0)
 end
 
-function test_int_subclass_with_int(self::BadInt)
+function test_int_subclass_with_int(self)
 mutable struct MyInt <: AbstractMyInt
 
 end
-function __int__(self::MyInt)::Int64
+function __int__(self)::Int64
 return 42
 end
 
 mutable struct BadInt <: AbstractBadInt
 
 end
-function __int__(self::BadInt)::Float64
+function __int__(self)::Float64
 return 42.0
 end
 
@@ -506,53 +506,53 @@ assertEqual(self, my_int, 7)
 assertRaises(self, TypeError, int, my_int)
 end
 
-function test_int_returns_int_subclass(self::TruncReturnsIntSubclass)
+function test_int_returns_int_subclass(self)
 mutable struct BadIndex <: AbstractBadIndex
 
 end
-function __index__(self::BadIndex)::Bool
+function __index__(self)::Bool
 return true
 end
 
 mutable struct BadIndex2 <: AbstractBadIndex2
 
 end
-function __index__(self::BadIndex2)::Bool
+function __index__(self)::Bool
 return true
 end
 
 mutable struct BadInt <: AbstractBadInt
 
 end
-function __int__(self::BadInt)::Bool
+function __int__(self)::Bool
 return true
 end
 
 mutable struct BadInt2 <: AbstractBadInt2
 
 end
-function __int__(self::BadInt2)::Bool
+function __int__(self)::Bool
 return true
 end
 
 mutable struct TruncReturnsBadIndex <: AbstractTruncReturnsBadIndex
 
 end
-function __trunc__(self::TruncReturnsBadIndex)::BadIndex
+function __trunc__(self)::BadIndex
 return BadIndex()
 end
 
 mutable struct TruncReturnsBadInt <: AbstractTruncReturnsBadInt
 
 end
-function __trunc__(self::TruncReturnsBadInt)::BadInt
+function __trunc__(self)::BadInt
 return BadInt()
 end
 
 mutable struct TruncReturnsIntSubclass <: AbstractTruncReturnsIntSubclass
 
 end
-function __trunc__(self::TruncReturnsIntSubclass)::Bool
+function __trunc__(self)::Bool
 return true
 end
 
@@ -595,9 +595,9 @@ assertEqual(self, n, 1)
 assertIs(self, type_(n), IntSubclass)
 end
 
-function test_error_message(self::IntTestCases)
+function test_error_message(self)
 function check(s, base = nothing)
-@test_throws ValueError "int(%r, %r)" % (s, base)() do cm 
+@test_throws ValueError msg = "int(%r, %r)" % (s, base)() do cm 
 if base === nothing
 parse(Int, s)
 else
@@ -624,7 +624,7 @@ check("123\ud800")
 check("123\ud800", 10)
 end
 
-function test_issue31619(self::IntTestCases)
+function test_issue31619(self)
 @test (parse(Int, "1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1_0_1") == 1431655765)
 @test (parse(Int, "1_2_3_4_5_6_7_0_1_2_3") == 1402433619)
 @test (parse(Int, "1_2_3_4_5_6_7_8_9") == 4886718345)

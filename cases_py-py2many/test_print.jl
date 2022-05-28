@@ -10,7 +10,7 @@ dispatch = Dict((false, false, false) => (args, sep, end_, file) -> println(args
 mutable struct ClassWith__str__ <: AbstractClassWith__str__
 x
 end
-function __str__(self::ClassWith__str__)
+function __str__(self)
 return self.x
 end
 
@@ -19,7 +19,7 @@ mutable struct TestPrint <: AbstractTestPrint
 written::String
 flushed::Int64
 end
-function check(self::TestPrint, expected, args, sep = NotDefined, end_ = NotDefined, file = NotDefined)
+function check(self, expected, args, sep = NotDefined, end_ = NotDefined, file = NotDefined)
 fn = dispatch[(sep !== NotDefined, end_ !== NotDefined, file !== NotDefined)]
 captured_stdout() do t 
 fn(args, sep, end_, file)
@@ -27,7 +27,7 @@ end
 @test (getvalue(t) == expected)
 end
 
-function test_print(self::TestPrint)
+function test_print(self)
 function x(expected, args, sep = NotDefined, end_ = NotDefined)
 check(self, expected, args)
 o = StringIO()
@@ -53,21 +53,21 @@ x("a\n b\n", ("a\n", "b"))
 x("a\n b\n", ("a\n", "b"))
 x("*\n", (ClassWith__str__("*"),))
 x("abc 1\n", (ClassWith__str__("abc"), 1))
-@test_throws TypeError print("", 3)
-@test_throws TypeError print("", 3)
-@test_throws AttributeError print("", "")
+@test_throws TypeError print("", sep = 3)
+@test_throws TypeError print("", end_ = 3)
+@test_throws AttributeError print("", file = "")
 end
 
-function test_print_flush(self::noflush)
+function test_print_flush(self)
 mutable struct filelike <: Abstractfilelike
 written::String
 flushed::Int64
 end
-function write(self::filelike, str)
+function write(self, str)
 self.written += str
 end
 
-function flush(self::filelike)
+function flush(self)
 self.flushed += 1
 end
 
@@ -80,15 +80,15 @@ assertEqual(self, f.flushed, 2)
 mutable struct noflush <: Abstractnoflush
 
 end
-function write(self::noflush, str)
+function write(self, str)
 #= pass =#
 end
 
-function flush(self::noflush)
+function flush(self)
 throw(RuntimeError)
 end
 
-assertRaises(self, RuntimeError, print, 1, noflush(), true)
+assertRaises(self, RuntimeError, print, 1, file = noflush(), flush = true)
 end
 
 mutable struct TestPy2MigrationHint <: AbstractTestPy2MigrationHint
@@ -97,7 +97,7 @@ mutable struct TestPy2MigrationHint <: AbstractTestPy2MigrationHint
      =#
 
 end
-function test_normal_string(self::TestPy2MigrationHint)
+function test_normal_string(self)
 python2_print_str = "print \"Hello World\""
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -105,7 +105,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_string_with_soft_space(self::TestPy2MigrationHint)
+function test_string_with_soft_space(self)
 python2_print_str = "print \"Hello World\","
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -113,7 +113,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_string_with_excessive_whitespace(self::TestPy2MigrationHint)
+function test_string_with_excessive_whitespace(self)
 python2_print_str = "print  \"Hello World\", "
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -121,7 +121,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_string_with_leading_whitespace(self::TestPy2MigrationHint)
+function test_string_with_leading_whitespace(self)
 python2_print_str = "if 1:\n            print \"Hello World\"\n        "
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -129,7 +129,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_string_with_semicolon(self::TestPy2MigrationHint)
+function test_string_with_semicolon(self)
 python2_print_str = "print p;"
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -137,7 +137,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_string_in_loop_on_same_line(self::TestPy2MigrationHint)
+function test_string_in_loop_on_same_line(self)
 python2_print_str = "for i in s: print i"
 assertRaises(self, SyntaxError) do context 
 exec(python2_print_str)
@@ -145,7 +145,7 @@ end
 assertIn(self, "Missing parentheses in call to \'print\'. Did you mean print(...)", string(context.exception))
 end
 
-function test_stream_redirection_hint_for_py2_migration(self::OverrideRRShift)
+function test_stream_redirection_hint_for_py2_migration(self)
 assertRaises(self, TypeError) do context 
 (print >> sys.stderr, "message")
 end
@@ -165,7 +165,7 @@ assertNotIn(self, "Did you mean", string(context.exception))
 mutable struct OverrideRRShift <: AbstractOverrideRRShift
 
 end
-function __rrshift__(self::OverrideRRShift, lhs)::Int64
+function __rrshift__(self, lhs)::Int64
 return 42
 end
 

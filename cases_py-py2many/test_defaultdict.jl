@@ -15,7 +15,7 @@ end
 mutable struct TestDefaultDict <: AbstractTestDefaultDict
 default_factory
 end
-function test_basic(self::TestDefaultDict)
+function test_basic(self)
 d1 = defaultdict()
 @test (d1.default_factory == nothing)
 d1.default_factory = list
@@ -27,7 +27,7 @@ d1[14]
 d1[15]
 @test (d1 == Dict(12 => [42, 24], 13 => [], 14 => []))
 @test d1[13] !== d1[14] !== d1[15]
-d2 = defaultdict(list, 1, 2)
+d2 = defaultdict(list, foo = 1, bar = 2)
 @test (d2.default_factory == list)
 @test (d2 == Dict("foo" => 1, "bar" => 2))
 @test (d2["foo"] == 1)
@@ -55,14 +55,14 @@ end
 @test_throws TypeError defaultdict(1)
 end
 
-function test_missing(self::TestDefaultDict)
+function test_missing(self)
 d1 = defaultdict()
 @test_throws KeyError d1.__missing__(42)
 d1.default_factory = list
 @test (__missing__(d1, 42) == [])
 end
 
-function test_repr(self::TestDefaultDict)
+function test_repr(self)
 d1 = defaultdict()
 @test (d1.default_factory == nothing)
 @test (repr(d1) == "defaultdict(None, {})")
@@ -83,7 +83,7 @@ d3[14]
 @test (repr(d3) == "defaultdict(%s, {13: 43})" % repr(foo))
 end
 
-function test_copy(self::TestDefaultDict)
+function test_copy(self)
 d1 = defaultdict()
 d2 = copy(d1)
 @test (type_(d2) == defaultdict)
@@ -107,7 +107,7 @@ e = copy(d)
 @test (e["a"] == 42)
 end
 
-function test_shallow_copy(self::TestDefaultDict)
+function test_shallow_copy(self)
 d1 = defaultdict(foobar, Dict(1 => 1))
 d2 = copy(d1)
 @test (d2.default_factory == foobar)
@@ -118,7 +118,7 @@ d2 = copy(d1)
 @test (d2 == d1)
 end
 
-function test_deep_copy(self::TestDefaultDict)
+function test_deep_copy(self)
 d1 = defaultdict(foobar, Dict(1 => [1]))
 d2 = deepcopy(d1)
 @test (d2.default_factory == foobar)
@@ -130,7 +130,7 @@ d2 = deepcopy(d1)
 @test (d2 == d1)
 end
 
-function test_keyerror_without_factory(self::TestDefaultDict)
+function test_keyerror_without_factory(self)
 d1 = defaultdict()
 try
 d1[(1,) + 1]
@@ -143,11 +143,11 @@ end
 end
 end
 
-function test_recursive_repr(self::sub)
+function test_recursive_repr(self)
 mutable struct sub <: Abstractsub
 default_factory
 end
-function _factory(self::sub)::Vector
+function _factory(self)::Vector
 return []
 end
 
@@ -155,11 +155,11 @@ d = sub()
 assertRegex(self, repr(d), "sub\\(<bound method .*sub\\._factory of sub\\(\\.\\.\\., \\{\\}\\)>, \\{\\}\\)")
 end
 
-function test_callable_arg(self::TestDefaultDict)
+function test_callable_arg(self)
 @test_throws TypeError defaultdict(Dict())
 end
 
-function test_pickling(self::TestDefaultDict)
+function test_pickling(self)
 d = defaultdict(int)
 d[2]
 for proto in 0:pickle.HIGHEST_PROTOCOL
@@ -169,7 +169,7 @@ o = loads(s)
 end
 end
 
-function test_union(self::TestDefaultDict)
+function test_union(self)
 i = defaultdict(int, Dict(1 => 1, 2 => 2))
 s = defaultdict(str, Dict(0 => "zero", 1 => "one"))
 i_s = __or__(i, s)

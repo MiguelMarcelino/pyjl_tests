@@ -22,23 +22,23 @@ type2test
                     BinASCIITest(data, rawdata::Array{UInt8} = b"The quick brown fox jumps over the lazy dog.\r\n", type2test = bytes) =
                         new(data, rawdata, type2test)
 end
-function setUp(self::BinASCIITest)
+function setUp(self)
 self.data = type2test(self, self.rawdata)
 end
 
-function test_exceptions(self::BinASCIITest)
+function test_exceptions(self)
 @test binascii.Error <: Exception
 @test binascii.Incomplete <: Exception
 end
 
-function test_functions(self::BinASCIITest)
+function test_functions(self)
 for name in all_functions
 @test hasfield(typeof(getfield(binascii, :name)), :__call__)
 @test_throws TypeError getfield(binascii, :name)()
 end
 end
 
-function test_returned_value(self::BinASCIITest)
+function test_returned_value(self)
 MAX_ALL = 45
 raw = self.rawdata[begin:MAX_ALL]
 for (fa, fb) in zip(a2b_functions, b2a_functions)
@@ -66,7 +66,7 @@ end
 @test isa(self, crc32(raw))
 end
 
-function test_base64valid(self::BinASCIITest)
+function test_base64valid(self)
 MAX_BASE64 = 57
 lines = []
 for i in 0:MAX_BASE64:length(self.rawdata) - 1
@@ -83,7 +83,7 @@ end
 @test (res == self.rawdata)
 end
 
-function test_base64invalid(self::BinASCIITest)
+function test_base64invalid(self)
 MAX_BASE64 = 57
 lines = []
 for i in 0:MAX_BASE64:length(self.data) - 1
@@ -123,7 +123,7 @@ end
 @test (a2b_base64(type2test(self, fillers)) == b"")
 end
 
-function test_base64errors(self::BinASCIITest)
+function test_base64errors(self)
 function assertIncorrectPadding(data)
 assertRaisesRegex(self, binascii.Error, "(?i)Incorrect padding") do 
 a2b_base64(type2test(self, data))
@@ -155,13 +155,13 @@ assertInvalidLength(repeat(b"a",(4*87 + 1)))
 assertInvalidLength(b"A\tB\nC ??DE")
 end
 
-function test_uu(self::BinASCIITest)
+function test_uu(self)
 MAX_UU = 45
 for backtick in (true, false)
 lines = []
 for i in 0:MAX_UU:length(self.data) - 1
 b = type2test(self, self.rawdata[i + 1:i + MAX_UU])
-a = b2a_uu(b, backtick)
+a = b2a_uu(b, backtick = backtick)
 push!(lines, a)
 end
 res = bytes()
@@ -180,18 +180,18 @@ end
 @test_throws binascii.Error binascii.b2a_uu(repeat(b"!",46))
 @test (b2a_uu(b"x") == b"!>   \n")
 @test (b2a_uu(b"") == b" \n")
-@test (b2a_uu(b"", true) == b"`\n")
+@test (b2a_uu(b"", backtick = true) == b"`\n")
 @test (a2b_uu(b" \n") == b"")
 @test (a2b_uu(b"`\n") == b"")
 @test (b2a_uu(b"\x00Cat") == b"$ $-A=   \n")
-@test (b2a_uu(b"\x00Cat", true) == b"$`$-A=```\n")
+@test (b2a_uu(b"\x00Cat", backtick = true) == b"$`$-A=```\n")
 @test (a2b_uu(b"$`$-A=```\n") == a2b_uu(b"$ $-A=   \n"))
 assertRaises(self, TypeError) do 
 b2a_uu(b"", true)
 end
 end
 
-function test_crc_hqx(self::BinASCIITest)
+function test_crc_hqx(self)
 crc = crc_hqx(type2test(self, b"Test the CRC-32 of"), 0)
 crc = crc_hqx(type2test(self, b" this string."), crc)
 @test (crc == 14290)
@@ -202,14 +202,14 @@ for crc in (0, 1, 4660, 74565, 305419896, -1)
 end
 end
 
-function test_crc32(self::BinASCIITest)
+function test_crc32(self)
 crc = crc32(type2test(self, b"Test the CRC-32 of"))
 crc = crc32(type2test(self, b" this string."), crc)
 @test (crc == 1571220330)
 @test_throws TypeError binascii.crc32()
 end
 
-function test_hqx(self::BinASCIITest)
+function test_hqx(self)
 rle = rlecode_hqx(self.data)
 a = b2a_hqx(type2test(self, rle))
 b, _ = a2b_hqx(type2test(self, a))
@@ -217,7 +217,7 @@ res = rledecode_hqx(b)
 @test (res == self.rawdata)
 end
 
-function test_rle(self::BinASCIITest)
+function test_rle(self)
 data = append!(append!(repeat(b"a",100), b"b"), repeat(b"c",300))
 encoded = rlecode_hqx(data)
 @test (encoded == b"a\x90dbc\x90\xffc\x90-")
@@ -225,7 +225,7 @@ decoded = rledecode_hqx(encoded)
 @test (decoded == data)
 end
 
-function test_hex(self::BinASCIITest)
+function test_hex(self)
 s = b"{s\x05\x00\x00\x00worldi\x02\x00\x00\x00s\x05\x00\x00\x00helloi\x01\x00\x00\x000"
 t = b2a_hex(type2test(self, s))
 u = a2b_hex(type2test(self, t))
@@ -241,7 +241,7 @@ u = a2b_hex(type2test(self, t))
 @test (unhexlify(type2test(self, t)) == u)
 end
 
-function test_hex_separator(self::BinASCIITest)
+function test_hex_separator(self)
 #= Test that hexlify and b2a_hex are binary versions of bytes.hex. =#
 s = b"{s\x05\x00\x00\x00worldi\x02\x00\x00\x00s\x05\x00\x00\x00helloi\x01\x00\x00\x000"
 @test (hexlify(type2test(self, s)) == encode(hex(s), "ascii"))
@@ -251,13 +251,13 @@ expected1 = encode(hex(s, ":"), "ascii")
 @test (b2a_hex(type2test(self, s), ":") == expected1)
 end
 
-function test_qp(self::BinASCIITest)
+function test_qp(self)
 type2test = self.type2test
 a2b_qp = binascii.a2b_qp
 b2a_qp = binascii.b2a_qp
-a2b_qp(b"", false)
+a2b_qp(data = b"", header = false)
 try
-a2b_qp(b"", Dict(1 => 1))
+a2b_qp(b"", None = Dict(1 => 1))
 catch exn
 if exn isa TypeError
 #= pass =#
@@ -276,19 +276,19 @@ end
 @test (a2b_qp(type2test(b"=XA")) == b"=XA")
 @test (a2b_qp(type2test(b"=AB")[begin:-1]) == b"=A")
 @test (a2b_qp(type2test(b"_")) == b"_")
-@test (a2b_qp(type2test(b"_"), true) == b" ")
-@test_throws TypeError b2a_qp("bar")
+@test (a2b_qp(type2test(b"_"), header = true) == b" ")
+@test_throws TypeError b2a_qp(foo = "bar")
 @test (a2b_qp(type2test(b"=00\r\n=00")) == b"\x00\r\n\x00")
 @test (b2a_qp(type2test(b"\xff\r\n\xff\n\xff")) == b"=FF\r\n=FF\r\n=FF")
 @test (b2a_qp(type2test(append!(repeat(b"0",75), b"\xff\r\n\xff\r\n\xff"))) == append!(repeat(b"0",75), b"=\r\n=FF\r\n=FF\r\n=FF"))
 @test (b2a_qp(type2test(b"\x7f")) == b"=7F")
 @test (b2a_qp(type2test(b"=")) == b"=3D")
 @test (b2a_qp(type2test(b"_")) == b"_")
-@test (b2a_qp(type2test(b"_"), true) == b"=5F")
-@test (b2a_qp(type2test(b"x y"), true) == b"x_y")
-@test (b2a_qp(type2test(b"x "), true) == b"x=20")
-@test (b2a_qp(type2test(b"x y"), true, true) == b"x=20y")
-@test (b2a_qp(type2test(b"x\ty"), true) == b"x\ty")
+@test (b2a_qp(type2test(b"_"), header = true) == b"=5F")
+@test (b2a_qp(type2test(b"x y"), header = true) == b"x_y")
+@test (b2a_qp(type2test(b"x "), header = true) == b"x=20")
+@test (b2a_qp(type2test(b"x y"), header = true, quotetabs = true) == b"x=20y")
+@test (b2a_qp(type2test(b"x\ty"), header = true) == b"x\ty")
 @test (b2a_qp(type2test(b" ")) == b"=20")
 @test (b2a_qp(type2test(b"\t")) == b"=09")
 @test (b2a_qp(type2test(b" x")) == b" x")
@@ -297,25 +297,25 @@ end
 @test (b2a_qp(type2test(b"\tx")[begin:-1]) == b"=09")
 @test (b2a_qp(type2test(b"\x00")) == b"=00")
 @test (b2a_qp(type2test(b"\x00\n")) == b"=00\n")
-@test (b2a_qp(type2test(b"\x00\n"), true) == b"=00\n")
+@test (b2a_qp(type2test(b"\x00\n"), quotetabs = true) == b"=00\n")
 @test (b2a_qp(type2test(b"x y\tz")) == b"x y\tz")
-@test (b2a_qp(type2test(b"x y\tz"), true) == b"x=20y=09z")
-@test (b2a_qp(type2test(b"x y\tz"), false) == b"x y\tz")
+@test (b2a_qp(type2test(b"x y\tz"), quotetabs = true) == b"x=20y=09z")
+@test (b2a_qp(type2test(b"x y\tz"), istext = false) == b"x y\tz")
 @test (b2a_qp(type2test(b"x \ny\t\n")) == b"x=20\ny=09\n")
-@test (b2a_qp(type2test(b"x \ny\t\n"), true) == b"x=20\ny=09\n")
-@test (b2a_qp(type2test(b"x \ny\t\n"), false) == b"x =0Ay\t=0A")
+@test (b2a_qp(type2test(b"x \ny\t\n"), quotetabs = true) == b"x=20\ny=09\n")
+@test (b2a_qp(type2test(b"x \ny\t\n"), istext = false) == b"x =0Ay\t=0A")
 @test (b2a_qp(type2test(b"x \ry\t\r")) == b"x \ry\t\r")
-@test (b2a_qp(type2test(b"x \ry\t\r"), true) == b"x=20\ry=09\r")
-@test (b2a_qp(type2test(b"x \ry\t\r"), false) == b"x =0Dy\t=0D")
+@test (b2a_qp(type2test(b"x \ry\t\r"), quotetabs = true) == b"x=20\ry=09\r")
+@test (b2a_qp(type2test(b"x \ry\t\r"), istext = false) == b"x =0Dy\t=0D")
 @test (b2a_qp(type2test(b"x \r\ny\t\r\n")) == b"x=20\r\ny=09\r\n")
-@test (b2a_qp(type2test(b"x \r\ny\t\r\n"), true) == b"x=20\r\ny=09\r\n")
-@test (b2a_qp(type2test(b"x \r\ny\t\r\n"), false) == b"x =0D=0Ay\t=0D=0A")
+@test (b2a_qp(type2test(b"x \r\ny\t\r\n"), quotetabs = true) == b"x=20\r\ny=09\r\n")
+@test (b2a_qp(type2test(b"x \r\ny\t\r\n"), istext = false) == b"x =0D=0Ay\t=0D=0A")
 @test (b2a_qp(type2test(b"x \r\n")[begin:-1]) == b"x \r")
 @test (b2a_qp(type2test(b"x\t\r\n")[begin:-1]) == b"x\t\r")
-@test (b2a_qp(type2test(b"x \r\n")[begin:-1], true) == b"x=20\r")
-@test (b2a_qp(type2test(b"x\t\r\n")[begin:-1], true) == b"x=09\r")
-@test (b2a_qp(type2test(b"x \r\n")[begin:-1], false) == b"x =0D")
-@test (b2a_qp(type2test(b"x\t\r\n")[begin:-1], false) == b"x\t=0D")
+@test (b2a_qp(type2test(b"x \r\n")[begin:-1], quotetabs = true) == b"x=20\r")
+@test (b2a_qp(type2test(b"x\t\r\n")[begin:-1], quotetabs = true) == b"x=09\r")
+@test (b2a_qp(type2test(b"x \r\n")[begin:-1], istext = false) == b"x =0D")
+@test (b2a_qp(type2test(b"x\t\r\n")[begin:-1], istext = false) == b"x\t=0D")
 @test (b2a_qp(type2test(b".")) == b"=2E")
 @test (b2a_qp(type2test(b".\n")) == b"=2E\n")
 @test (b2a_qp(type2test(b".\r")) == b"=2E\r")
@@ -324,7 +324,7 @@ end
 @test (b2a_qp(type2test(b".a")[begin:-1]) == b"=2E")
 end
 
-function test_empty_string(self::BinASCIITest)
+function test_empty_string(self)
 empty = type2test(self, b"")
 for func in all_functions
 if func == "crc_hqx"
@@ -344,7 +344,7 @@ end
 end
 end
 
-function test_unicode_b2a(self::BinASCIITest)
+function test_unicode_b2a(self)
 for func in (set(all_functions) - set(a2b_functions)) | Set(["rledecode_hqx"])
 try
 @test_throws TypeError getfield(binascii, :func)("test")
@@ -359,7 +359,7 @@ end
 @test_throws TypeError binascii.crc_hqx("test", 0)
 end
 
-function test_unicode_a2b(self::BinASCIITest)
+function test_unicode_a2b(self)
 MAX_ALL = 45
 raw = self.rawdata[begin:MAX_ALL]
 for (fa, fb) in zip(a2b_functions, b2a_functions)
@@ -391,14 +391,14 @@ end
 end
 end
 
-function test_b2a_base64_newline(self::BinASCIITest)
+function test_b2a_base64_newline(self)
 b = type2test(self, b"hello")
 @test (b2a_base64(b) == b"aGVsbG8=\n")
-@test (b2a_base64(b, true) == b"aGVsbG8=\n")
-@test (b2a_base64(b, false) == b"aGVsbG8=")
+@test (b2a_base64(b, newline = true) == b"aGVsbG8=\n")
+@test (b2a_base64(b, newline = false) == b"aGVsbG8=")
 end
 
-function test_deprecated_warnings(self::BinASCIITest)
+function test_deprecated_warnings(self)
 assertWarns(self, DeprecationWarning) do 
 @test (b2a_hqx(b"abc") == b"B@*M")
 end
@@ -416,7 +416,7 @@ end
 mutable struct ArrayBinASCIITest <: AbstractArrayBinASCIITest
 
 end
-function type2test(self::ArrayBinASCIITest, s)
+function type2test(self, s)
 return array("B", collect(s))
 end
 
@@ -438,7 +438,7 @@ mutable struct ChecksumBigBufferTestCase <: AbstractChecksumBigBufferTestCase
 #= bpo-38256 - check that inputs >=4 GiB are handled correctly. =#
 
 end
-function test_big_buffer(self::ChecksumBigBufferTestCase, size)
+function test_big_buffer(self, size)
 data = repeat(b"nyan",__add__(_1G, 1))
 @test (crc32(data) == 1044521549)
 end

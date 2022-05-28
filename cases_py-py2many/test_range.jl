@@ -27,13 +27,13 @@ end
 mutable struct RangeTest <: AbstractRangeTest
 n::Int64
 end
-function assert_iterators_equal(self::RangeTest, xs, ys, test_id, limit = nothing)
+function assert_iterators_equal(self, xs, ys, test_id, limit = nothing)
 if limit !== nothing
 xs = islice(xs, limit)
 ys = islice(ys, limit)
 end
 sentinel = object()
-pairs = zip_longest(xs, ys, sentinel)
+pairs = zip_longest(xs, ys, fillvalue = sentinel)
 for (i, (x, y)) in enumerate(pairs)
 if x == y
 continue;
@@ -47,7 +47,7 @@ end
 end
 end
 
-function test_range(self::RangeTest)
+function test_range(self)
 @test (collect(0:2) == [0, 1, 2])
 @test (collect(1:4) == [1, 2, 3, 4])
 @test (collect(0:-1) == [])
@@ -86,7 +86,7 @@ r = -(sys.maxsize):2:sys.maxsize - 1
 @test (length(r) == sys.maxsize)
 end
 
-function test_range_constructor_error_messages(self::RangeTest)
+function test_range_constructor_error_messages(self)
 assertRaisesRegex(self, TypeError, "range expected at least 1 argument, got 0") do 
 range()
 end
@@ -95,7 +95,7 @@ assertRaisesRegex(self, TypeError, "range expected at most 3 arguments, got 6") 
 end
 end
 
-function test_large_operands(self::RangeTest)
+function test_large_operands(self)
 x = 10^20:3:10^20
 @test (length(x) == 4)
 @test (length(collect(x)) == 4)
@@ -141,7 +141,7 @@ assertNotIn(self, -(b), seq)
 @test (seq[end] == -(a) - c)
 end
 
-function test_large_range(self::RangeTest)
+function test_large_range(self)
 function _range_len(x)::Int64
 try
 length = length(x)
@@ -234,7 +234,7 @@ x[expected_len + 1]
 end
 end
 
-function test_invalid_invocation(self::RangeTest)
+function test_invalid_invocation(self)
 @test_throws TypeError range()
 @test_throws TypeError range(1, 2, 3, 4)
 @test_throws ValueError range(1, 2, 0)
@@ -257,7 +257,7 @@ a = Int(10*sys.maxsize)
 @test_throws TypeError range(0.0, 0.0, 1.0)
 end
 
-function test_index(self::BadCmp)
+function test_index(self)
 u = 0:1
 assertEqual(self, index(u, 0), 0)
 assertEqual(self, index(u, 1), 1)
@@ -273,7 +273,7 @@ end
 mutable struct BadCmp <: AbstractBadCmp
 
 end
-function __eq__(self::BadCmp, other)::Bool
+function __eq__(self, other)::Bool
 if other == 2
 throw(BadExc())
 end
@@ -293,13 +293,13 @@ assertEqual(self, index(1:2:2^100, 2^87 + 1), 2^86)
 assertEqual(self, index(0:9, ALWAYS_EQ), 0)
 end
 
-function test_user_index_method(self::IN)
+function test_user_index_method(self)
 bignum = 2*sys.maxsize
 smallnum = 42
 mutable struct I <: AbstractI
 n::Int64
 end
-function __index__(self::I)::Int64
+function __index__(self)::Int64
 return self.n
 end
 
@@ -308,7 +308,7 @@ assertEqual(self, collect(I(smallnum):I(smallnum + 1) - 1), [smallnum])
 mutable struct IX <: AbstractIX
 
 end
-function __index__(self::IX)
+function __index__(self)
 throw(RuntimeError)
 end
 
@@ -316,7 +316,7 @@ assertRaises(self, RuntimeError, range, IX())
 mutable struct IN <: AbstractIN
 
 end
-function __index__(self::IN)::String
+function __index__(self)::String
 return "not a number"
 end
 
@@ -330,7 +330,7 @@ assertRaises(self, TypeError) do
 end
 end
 
-function test_count(self::RangeTest)
+function test_count(self)
 @test (count(0:2, -1) == 0)
 @test (count(0:2, 0) == 1)
 @test (count(0:2, 1) == 1)
@@ -347,17 +347,17 @@ assertIs(self, type_(count(0:2, 1)), int)
 @test (length(sys.maxsize:sys.maxsize + 9) == 10)
 end
 
-function test_repr(self::RangeTest)
+function test_repr(self)
 @test (repr(0:0) == "range(0, 1)")
 @test (repr(1:1) == "range(1, 2)")
 @test (repr(1:3:1) == "range(1, 2, 3)")
 end
 
-function test_pickling(self::RangeTest)
+function test_pickling(self)
 testcases = [(13,), (0, 11), (-22, 10), (20, 3, -1), (13, 21, 3), (-2, 2, 2), (2^65, 2^65 + 2)]
 for proto in 0:pickle.HIGHEST_PROTOCOL
 for t in testcases
-subTest(self, proto, t) do 
+subTest(self, proto = proto, test = t) do 
 r = 0:t... - 1
 @test (collect(loads(dumps(r, proto))) == collect(r))
 end
@@ -365,14 +365,14 @@ end
 end
 end
 
-function test_iterator_pickling(self::RangeTest)
+function test_iterator_pickling(self)
 testcases = [(13,), (0, 11), (-22, 10), (20, 3, -1), (13, 21, 3), (-2, 2, 2)]
 for M in (2^31, 2^63)
 testcases = append!(testcases, [(M - 3, M - 1), (4*M, 4*M + 2), (M - 2, M - 1, 2), (-(M) + 1, -(M), -2), (1, 2, M - 1), (-1, -2, -(M)), (1, M - 1, M - 1), (-1, -(M), -(M))])
 end
 for proto in 0:pickle.HIGHEST_PROTOCOL
 for t in testcases
-subTest(self, proto, t) do 
+subTest(self, proto = proto, t = t) do 
 it = (x for x in 0:t... - 1)
 itorg = (x for x in 0:t... - 1)
 data = collect(0:t... - 1)
@@ -396,9 +396,9 @@ end
 end
 end
 
-function test_iterator_pickling_overflowing_index(self::RangeTest)
+function test_iterator_pickling_overflowing_index(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
-subTest(self, proto) do 
+subTest(self, proto = proto) do 
 it = (x for x in 0:2^32)
 _, _, idx = __reduce__(it)
 @test (idx == 0)
@@ -412,7 +412,7 @@ end
 end
 end
 
-function test_exhausted_iterator_pickling(self::RangeTest)
+function test_exhausted_iterator_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 r = 2^65:2^65
 i = (x for x in r)
@@ -430,7 +430,7 @@ i2 = loads(d)
 end
 end
 
-function test_large_exhausted_iterator_pickling(self::RangeTest)
+function test_large_exhausted_iterator_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 r = 0:19
 i = (x for x in r)
@@ -448,13 +448,13 @@ i2 = loads(d)
 end
 end
 
-function test_odd_bug(self::RangeTest)
+function test_odd_bug(self)
 assertRaises(self, TypeError) do 
 0:-1:[]
 end
 end
 
-function test_types(self::C3)
+function test_types(self)
 assertIn(self, 1.0, 0:2)
 assertIn(self, true, 0:2)
 assertIn(self, 1 + 0im, 0:2)
@@ -462,11 +462,11 @@ assertIn(self, ALWAYS_EQ, 0:2)
 mutable struct C2 <: AbstractC2
 
 end
-function __int__(self::C2)::Int64
+function __int__(self)::Int64
 return 1
 end
 
-function __index__(self::C2)::Int64
+function __index__(self)::Int64
 return 1
 end
 
@@ -475,7 +475,7 @@ assertIn(self, parse(Int, C2()), 0:2)
 mutable struct C3 <: AbstractC3
 
 end
-function __eq__(self::C3, other)::Bool
+function __eq__(self, other)::Bool
 return true
 end
 
@@ -483,7 +483,7 @@ assertIn(self, C3(11), 0:9)
 assertIn(self, C3(11), collect(0:9))
 end
 
-function test_strided_limits(self::RangeTest)
+function test_strided_limits(self)
 r = 0:2:100
 assertIn(self, 0, r)
 assertNotIn(self, 1, r)
@@ -502,7 +502,7 @@ assertNotIn(self, -19, r)
 assertNotIn(self, -20, r)
 end
 
-function test_empty(self::RangeTest)
+function test_empty(self)
 r = 0:-1
 assertNotIn(self, 0, r)
 assertNotIn(self, 1, r)
@@ -512,7 +512,7 @@ assertNotIn(self, -1, r)
 assertNotIn(self, 1, r)
 end
 
-function test_range_iterators(self::RangeTest)
+function test_range_iterators(self)
 limits = [base + jiggle for M in (2^32, 2^64) for base in (-(M), -(M) ÷ 2, 0, M ÷ 2, M) for jiggle in (-2, -1, 0, 1, 2)]
 test_ranges = [(start, end_, step) for start in limits for end_ in limits for step in (-(2^63), -(2^31), -2, -1, 1, 2)]
 for (start, end_, step) in test_ranges
@@ -527,14 +527,14 @@ assert_iterators_equal(self, iter1, iter2, test_id)
 end
 end
 
-function test_range_iterators_invocation(self::RangeTest)
+function test_range_iterators_invocation(self)
 rangeiter_type = type_((x for x in 0:-1))
 @test_throws TypeError rangeiter_type(1, 3, 1)
 long_rangeiter_type = type_((x for x in 0:1 << 1000))
 @test_throws TypeError long_rangeiter_type(1, 3, 1)
 end
 
-function test_slice(self::RangeTest)
+function test_slice(self)
 function check(start, stop, step = nothing)
 i = (start:stop)
 @test (collect(r[i + 1]) == collect(r)[i + 1])
@@ -553,7 +553,7 @@ check(-1, -3, -1)
 end
 end
 
-function test_contains(self::RangeTest)
+function test_contains(self)
 r = 0:9
 assertIn(self, 0, r)
 assertIn(self, 1, r)
@@ -588,13 +588,13 @@ assertNotIn(self, 10, r)
 assertNotIn(self, "", r)
 end
 
-function test_reverse_iteration(self::RangeTest)
+function test_reverse_iteration(self)
 for r in [0:9, 0:-1, 1:3:8, -1:-3:8, sys.maxsize + 1:sys.maxsize + 9]
 @test (collect(reversed(r)) == collect(r)[end:-1:begin])
 end
 end
 
-function test_issue11845(self::RangeTest)
+function test_issue11845(self)
 r = 0:indices((1:18), 20)... - 1
 values = Set([nothing, 0, 1, -1, 2, -2, 5, -5, 19, -19, 20, -20, 21, -21, 30, -30, 99, -99])
 for i in values
@@ -606,7 +606,7 @@ end
 end
 end
 
-function test_comparison(self::RangeTest)
+function test_comparison(self)
 test_ranges = [0:-1, 0:0, 1:3:0, 0:0, 5:5, 5:2:5, 5:2:6, 0:1, 0:2:3, 0:2:4, 0:2:5]
 test_tuples = collect(map(tuple, test_ranges))
 ranges_eq = [a == b for a in test_ranges for b in test_ranges]
@@ -644,7 +644,7 @@ assertRaises(self, TypeError) do
 end
 end
 
-function test_attributes(self::RangeTest)
+function test_attributes(self)
 assert_attrs(self, 0:-1, 0, 0, 1)
 assert_attrs(self, 0:9, 0, 10, 1)
 assert_attrs(self, 0:-9, 0, -10, 1)
@@ -657,7 +657,7 @@ assert_attrs(self, false:0, 0, 1, 1)
 assert_attrs(self, false:true:0, 0, 1, 1)
 end
 
-function assert_attrs(self::RangeTest, rangeobj, start, stop, step)
+function assert_attrs(self, rangeobj, start, stop, step)
 @test (rangeobj.start == start)
 @test (rangeobj.stop == stop)
 @test (rangeobj.step == step)

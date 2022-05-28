@@ -5,7 +5,7 @@ g = "Global variable"
 mutable struct DictComprehensionTest <: AbstractDictComprehensionTest
 
 end
-function test_basics(self::DictComprehensionTest)
+function test_basics(self)
 expected = Dict(0 => 10, 1 => 11, 2 => 12, 3 => 13, 4 => 14, 5 => 15, 6 => 16, 7 => 17, 8 => 18, 9 => 19)
 actual = Dict(k => k + 10 for k in 0:9)
 @test (actual == expected)
@@ -14,7 +14,7 @@ actual = Dict(k => v for k in 0:9 for v in 0:9 if k == v )
 @test (actual == expected)
 end
 
-function test_scope_isolation(self::DictComprehensionTest)
+function test_scope_isolation(self)
 k = "Local Variable"
 expected = Dict(0 => nothing, 1 => nothing, 2 => nothing, 3 => nothing, 4 => nothing, 5 => nothing, 6 => nothing, 7 => nothing, 8 => nothing, 9 => nothing)
 actual = Dict(k => nothing for k in 0:9)
@@ -26,7 +26,7 @@ actual = Dict(k => v for v in 0:9 for k in v*9:v*10)
 @test (actual == expected)
 end
 
-function test_scope_isolation_from_global(self::DictComprehensionTest)
+function test_scope_isolation_from_global(self)
 expected = Dict(0 => nothing, 1 => nothing, 2 => nothing, 3 => nothing, 4 => nothing, 5 => nothing, 6 => nothing, 7 => nothing, 8 => nothing, 9 => nothing)
 actual = Dict(g => nothing for g in 0:9)
 @test (actual == expected)
@@ -37,13 +37,13 @@ actual = Dict(g => v for v in 0:9 for g in v*9:v*10)
 @test (actual == expected)
 end
 
-function test_global_visibility(self::DictComprehensionTest)
+function test_global_visibility(self)
 expected = Dict(0 => "Global variable", 1 => "Global variable", 2 => "Global variable", 3 => "Global variable", 4 => "Global variable", 5 => "Global variable", 6 => "Global variable", 7 => "Global variable", 8 => "Global variable", 9 => "Global variable")
 actual = Dict(k => g for k in 0:9)
 @test (actual == expected)
 end
 
-function test_local_visibility(self::DictComprehensionTest)
+function test_local_visibility(self)
 v = "Local variable"
 expected = Dict(0 => "Local variable", 1 => "Local variable", 2 => "Local variable", 3 => "Local variable", 4 => "Local variable", 5 => "Local variable", 6 => "Local variable", 7 => "Local variable", 8 => "Local variable", 9 => "Local variable")
 actual = Dict(k => v for k in 0:9)
@@ -51,7 +51,7 @@ actual = Dict(k => v for k in 0:9)
 @test (v == "Local variable")
 end
 
-function test_illegal_assignment(self::DictComprehensionTest)
+function test_illegal_assignment(self)
 assertRaisesRegex(self, SyntaxError, "cannot assign") do 
 compile("{x: y for y, x in ((1, 2), (3, 4))} = 5", "<test>", "exec")
 end
@@ -60,7 +60,7 @@ compile("{x: y for y, x in ((1, 2), (3, 4))} += 5", "<test>", "exec")
 end
 end
 
-function test_evaluation_order(self::DictComprehensionTest)
+function test_evaluation_order(self)
 expected = Dict("H" => "W", "e" => "o", "l" => "l", "o" => "d")
 expected_calls = [("key", "H"), ("value", "W"), ("key", "e"), ("value", "o"), ("key", "l"), ("value", "r"), ("key", "l"), ("value", "l"), ("key", "o"), ("value", "d")]
 actual_calls = []
@@ -74,7 +74,7 @@ actual = Dict(add_call("key", k) => add_call("value", v) for (k, v) in zip(["H",
 @test (actual_calls == expected_calls)
 end
 
-function test_assignment_idiom_in_comprehensions(self::DictComprehensionTest)
+function test_assignment_idiom_in_comprehensions(self)
 expected = Dict(1 => 1, 2 => 4, 3 => 9, 4 => 16)
 actual = Dict(j => j*j for i in 0:3 for j in [i + 1])
 @test (actual == expected)
@@ -86,7 +86,7 @@ actual = Dict(j + k => j*k for i in 0:3 for (j, k) in [(i + 1, i + 2)])
 @test (actual == expected)
 end
 
-function test_star_expression(self::DictComprehensionTest)
+function test_star_expression(self)
 expected = Dict(0 => 0, 1 => 1, 2 => 4, 3 => 9)
 @test (Dict(i => i*i for i in [0:3...]) == expected)
 @test (Dict(i => i*i for i in (0:3...,)) == expected)

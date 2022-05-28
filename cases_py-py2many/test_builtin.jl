@@ -70,11 +70,11 @@ mutable struct Squares <: AbstractSquares
 max
 sofar::Vector
 end
-function __len__(self::Squares)::Int64
+function __len__(self)::Int64
 return length(self.sofar)
 end
 
-function __getitem__(self::Squares, i)::Vector
+function __getitem__(self, i)::Vector
 if !(0 <= i < self.max)
 throw(IndexError)
 end
@@ -90,11 +90,11 @@ mutable struct StrSquares <: AbstractStrSquares
 max
 sofar::Vector
 end
-function __len__(self::StrSquares)::Int64
+function __len__(self)::Int64
 return length(self.sofar)
 end
 
-function __getitem__(self::StrSquares, i)::Vector
+function __getitem__(self, i)::Vector
 if !(0 <= i < self.max)
 throw(IndexError)
 end
@@ -109,7 +109,7 @@ end
 mutable struct BitBucket <: AbstractBitBucket
 
 end
-function write(self::BitBucket, line)
+function write(self, line)
 #= pass =#
 end
 
@@ -118,14 +118,14 @@ test_conv_sign = [("0", 0), ("1", 1), ("9", 9), ("10", 10), ("99", 99), ("100", 
 mutable struct TestFailingBool <: AbstractTestFailingBool
 
 end
-function __bool__(self::TestFailingBool)
+function __bool__(self)
 throw(RuntimeError)
 end
 
 mutable struct TestFailingIter <: AbstractTestFailingIter
 
 end
-function __iter__(self::TestFailingIter)
+function __iter__(self)
 throw(RuntimeError)
 end
 
@@ -152,7 +152,7 @@ system_round_bug::Bool
                     BuiltinTest(bar::String, size, x::Int64, y::Int64, z::Int64, __dict__::Int64 = 8, __slots__::Vector = [], _cells::Dict = Dict(), linux_alpha = startswith(system(), "Linux") && startswith(machine(), "alpha"), system_round_bug::Bool = round(5000000000000000.0 + 1) != (5000000000000000.0 + 1)) =
                         new(bar, size, x, y, z, __dict__, __slots__, _cells, linux_alpha, system_round_bug)
 end
-function check_iter_pickle(self::BuiltinTest, it, seq, proto)
+function check_iter_pickle(self, it, seq, proto)
 itorg = it
 d = dumps(it, proto)
 it = loads(d)
@@ -171,23 +171,23 @@ it = loads(d)
 @test (collect(it) == seq[2:end])
 end
 
-function test_import(self::BuiltinTest)
+function test_import(self)
 __import__("sys")
 __import__("time")
 __import__("string")
-__import__("sys")
-__import__("time", 0)
+__import__(name = "sys")
+__import__(name = "time", level = 0)
 @test_throws ImportError __import__("spamspam")
 @test_throws TypeError __import__(1, 2, 3, 4)
 @test_throws ValueError __import__("")
-@test_throws TypeError __import__("sys", "sys")
+@test_throws TypeError __import__("sys", name = "sys")
 assertWarns(self, ImportWarning) do 
-@test_throws ImportError __import__("", Dict("__package__" => nothing, "__spec__" => nothing, "__name__" => "__main__"), Dict(), ("foo",), 1)
+@test_throws ImportError __import__("", Dict("__package__" => nothing, "__spec__" => nothing, "__name__" => "__main__"), locals = Dict(), fromlist = ("foo",), level = 1)
 end
 @test_throws ModuleNotFoundError __import__("string\0")
 end
 
-function test_abs(self::AbsClass)
+function test_abs(self)
 assertEqual(self, abs(0), 0)
 assertEqual(self, abs(1234), 1234)
 assertEqual(self, abs(-1234), 1234)
@@ -203,14 +203,14 @@ assertRaises(self, TypeError, abs, nothing)
 mutable struct AbsClass <: AbstractAbsClass
 
 end
-function __abs__(self::AbsClass)::Int64
+function __abs__(self)::Int64
 return -5
 end
 
 assertEqual(self, abs(AbsClass()), -5)
 end
 
-function test_all(self::BuiltinTest)
+function test_all(self)
 @test (all([2, 4, 6]) == true_)
 @test (all([2, nothing, 6]) == false_)
 @test_throws RuntimeError all([2, TestFailingBool(), 6])
@@ -226,7 +226,7 @@ S = [50, 40, 60]
 @test (all((x > 42 for x in S)) == false_)
 end
 
-function test_any(self::BuiltinTest)
+function test_any(self)
 @test (any([nothing, nothing, nothing]) == false_)
 @test (any([nothing, 4, nothing]) == true_)
 @test_throws RuntimeError any([nothing, TestFailingBool(), 6])
@@ -242,7 +242,7 @@ S = [10, 20, 30]
 @test (any((x > 42 for x in S)) == false_)
 end
 
-function test_ascii(self::BuiltinTest)
+function test_ascii(self)
 @test (ascii("") == "\'\'")
 @test (ascii(0) == "0")
 @test (ascii(()) == "()")
@@ -273,13 +273,13 @@ s = "\'\0\"\n\r\t abcd\xe9𒿿\ud800𝄡xxx."
 @test (ascii(s) == "\'\\\'\\x00\"\\n\\r\\t abcd\\x85\\xe9\\U00012fff\\ud800\\U0001d121xxx.\'")
 end
 
-function test_neg(self::BuiltinTest)
+function test_neg(self)
 x = -(sys.maxsize) - 1
 @test isa(x, int)
 @test (-(x) == sys.maxsize + 1)
 end
 
-function test_callable(self::C3)
+function test_callable(self)
 assertTrue(self, callable(len))
 assertFalse(self, callable("a"))
 assertTrue(self, callable(callable))
@@ -293,7 +293,7 @@ assertTrue(self, callable(f))
 mutable struct C1 <: AbstractC1
 
 end
-function meth(self::C1)
+function meth(self)
 #= pass =#
 end
 
@@ -311,7 +311,7 @@ assertFalse(self, callable(c))
 mutable struct C2 <: AbstractC2
 
 end
-function __call__(self::C2)
+function __call__(self)
 #= pass =#
 end
 
@@ -327,7 +327,7 @@ c3 = C3()
 assertTrue(self, callable(c3))
 end
 
-function test_chr(self::BuiltinTest)
+function test_chr(self)
 @test (Char(32) == " ")
 @test (Char(65) == "A")
 @test (Char(97) == "a")
@@ -349,23 +349,23 @@ function test_chr(self::BuiltinTest)
 @test_throws (OverflowError, ValueError) chr(2^32)
 end
 
-function test_cmp(self::BuiltinTest)
+function test_cmp(self)
 @test !hasfield(typeof(builtins), :cmp)
 end
 
-function test_compile(self::BuiltinTest)
+function test_compile(self)
 compile("print(1)\n", "", "exec")
 bom = b"\xef\xbb\xbf"
 compile(append!(bom, b"print(1)\n"), "", "exec")
-compile("pass", "?", "exec")
-compile(false, "tmp", "0", "eval")
-compile("pass", "?", true, "exec")
+compile(source = "pass", filename = "?", mode = "exec")
+compile(dont_inherit = false, filename = "tmp", source = "0", mode = "eval")
+compile("pass", "?", dont_inherit = true, mode = "exec")
 compile(memoryview(b"text"), "name", "exec")
 @test_throws TypeError compile()
 @test_throws ValueError compile("print(42)\n", "<string>", "badmode")
 @test_throws ValueError compile("print(42)\n", "<string>", "single", 255)
 @test_throws ValueError compile(Char(0), "f", "exec")
-@test_throws TypeError compile("pass", "?", "exec", "eval", "0", "tmp")
+@test_throws TypeError compile("pass", "?", "exec", mode = "eval", source = "0", filename = "tmp")
 compile("print(\"å\")\n", "", "exec")
 @test_throws ValueError compile(Char(0), "f", "exec")
 @test_throws ValueError compile(string("a = 1"), "f", "bad")
@@ -377,9 +377,9 @@ end
 values = [(-1, __debug__, f.__doc__, __debug__, __debug__), (0, true, "doc", true, true), (1, false, "doc", false, false), (2, false, nothing, false, false)]
 for (optval, expected...) in values
 codeobjs = []
-push!(codeobjs, compile(codestr, "<test>", "exec", optval))
+push!(codeobjs, compile(codestr, "<test>", "exec", optimize = optval))
 tree = parse(codestr)
-push!(codeobjs, compile(tree, "<test>", "exec", optval))
+push!(codeobjs, compile(tree, "<test>", "exec", optimize = optval))
 for code in codeobjs
 ns = Dict()
 exec(code, ns)
@@ -389,18 +389,18 @@ end
 end
 end
 
-function test_compile_top_level_await_no_coro(self::BuiltinTest)
+function test_compile_top_level_await_no_coro(self)
 #= Make sure top level non-await codes get the correct coroutine flags =#
 modes = ("single", "exec")
 code_samples = ["def f():pass\n", "[x for x in l]", "{x for x in l}", "(x for x in l)", "{x:x for x in l}"]
 for (mode, code_sample) in product(modes, code_samples)
 source = dedent(code_sample)
-co = compile(source, "?", mode, ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
-assertNotEqual(self, __and__(co.co_flags, CO_COROUTINE), CO_COROUTINE, "source=$(source) mode=$(mode)")
+co = compile(source, "?", mode, flags = ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+assertNotEqual(self, __and__(co.co_flags, CO_COROUTINE), CO_COROUTINE, msg = "source=$(source) mode=$(mode)")
 end
 end
 
-function test_compile_top_level_await(self::BuiltinTest)
+function test_compile_top_level_await(self)
 #= Test whether code some top level await can be compiled.
 
         Make sure it compiles only with the PyCF_ALLOW_TOP_LEVEL_AWAIT flag
@@ -420,10 +420,10 @@ policy = maybe_get_event_loop_policy()
 try
 for (mode, code_sample) in product(modes, code_samples)
 source = dedent(code_sample)
-@test_throws SyntaxError "source=$(source) mode=$(mode)"() do 
+@test_throws SyntaxError msg = "source=$(source) mode=$(mode)"() do 
 compile(source, "?", mode)
 end
-co = compile(source, "?", mode, ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+co = compile(source, "?", mode, flags = ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
 @test (__and__(co.co_flags, CO_COROUTINE) == CO_COROUTINE)
 globals_ = Dict("asyncio" => asyncio, "a" => 0, "arange" => arange)
 async_f = FunctionType(co, globals_)
@@ -439,7 +439,7 @@ end
 end
 end
 
-function test_compile_top_level_await_invalid_cases(self::BuiltinTest)
+function test_compile_top_level_await_invalid_cases(self)
 Channel() do ch_test_compile_top_level_await_invalid_cases 
 @async function arange(n)
 for i in 0:n - 1
@@ -452,11 +452,11 @@ policy = maybe_get_event_loop_policy()
 try
 for (mode, code_sample) in product(modes, code_samples)
 source = dedent(code_sample)
-@test_throws SyntaxError "source=$(source) mode=$(mode)"() do 
+@test_throws SyntaxError msg = "source=$(source) mode=$(mode)"() do 
 compile(source, "?", mode)
 end
-@test_throws SyntaxError "source=$(source) mode=$(mode)"() do 
-co = compile(source, "?", mode, ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+@test_throws SyntaxError msg = "source=$(source) mode=$(mode)"() do 
+co = compile(source, "?", mode, flags = ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
 end
 end
 finally
@@ -465,26 +465,26 @@ end
 end
 end
 
-function test_compile_async_generator(self::BuiltinTest)
+function test_compile_async_generator(self)
 #= 
         With the PyCF_ALLOW_TOP_LEVEL_AWAIT flag added in 3.8, we want to
         make sure AsyncGenerators are still properly not marked with the
         CO_COROUTINE flag.
          =#
 code = dedent("async def ticker():\n                for i in range(10):\n                    yield i\n                    await asyncio.sleep(0)")
-co = compile(code, "?", "exec", ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+co = compile(code, "?", "exec", flags = ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
 glob = Dict()
 exec(co, glob)
 @test (type_(glob["ticker"]()) == AsyncGeneratorType)
 end
 
-function test_delattr(self::BuiltinTest)
+function test_delattr(self)
 sys.spam = 1
 delattr(sys, "spam")
 @test_throws TypeError delattr()
 end
 
-function test_dir(self::Foo)
+function test_dir(self)
 assertRaises(self, TypeError, dir, 42, 42)
 local_var = 1
 assertIn(self, "local_var", dir())
@@ -531,7 +531,7 @@ assertIn(self, "bar", dir(f))
 mutable struct Foo <: AbstractFoo
 
 end
-function __dir__(self::Foo)
+function __dir__(self)
 return ["kan", "ga", "roo"]
 end
 
@@ -540,7 +540,7 @@ assertTrue(self, dir(f) == ["ga", "kan", "roo"])
 mutable struct Foo <: AbstractFoo
 
 end
-function __dir__(self::Foo)
+function __dir__(self)
 return ("b", "c", "a")
 end
 
@@ -550,7 +550,7 @@ assertTrue(self, res == ["a", "b", "c"])
 mutable struct Foo <: AbstractFoo
 
 end
-function __dir__(self::Foo)::Int64
+function __dir__(self)::Int64
 return 7
 end
 
@@ -568,7 +568,7 @@ end
 assertEqual(self, sorted(__dir__([])), dir([]))
 end
 
-function test_divmod(self::BuiltinTest)
+function test_divmod(self)
 @test (div(12) == (1, 5))
 @test (div(-12) == (-2, 2))
 @test (div(12) == (-2, -2))
@@ -582,7 +582,7 @@ end
 @test_throws TypeError divmod()
 end
 
-function test_eval(self::X)
+function test_eval(self)
 assertEqual(self, eval("1+1"), 2)
 assertEqual(self, eval(" 1+1\n"), 2)
 globals = Dict("a" => 1, "b" => 2)
@@ -602,26 +602,26 @@ assertRaises(self, SyntaxError, eval, append!(bom[begin:2], b"a"))
 mutable struct X <: AbstractX
 
 end
-function __getitem__(self::X, key)
+function __getitem__(self, key)
 throw(ValueError)
 end
 
 assertRaises(self, ValueError, eval, "foo", Dict(), X())
 end
 
-function test_general_eval(self::C)
+function test_general_eval(self)
 mutable struct M <: AbstractM
 #= Test mapping interface versus possible calls from eval(). =#
 
 end
-function __getitem__(self::M, key)::Int64
+function __getitem__(self, key)::Int64
 if key == "a"
 return 12
 end
 throw(KeyError)
 end
 
-function keys(self::M)::Vector
+function keys(self)::Vector
 return collect("xyz")
 end
 
@@ -643,14 +643,14 @@ assertRaises(self, TypeError, eval, "a", g, m)
 mutable struct D <: AbstractD
 
 end
-function __getitem__(self::D, key)::Int64
+function __getitem__(self, key)::Int64
 if key == "a"
 return 12
 end
 return __getitem__(dict, self)
 end
 
-function keys(self::D)::Vector
+function keys(self)::Vector
 return collect("xyz")
 end
 
@@ -669,11 +669,11 @@ _cells::Dict
                     SpreadSheet(_cells::Dict = Dict()) =
                         new(_cells)
 end
-function __setitem__(self::SpreadSheet, key, formula)
+function __setitem__(self, key, formula)
 self._cells[key + 1] = formula
 end
 
-function __getitem__(self::SpreadSheet, key)
+function __getitem__(self, key)
 return eval(self._cells[key + 1], globals(), self)
 end
 
@@ -685,18 +685,18 @@ assertEqual(self, ss["a3"], 210)
 mutable struct C <: AbstractC
 
 end
-function __getitem__(self::C, item)
+function __getitem__(self, item)
 throw(KeyError(item))
 end
 
-function keys(self::C)::Int64
+function keys(self)::Int64
 return 1
 end
 
 assertRaises(self, TypeError, eval, "dir()", globals(), C())
 end
 
-function test_exec(self::BuiltinTest)
+function test_exec(self)
 g = Dict()
 exec("z = 1", g)
 if "__builtins__" ∈ g
@@ -711,7 +711,7 @@ end
 g = Dict()
 l = Dict()
 check_warnings() do 
-filterwarnings("ignore", "global statement", "<string>")
+filterwarnings("ignore", "global statement", module_ = "<string>")
 exec("global a; a = 1; b = 2", g, l)
 end
 if "__builtins__" ∈ g
@@ -723,7 +723,7 @@ end
 @test ((g, l) == (Dict("a" => 1), Dict("b" => 2)))
 end
 
-function test_exec_globals(self::frozendict)
+function test_exec_globals(self)
 code = compile("print(\'Hello World!\')", "", "exec")
 assertRaisesRegex(self, NameError, "name \'print\' is not defined", exec, code, Dict("__builtins__" => Dict()))
 assertRaises(self, TypeError, exec, code, Dict("__builtins__" => 123))
@@ -736,7 +736,7 @@ end
 mutable struct frozendict <: Abstractfrozendict
 
 end
-function __setitem__(self::frozendict, key, value)
+function __setitem__(self, key, value)
 throw(frozendict_error("frozendict is readonly"))
 end
 
@@ -752,7 +752,7 @@ code = compile("x=1", "test", "exec")
 assertRaises(self, frozendict_error, exec, code, namespace)
 end
 
-function test_exec_redirected(self::BuiltinTest)
+function test_exec_redirected(self)
 savestdout = sys.stdout
 sys.stdout = nothing
 try
@@ -766,7 +766,7 @@ sys.stdout = savestdout
 end
 end
 
-function test_filter(self::BadSeq)
+function test_filter(self)
 assertEqual(self, collect(filter((c) -> "a" <= c <= "z", "Hello World")), collect("elloorld"))
 assertEqual(self, collect(filter(nothing, [1, "hello", [], [3], "", nothing, 9, 0])), [1, "hello", [3], 9])
 assertEqual(self, collect(filter((x) -> x > 0, [1, -3, 9, 0, 2])), [1, 9, 2])
@@ -781,7 +781,7 @@ assertRaises(self, TypeError, filter)
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __getitem__(self::BadSeq, index)::Int64
+function __getitem__(self, index)::Int64
 if index < 4
 return 42
 end
@@ -799,7 +799,7 @@ assertEqual(self, collect(filter((x) -> x >= 3, (1, 2, 3, 4))), [3, 4])
 assertRaises(self, TypeError, list, filter(42, (1, 2)))
 end
 
-function test_filter_pickle(self::BuiltinTest)
+function test_filter_pickle(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 f1 = filter(filter_char, "abcdeabcde")
 f2 = filter(filter_char, "abcdeabcde")
@@ -807,7 +807,7 @@ check_iter_pickle(self, f1, collect(f2), proto)
 end
 end
 
-function test_getattr(self::BuiltinTest)
+function test_getattr(self)
 @test getfield(sys, :stdout) === sys.stdout
 @test_throws TypeError getattr(sys, 1)
 @test_throws TypeError getattr(sys, 1, "foo")
@@ -816,7 +816,7 @@ function test_getattr(self::BuiltinTest)
 @test_throws AttributeError getattr(1, "\udad1픞")
 end
 
-function test_hasattr(self::B)
+function test_hasattr(self)
 assertTrue(self, hasfield(typeof(sys), :stdout))
 assertRaises(self, TypeError, hasattr, sys, 1)
 assertRaises(self, TypeError, hasattr)
@@ -824,7 +824,7 @@ assertEqual(self, false, hasfield(typeof(sys), :Char(sys.maxunicode)))
 mutable struct A <: AbstractA
 
 end
-function __getattr__(self::A, what)
+function __getattr__(self, what)
 throw(SystemExit)
 end
 
@@ -832,14 +832,14 @@ assertRaises(self, SystemExit, hasattr, A(), "b")
 mutable struct B <: AbstractB
 
 end
-function __getattr__(self::B, what)
+function __getattr__(self, what)
 throw(ValueError)
 end
 
 assertRaises(self, ValueError, hasattr, B(), "b")
 end
 
-function test_hash(self::Z)
+function test_hash(self)
 hash(nothing)
 assertEqual(self, hash(1), hash(1))
 assertEqual(self, hash(1), hash(1.0))
@@ -856,7 +856,7 @@ assertRaises(self, TypeError, hash, Dict())
 mutable struct X <: AbstractX
 
 end
-function __hash__(self::X)::Int64
+function __hash__(self)::Int64
 return 2^100
 end
 
@@ -864,20 +864,20 @@ assertEqual(self, type_(hash(X())), int)
 mutable struct Z <: AbstractZ
 
 end
-function __hash__(self::Z)
+function __hash__(self)
 return self
 end
 
 assertEqual(self, hash(Z(42)), hash(42))
 end
 
-function test_hex(self::BuiltinTest)
+function test_hex(self)
 @test (hex(16) == "0x10")
 @test (hex(-16) == "-0x10")
 @test_throws TypeError hex(Dict())
 end
 
-function test_id(self::BuiltinTest)
+function test_id(self)
 id(nothing)
 id(1)
 id(1.0)
@@ -887,7 +887,7 @@ id([0, 1, 2, 3])
 id(Dict("spam" => 1, "eggs" => 2, "ham" => 3))
 end
 
-function test_iter(self::BuiltinTest)
+function test_iter(self)
 @test_throws TypeError iter()
 @test_throws TypeError iter(42, 42)
 lists = [("1", "2"), ["1", "2"], "12"]
@@ -899,7 +899,7 @@ i = (x for x in l)
 end
 end
 
-function test_isinstance(self::E)
+function test_isinstance(self)
 mutable struct C <: AbstractC
 
 end
@@ -924,7 +924,7 @@ assertRaises(self, TypeError, isinstance, E, "foo")
 assertRaises(self, TypeError, isinstance)
 end
 
-function test_issubclass(self::E)
+function test_issubclass(self)
 mutable struct C <: AbstractC
 
 end
@@ -948,7 +948,7 @@ assertRaises(self, TypeError, issubclass, E, "foo")
 assertRaises(self, TypeError, issubclass)
 end
 
-function test_len(self::NoLenMethod)
+function test_len(self)
 assertEqual(self, length("123"), 3)
 assertEqual(self, length(()), 0)
 assertEqual(self, length((1, 2, 3, 4)), 4)
@@ -958,7 +958,7 @@ assertEqual(self, length(Dict("a" => 1, "b" => 2)), 2)
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __len__(self::BadSeq)
+function __len__(self)
 throw(ValueError)
 end
 
@@ -966,7 +966,7 @@ assertRaises(self, ValueError, len, BadSeq())
 mutable struct InvalidLen <: AbstractInvalidLen
 
 end
-function __len__(self::InvalidLen)
+function __len__(self)
 return nothing
 end
 
@@ -974,7 +974,7 @@ assertRaises(self, TypeError, len, InvalidLen())
 mutable struct FloatLen <: AbstractFloatLen
 
 end
-function __len__(self::FloatLen)::Float64
+function __len__(self)::Float64
 return 4.5
 end
 
@@ -982,7 +982,7 @@ assertRaises(self, TypeError, len, FloatLen())
 mutable struct NegativeLen <: AbstractNegativeLen
 
 end
-function __len__(self::NegativeLen)::Int64
+function __len__(self)::Int64
 return -10
 end
 
@@ -990,7 +990,7 @@ assertRaises(self, ValueError, len, NegativeLen())
 mutable struct HugeLen <: AbstractHugeLen
 
 end
-function __len__(self::HugeLen)::Int64
+function __len__(self)::Int64
 return sys.maxsize + 1
 end
 
@@ -998,7 +998,7 @@ assertRaises(self, OverflowError, len, HugeLen())
 mutable struct HugeNegativeLen <: AbstractHugeNegativeLen
 
 end
-function __len__(self::HugeNegativeLen)::Int64
+function __len__(self)::Int64
 return -(sys.maxsize) - 10
 end
 
@@ -1010,7 +1010,7 @@ end
 assertRaises(self, TypeError, len, NoLenMethod())
 end
 
-function test_map(self::BadSeq)
+function test_map(self)
 Channel() do ch_test_map 
 assertEqual(self, collect(map((x) -> x*x, 1:3)), [1, 4, 9])
 try
@@ -1052,7 +1052,7 @@ assertRaises(self, TypeError, map, (x) -> x, 42)
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __iter__(self::BadSeq)
+function __iter__(self)
 Channel() do ch___iter__ 
 throw(ValueError)
 put!(ch___iter__, nothing)
@@ -1068,7 +1068,7 @@ assertRaises(self, RuntimeError, list, map(badfunc, 0:4))
 end
 end
 
-function test_map_pickle(self::BuiltinTest)
+function test_map_pickle(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 m1 = map(map_char, "Is this the real life?")
 m2 = map(map_char, "Is this the real life?")
@@ -1076,7 +1076,7 @@ check_iter_pickle(self, m1, collect(m2), proto)
 end
 end
 
-function test_max(self::BadSeq)
+function test_max(self)
 assertEqual(self, max("123123"), "3")
 assertEqual(self, max(1, 2, 3), 3)
 assertEqual(self, max((1, 2, 3, 1, 2, 3)), 3)
@@ -1092,7 +1092,7 @@ assertRaises(self, ValueError, max, ())
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __getitem__(self::BadSeq, index)
+function __getitem__(self, index)
 throw(ValueError)
 end
 
@@ -1106,22 +1106,22 @@ if exn isa TypeError
 end
 end
 end
-assertEqual(self, max((1,), neg), 1)
-assertEqual(self, max((1, 2), neg), 1)
-assertEqual(self, max(1, 2, neg), 1)
-assertEqual(self, max((), nothing), nothing)
-assertEqual(self, max((1,), nothing), 1)
-assertEqual(self, max((1, 2), nothing), 2)
-assertEqual(self, max((), 1, neg), 1)
-assertEqual(self, max((1, 2), 3, neg), 1)
-assertEqual(self, max((1, 2), nothing), 2)
+assertEqual(self, max((1,), key = neg), 1)
+assertEqual(self, max((1, 2), key = neg), 1)
+assertEqual(self, max(1, 2, key = neg), 1)
+assertEqual(self, max((), default = nothing), nothing)
+assertEqual(self, max((1,), default = nothing), 1)
+assertEqual(self, max((1, 2), default = nothing), 2)
+assertEqual(self, max((), default = 1, key = neg), 1)
+assertEqual(self, max((1, 2), default = 3, key = neg), 1)
+assertEqual(self, max((1, 2), key = nothing), 2)
 data = [randrange(200) for i in 0:99]
 keys = dict(((elem, randrange(50)) for elem in data))
 f = keys.__getitem__
-assertEqual(self, max(data, f), sorted(reversed(data), f)[end])
+assertEqual(self, max(data, key = f), sorted(reversed(data), key = f)[end])
 end
 
-function test_min(self::BadSeq)
+function test_min(self)
 assertEqual(self, min("123123"), "1")
 assertEqual(self, min(1, 2, 3), 1)
 assertEqual(self, min((1, 2, 3, 1, 2, 3)), 1)
@@ -1137,7 +1137,7 @@ assertRaises(self, ValueError, min, ())
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __getitem__(self::BadSeq, index)
+function __getitem__(self, index)
 throw(ValueError)
 end
 
@@ -1151,22 +1151,22 @@ if exn isa TypeError
 end
 end
 end
-assertEqual(self, min((1,), neg), 1)
-assertEqual(self, min((1, 2), neg), 2)
-assertEqual(self, min(1, 2, neg), 2)
-assertEqual(self, min((), nothing), nothing)
-assertEqual(self, min((1,), nothing), 1)
-assertEqual(self, min((1, 2), nothing), 1)
-assertEqual(self, min((), 1, neg), 1)
-assertEqual(self, min((1, 2), 1, neg), 2)
-assertEqual(self, min((1, 2), nothing), 1)
+assertEqual(self, min((1,), key = neg), 1)
+assertEqual(self, min((1, 2), key = neg), 2)
+assertEqual(self, min(1, 2, key = neg), 2)
+assertEqual(self, min((), default = nothing), nothing)
+assertEqual(self, min((1,), default = nothing), 1)
+assertEqual(self, min((1, 2), default = nothing), 1)
+assertEqual(self, min((), default = 1, key = neg), 1)
+assertEqual(self, min((1, 2), default = 1, key = neg), 2)
+assertEqual(self, min((1, 2), key = nothing), 1)
 data = [randrange(200) for i in 0:99]
 keys = dict(((elem, randrange(50)) for elem in data))
 f = keys.__getitem__
-assertEqual(self, min(data, f), sorted(data, f)[1])
+assertEqual(self, min(data, key = f), sorted(data, key = f)[1])
 end
 
-function test_next(self::Iter)
+function test_next(self)
 Channel() do ch_test_next 
 it = (x for x in 0:1)
 assertEqual(self, take!(it), 0)
@@ -1177,11 +1177,11 @@ assertEqual(self, take!(it), 42)
 mutable struct Iter <: AbstractIter
 
 end
-function __iter__(self::Iter)
+function __iter__(self)
 return self
 end
 
-function __next__(self::Iter)
+function __next__(self)
 throw(StopIteration)
 end
 
@@ -1202,13 +1202,13 @@ assertEqual(self, take!(it), 42)
 end
 end
 
-function test_oct(self::BuiltinTest)
+function test_oct(self)
 @test (oct(100) == "0o144")
 @test (oct(-100) == "-0o144")
 @test_throws TypeError oct(())
 end
 
-function write_testfile(self::BuiltinTest)
+function write_testfile(self)
 fp = readline(TESTFN)
 addCleanup(self, unlink, TESTFN)
 fp do 
@@ -1221,7 +1221,7 @@ write(fp, repeat("YYY",100))
 end
 end
 
-function test_open(self::BuiltinTest)
+function test_open(self)
 write_testfile(self)
 fp = readline(TESTFN)
 fp do 
@@ -1236,7 +1236,7 @@ end
 @test_throws ValueError open(b"a\x00b")
 end
 
-function test_open_default_encoding(self::BuiltinTest)
+function test_open_default_encoding(self)
 old_environ = dict(os.environ)
 try
 for key in ("LC_ALL", "LANG", "LC_CTYPE")
@@ -1260,14 +1260,14 @@ update(os.environ, old_environ)
 end
 end
 
-function test_open_non_inheritable(self::BuiltinTest)
+function test_open_non_inheritable(self)
 fileobj = readline(__file__)
 fileobj do 
 @test !(get_inheritable(fileno(fileobj)))
 end
 end
 
-function test_ord(self::BuiltinTest)
+function test_ord(self)
 @test (Int(codepoint(' ')) == 32)
 @test (Int(codepoint('A')) == 65)
 @test (Int(codepoint('a')) == 97)
@@ -1292,7 +1292,7 @@ function test_ord(self::BuiltinTest)
 @test (Int(codepoint('􏿿')) == 1114111)
 end
 
-function test_pow(self::BuiltinTest)
+function test_pow(self)
 @test (pow(0, 0) == 1)
 @test (pow(0, 1) == 0)
 @test (pow(1, 0) == 1)
@@ -1333,19 +1333,19 @@ assertAlmostEqual(self, pow(-1, 1 / 3), 0.5 + 0.8660254037844386im)
 @test (pow(-1, -2, 3) == 1)
 @test_throws ValueError pow(1, 2, 0)
 @test_throws TypeError pow()
-@test (pow(0, 0) == 1)
-@test (pow(2, 4) == 16)
-@test (pow(5, 2, 14) == 11)
-twopow = partial(pow, 2)
-@test (twopow(5) == 32)
-fifth_power = partial(pow, 5)
+@test (pow(0, exp = 0) == 1)
+@test (pow(base = 2, exp = 4) == 16)
+@test (pow(base = 5, exp = 2, mod = 14) == 11)
+twopow = partial(pow, base = 2)
+@test (twopow(exp = 5) == 32)
+fifth_power = partial(pow, exp = 5)
 @test (fifth_power(2) == 32)
-mod10 = partial(pow, 10)
+mod10 = partial(pow, mod = 10)
 @test (mod10(2, 6) == 4)
-@test (mod10(6, 2) == 4)
+@test (mod10(exp = 6, base = 2) == 4)
 end
 
-function test_input(self::BuiltinTest)
+function test_input(self)
 write_testfile(self)
 fp = readline(TESTFN)
 savestdin = sys.stdin
@@ -1379,7 +1379,7 @@ close(fp)
 end
 end
 
-function test_repr(self::BuiltinTest)
+function test_repr(self)
 @test (repr("") == "\'\'")
 @test (repr(0) == "0")
 @test (repr(()) == "()")
@@ -1393,7 +1393,7 @@ a[1] = a
 @test (repr(a) == "{0: {...}}")
 end
 
-function test_round(self::TestNoRound)
+function test_round(self)
 assertEqual(self, round(0.0), 0.0)
 assertEqual(self, type_(round(0.0)), int)
 assertEqual(self, round(1.0), 1.0)
@@ -1432,12 +1432,12 @@ assertEqual(self, type_(round(0)), int)
 assertEqual(self, type_(round(-8, digits = -1)), int)
 assertEqual(self, type_(round(-8, digits = 0)), int)
 assertEqual(self, type_(round(-8, digits = 1)), int)
-assertEqual(self, round(-8.0, digits = -1), -10.0)
+assertEqual(self, round(number = -8.0, digits = ndigits = -1), -10.0)
 assertRaises(self, TypeError, round)
 mutable struct TestRound <: AbstractTestRound
 
 end
-function __round__(self::TestRound)::Int64
+function __round__(self)::Int64
 return 23
 end
 
@@ -1454,7 +1454,7 @@ assertRaises(self, TypeError, round, t)
 assertRaises(self, TypeError, round, t, 0)
 end
 
-function test_round_large(self::BuiltinTest)
+function test_round_large(self)
 @test (round(5000000000000000.0 - 1) == 5000000000000000.0 - 1)
 @test (round(5000000000000000.0) == 5000000000000000.0)
 @test (round(5000000000000000.0 + 1) == 5000000000000000.0 + 1)
@@ -1462,21 +1462,21 @@ function test_round_large(self::BuiltinTest)
 @test (round(5000000000000000.0 + 3) == 5000000000000000.0 + 3)
 end
 
-function test_bug_27936(self::BuiltinTest)
+function test_bug_27936(self)
 for x in [1234, 1234.56, Decimal("1234.56"), Fraction(123456, 100)]
 @test (round(x, digits = nothing) == round(x))
 @test (type_(round(x, digits = nothing)) == type_(round(x)))
 end
 end
 
-function test_setattr(self::BuiltinTest)
+function test_setattr(self)
 setattr(sys, "spam", 1)
 @test (sys.spam == 1)
 @test_throws TypeError setattr(sys, 1, "spam")
 @test_throws TypeError setattr()
 end
 
-function test_sum(self::BadSeq)
+function test_sum(self)
 assertEqual(self, sum([]), 0)
 assertEqual(self, sum(collect(2:7)), 27)
 assertEqual(self, sum((x for x in collect(2:7))), 27)
@@ -1484,7 +1484,7 @@ assertEqual(self, sum(Squares(10)), 285)
 assertEqual(self, sum((x for x in Squares(10))), 285)
 assertEqual(self, sum([[1], [2], [3]], []), [1, 2, 3])
 assertEqual(self, sum(0:9, 1000), 1045)
-assertEqual(self, sum(0:9, 1000), 1045)
+assertEqual(self, sum(0:9, start = 1000), 1045)
 assertEqual(self, sum(0:9, 2^31 - 5), 2^31 + 40)
 assertEqual(self, sum(0:9, 2^63 - 5), 2^63 + 40)
 assertEqual(self, sum(((i % 2) != 0 for i in 0:9)), 5)
@@ -1515,7 +1515,7 @@ assertRaises(self, TypeError, sum, [], Vector{UInt8}())
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __getitem__(self::BadSeq, index)
+function __getitem__(self, index)
 throw(ValueError)
 end
 
@@ -1525,7 +1525,7 @@ sum(([x] for x in 0:9), empty)
 assertEqual(self, empty, [])
 end
 
-function test_type(self::BuiltinTest)
+function test_type(self)
 @test (type_("") == type_("123"))
 assertNotEqual(self, type_(""), type_(()))
 end
@@ -1541,7 +1541,7 @@ b = 2
 return vars()
 end
 
-function test_vars(self::BuiltinTest)
+function test_vars(self)
 @test (set(vars()) == set(dir()))
 @test (set(vars(sys)) == set(dir(sys)))
 @test (get_vars_f0() == Dict())
@@ -1551,7 +1551,7 @@ function test_vars(self::BuiltinTest)
 @test (vars(C_get_vars(self)) == Dict("a" => 2))
 end
 
-function iter_error(self::BuiltinTest, iterable, error)::Vector
+function iter_error(self, iterable, error)::Vector
 #= Collect `iterable` into a list, catching an expected `error`. =#
 items = []
 assertRaises(self, error) do 
@@ -1562,7 +1562,7 @@ end
 return items
 end
 
-function test_zip(self::BadSeq)
+function test_zip(self)
 a = (1, 2, 3)
 b = (4, 5, 6)
 t = [(1, 4), (2, 5), (3, 6)]
@@ -1574,7 +1574,7 @@ assertEqual(self, collect(zip(a, b)), t)
 mutable struct I <: AbstractI
 
 end
-function __getitem__(self::I, i)::Int64
+function __getitem__(self, i)::Int64
 if i < 0 || i > 2
 throw(IndexError)
 end
@@ -1594,7 +1594,7 @@ assertRaises(self, RuntimeError, zip, a, TestFailingIter())
 mutable struct SequenceWithoutALength <: AbstractSequenceWithoutALength
 
 end
-function __getitem__(self::SequenceWithoutALength, i)
+function __getitem__(self, i)
 if i == 5
 throw(IndexError)
 else
@@ -1606,7 +1606,7 @@ assertEqual(self, collect(zip(SequenceWithoutALength(), 0:2^30)), collect(enumer
 mutable struct BadSeq <: AbstractBadSeq
 
 end
-function __getitem__(self::BadSeq, i)
+function __getitem__(self, i)
 if i == 5
 throw(ValueError)
 else
@@ -1617,7 +1617,7 @@ end
 assertRaises(self, ValueError, list, zip(BadSeq(), BadSeq()))
 end
 
-function test_zip_pickle(self::BuiltinTest)
+function test_zip_pickle(self)
 a = (1, 2, 3)
 b = (4, 5, 6)
 t = [(1, 4), (2, 5), (3, 6)]
@@ -1627,7 +1627,7 @@ check_iter_pickle(self, z1, t, proto)
 end
 end
 
-function test_zip_pickle_strict(self::BuiltinTest)
+function test_zip_pickle_strict(self)
 a = (1, 2, 3)
 b = (4, 5, 6)
 t = [(1, 4), (2, 5), (3, 6)]
@@ -1637,7 +1637,7 @@ check_iter_pickle(self, z1, t, proto)
 end
 end
 
-function test_zip_pickle_strict_fail(self::BuiltinTest)
+function test_zip_pickle_strict_fail(self)
 a = (1, 2, 3)
 b = (4, 5, 6, 7)
 t = [(1, 4), (2, 5), (3, 6)]
@@ -1649,12 +1649,12 @@ z2 = loads(dumps(z1, proto))
 end
 end
 
-function test_zip_bad_iterable(self::BadIterable)
+function test_zip_bad_iterable(self)
 exception = TypeError()
 mutable struct BadIterable <: AbstractBadIterable
 
 end
-function __iter__(self::BadIterable)
+function __iter__(self)
 throw(exception)
 end
 
@@ -1664,14 +1664,14 @@ end
 assertIs(self, cm.exception, exception)
 end
 
-function test_zip_strict(self::BuiltinTest)
+function test_zip_strict(self)
 @test (tuple(zip((1, 2, 3), "abc")) == ((1, "a"), (2, "b"), (3, "c")))
 @test_throws ValueError tuple(zip((1, 2, 3, 4), "abc"))
 @test_throws ValueError tuple(zip((1, 2), "abc"))
 @test_throws ValueError tuple(zip((1, 2), (1, 2)))
 end
 
-function test_zip_strict_iterators(self::BuiltinTest)
+function test_zip_strict_iterators(self)
 x = (x for x in 0:4)
 y = [0]
 z = (x for x in 0:4)
@@ -1680,7 +1680,7 @@ z = (x for x in 0:4)
 @test (next(z) == 1)
 end
 
-function test_zip_strict_error_handling(self::Iter)
+function test_zip_strict_error_handling(self)
 mutable struct Error <: AbstractError
 
 end
@@ -1688,11 +1688,11 @@ end
 mutable struct Iter <: AbstractIter
 size
 end
-function __iter__(self::Iter)
+function __iter__(self)
 return self
 end
 
-function __next__(self::Iter)
+function __next__(self)
 self.size -= 1
 if self.size < 0
 throw(Error)
@@ -1718,15 +1718,15 @@ l8 = iter_error(self, zip(Iter(3), "AB"), ValueError)
 assertEqual(self, l8, [(2, "A"), (1, "B")])
 end
 
-function test_zip_strict_error_handling_stopiteration(self::Iter)
+function test_zip_strict_error_handling_stopiteration(self)
 mutable struct Iter <: AbstractIter
 size
 end
-function __iter__(self::Iter)
+function __iter__(self)
 return self
 end
 
-function __next__(self::Iter)
+function __next__(self)
 self.size -= 1
 if self.size < 0
 throw(StopIteration)
@@ -1752,19 +1752,19 @@ l8 = iter_error(self, zip(Iter(3), "AB"), ValueError)
 assertEqual(self, l8, [(2, "A"), (1, "B")])
 end
 
-function test_zip_result_gc(self::BuiltinTest)
+function test_zip_result_gc(self)
 it = zip([[]])
 collect()
 @test is_tracked(next(it))
 end
 
-function test_format(self::DerivedFromStr)
+function test_format(self)
 assertEqual(self, 3, "3")
 function classes_new()
 mutable struct A <: AbstractA
 x
 end
-function __format__(self::A, format_spec)::String
+function __format__(self, format_spec)::String
 return string(self.x) + format_spec
 end
 
@@ -1779,7 +1779,7 @@ end
 mutable struct DerivedFromSimple <: AbstractDerivedFromSimple
 x
 end
-function __format__(self::DerivedFromSimple, format_spec)::String
+function __format__(self, format_spec)::String
 return string(self.x) + format_spec
 end
 
@@ -1814,7 +1814,7 @@ empty_format_spec(nothing)
 mutable struct BadFormatResult <: AbstractBadFormatResult
 
 end
-function __format__(self::BadFormatResult, format_spec)::Float64
+function __format__(self, format_spec)::Float64
 return 1.0
 end
 
@@ -1829,7 +1829,7 @@ assertRaises(self, TypeError, object().__format__, nothing)
 mutable struct A <: AbstractA
 
 end
-function __format__(self::A, fmt_str)
+function __format__(self, fmt_str)
 return ""
 end
 
@@ -1859,7 +1859,7 @@ end
 assertEqual(self, 0, "         0")
 end
 
-function test_bin(self::BuiltinTest)
+function test_bin(self)
 @test (bin(0) == "0b0")
 @test (bin(1) == "0b1")
 @test (bin(-1) == "-0b1")
@@ -1869,28 +1869,28 @@ function test_bin(self::BuiltinTest)
 @test (bin(-(2^65 - 1)) == "-0b" * repeat("1",65))
 end
 
-function test_bytearray_translate(self::BuiltinTest)
+function test_bytearray_translate(self)
 x = Vector{UInt8}(b"abc")
 @test_throws ValueError replace!(b"1", 1)
 @test_throws TypeError replace!(repeat(b"1",256), 1)
 end
 
-function test_bytearray_extend_error(self::BuiltinTest)
+function test_bytearray_extend_error(self)
 array = Vector{UInt8}()
 bad_iter = map(int, "X")
 @test_throws ValueError array.extend(bad_iter)
 end
 
-function test_construct_singletons(self::BuiltinTest)
+function test_construct_singletons(self)
 for const_ in (nothing, Ellipsis, NotImplemented)
 tp = type_(const_)
 assertIs(self, tp(), const_)
 @test_throws TypeError tp(1, 2)
-@test_throws TypeError tp(1, 2)
+@test_throws TypeError tp(a = 1, b = 2)
 end
 end
 
-function test_warning_notimplemented(self::BuiltinTest)
+function test_warning_notimplemented(self)
 assertWarns(self, DeprecationWarning, bool, NotImplemented)
 assertWarns(self, DeprecationWarning) do 
 @test NotImplemented
@@ -1904,7 +1904,7 @@ mutable struct TestBreakpoint <: AbstractTestBreakpoint
 resources
 env
 end
-function setUp(self::TestBreakpoint)
+function setUp(self)
 self.resources = ExitStack()
 addCleanup(self, self.resources.close)
 self.env = enter_context(self.resources, EnvironmentVarGuard())
@@ -1913,21 +1913,21 @@ del(self.env)
 enter_context(self.resources, swap_attr(sys, "breakpointhook", sys.__breakpointhook__))
 end
 
-function test_breakpoint(self::TestBreakpoint)
+function test_breakpoint(self)
 patch("pdb.set_trace") do mock 
 breakpoint()
 end
 assert_called_once(mock)
 end
 
-function test_breakpoint_with_breakpointhook_set(self::TestBreakpoint)
+function test_breakpoint_with_breakpointhook_set(self)
 my_breakpointhook = MagicMock()
 sys.breakpointhook = my_breakpointhook
 breakpoint()
 assert_called_once_with(my_breakpointhook)
 end
 
-function test_breakpoint_with_breakpointhook_reset(self::TestBreakpoint)
+function test_breakpoint_with_breakpointhook_reset(self)
 my_breakpointhook = MagicMock()
 sys.breakpointhook = my_breakpointhook
 breakpoint()
@@ -1940,23 +1940,23 @@ end
 assert_called_once_with(my_breakpointhook)
 end
 
-function test_breakpoint_with_args_and_keywords(self::TestBreakpoint)
+function test_breakpoint_with_args_and_keywords(self)
 my_breakpointhook = MagicMock()
 sys.breakpointhook = my_breakpointhook
-breakpoint(1, 2, 3, 4, 5)
-assert_called_once_with(my_breakpointhook, 1, 2, 3, 4, 5)
+breakpoint(1, 2, 3, four = 4, five = 5)
+assert_called_once_with(my_breakpointhook, 1, 2, 3, four = 4, five = 5)
 end
 
-function test_breakpoint_with_passthru_error(self::TestBreakpoint)
+function test_breakpoint_with_passthru_error(self)
 function my_breakpointhook()
 #= pass =#
 end
 
 sys.breakpointhook = my_breakpointhook
-@test_throws TypeError breakpoint(1, 2, 3, 4, 5)
+@test_throws TypeError breakpoint(1, 2, 3, four = 4, five = 5)
 end
 
-function test_envar_good_path_builtin(self::TestBreakpoint)
+function test_envar_good_path_builtin(self)
 self.env["PYTHONBREAKPOINT"] = "int"
 patch("builtins.int") do mock 
 breakpoint("7")
@@ -1964,7 +1964,7 @@ assert_called_once_with(mock, "7")
 end
 end
 
-function test_envar_good_path_other(self::TestBreakpoint)
+function test_envar_good_path_other(self)
 self.env["PYTHONBREAKPOINT"] = "sys.exit"
 patch("sys.exit") do mock 
 breakpoint()
@@ -1972,7 +1972,7 @@ assert_called_once_with(mock)
 end
 end
 
-function test_envar_good_path_noop_0(self::TestBreakpoint)
+function test_envar_good_path_noop_0(self)
 self.env["PYTHONBREAKPOINT"] = "0"
 patch("pdb.set_trace") do mock 
 breakpoint()
@@ -1980,7 +1980,7 @@ assert_not_called(mock)
 end
 end
 
-function test_envar_good_path_empty_string(self::TestBreakpoint)
+function test_envar_good_path_empty_string(self)
 self.env["PYTHONBREAKPOINT"] = ""
 patch("pdb.set_trace") do mock 
 breakpoint()
@@ -1988,12 +1988,12 @@ assert_called_once_with(mock)
 end
 end
 
-function test_envar_unimportable(self::TestBreakpoint)
+function test_envar_unimportable(self)
 for envar in (".", "..", ".foo", "foo.", ".int", "int.", ".foo.bar", "..foo.bar", "/./", "nosuchbuiltin", "nosuchmodule.nosuchcallable")
-subTest(self, envar) do 
+subTest(self, envar = envar) do 
 self.env["PYTHONBREAKPOINT"] = envar
 mock = enter_context(self.resources, patch("pdb.set_trace"))
-w = enter_context(self.resources, check_warnings(true))
+w = enter_context(self.resources, check_warnings(quiet = true))
 breakpoint()
 @test (string(w.message) == "Ignoring unimportable \$PYTHONBREAKPOINT: \"$(envar)\"")
 @test (w.category == RuntimeWarning)
@@ -2002,7 +2002,7 @@ end
 end
 end
 
-function test_envar_ignored_when_hook_is_set(self::TestBreakpoint)
+function test_envar_ignored_when_hook_is_set(self)
 self.env["PYTHONBREAKPOINT"] = "sys.exit"
 patch("sys.exit") do mock 
 sys.breakpointhook = int
@@ -2020,7 +2020,7 @@ function handle_sighup(signum, frame)
 #= pass =#
 end
 
-function run_child(self::PtyTests, child, terminal_input)
+function run_child(self, child, terminal_input)
 old_sighup = signal(signal.SIGHUP, self.handle_sighup)
 try
 return _run_child(self, child, terminal_input)
@@ -2029,7 +2029,7 @@ signal(signal.SIGHUP, old_sighup)
 end
 end
 
-function _run_child(self::PtyTests, child, terminal_input)
+function _run_child(self, child, terminal_input)
 r, w = pipe()
 try
 pid, fd = fork()
@@ -2090,18 +2090,18 @@ child_output = decode(child_output, "ascii", "ignore")
 fail(self, "got %d lines in pipe but expected 2, child output was:\n%s" % (length(lines), child_output))
 end
 close(fd)
-wait_process(pid, 0)
+wait_process(pid, exitcode = 0)
 return lines
 end
 
-function check_input_tty(self::PtyTests, prompt, terminal_input, stdio_encoding = nothing)
+function check_input_tty(self, prompt, terminal_input, stdio_encoding = nothing)
 if !isatty(sys.stdin) || !isatty(sys.stdout)
 skipTest(self, "stdin and stdout must be ttys")
 end
 function child(wpipe)
 if stdio_encoding
-sys.stdin = TextIOWrapper(detach(sys.stdin), stdio_encoding, "surrogateescape")
-sys.stdout = TextIOWrapper(detach(sys.stdout), stdio_encoding, "replace")
+sys.stdin = TextIOWrapper(detach(sys.stdin), encoding = stdio_encoding, errors = "surrogateescape")
+sys.stdout = TextIOWrapper(detach(sys.stdout), encoding = stdio_encoding, errors = "replace")
 end
 write(wpipe, "tty =$(isatty(sys.stdin) && isatty(sys.stdout))")
 write(wpipe, "$(ascii(input(prompt)))")
@@ -2121,27 +2121,27 @@ end
 @test (input_result == expected)
 end
 
-function test_input_tty(self::PtyTests)
+function test_input_tty(self)
 check_input_tty(self, "prompt", b"quux")
 end
 
-function skip_if_readline(self::PtyTests)
+function skip_if_readline(self)
 if "readline" ∈ sys.modules
 skipTest(self, "the readline module is loaded")
 end
 end
 
-function test_input_tty_non_ascii(self::PtyTests)
+function test_input_tty_non_ascii(self)
 skip_if_readline(self)
 check_input_tty(self, "prompt\xe9", b"quux\xe9", "utf-8")
 end
 
-function test_input_tty_non_ascii_unicode_errors(self::PtyTests)
+function test_input_tty_non_ascii_unicode_errors(self)
 skip_if_readline(self)
 check_input_tty(self, "prompt\xe9", b"quux\xe9", "ascii")
 end
 
-function test_input_no_stdout_fileno(self::PtyTests)
+function test_input_no_stdout_fileno(self)
 function child(wpipe)
 write(wpipe, "stdin.isatty():$(isatty(sys.stdin))")
 sys.stdout = StringIO()
@@ -2157,7 +2157,7 @@ end
 mutable struct TestSorted <: AbstractTestSorted
 
 end
-function test_basic(self::TestSorted)
+function test_basic(self)
 data = collect(0:99)
 copy = data[begin:end]
 shuffle(copy)
@@ -2165,25 +2165,25 @@ shuffle(copy)
 assertNotEqual(self, data, copy)
 reverse(data)
 shuffle(copy)
-@test (data == sorted(copy, (x) -> -(x)))
+@test (data == sorted(copy, key = (x) -> -(x)))
 assertNotEqual(self, data, copy)
 shuffle(copy)
-@test (data == sorted(copy, true))
+@test (data == sorted(copy, reverse = true))
 assertNotEqual(self, data, copy)
 end
 
-function test_bad_arguments(self::TestSorted)
+function test_bad_arguments(self)
 sorted([])
 assertRaises(self, TypeError) do 
-sorted([])
+sorted(iterable = [])
 end
-sorted([], nothing)
+sorted([], key = nothing)
 assertRaises(self, TypeError) do 
 sorted([], nothing)
 end
 end
 
-function test_inputtypes(self::TestSorted)
+function test_inputtypes(self)
 s = "abracadabra"
 types = [list, tuple, str]
 for T in types
@@ -2196,7 +2196,7 @@ for T in types
 end
 end
 
-function test_baddecorator(self::TestSorted)
+function test_baddecorator(self)
 data = split("The quick Brown fox Jumped over The lazy Dog")
 @test_throws TypeError sorted(data, nothing, (x, y) -> 0)
 end
@@ -2204,16 +2204,16 @@ end
 mutable struct ShutdownTest <: AbstractShutdownTest
 
 end
-function test_cleanup(self::ShutdownTest)
+function test_cleanup(self)
 code = "if 1:\n            import builtins\n            import sys\n\n            class C:\n                def __del__(self):\n                    print(\"before\")\n                    # Check that builtins still exist\n                    len(())\n                    print(\"after\")\n\n            c = C()\n            # Make this module survive until builtins and sys are cleaned\n            builtins.here = sys.modules[__name__]\n            sys.here = sys.modules[__name__]\n            # Create a reference loop so that this module needs to go\n            # through a GC phase.\n            here = sys.modules[__name__]\n            "
-rc, out, err = assert_python_ok("-c", code, "ascii")
+rc, out, err = assert_python_ok("-c", code, PYTHONIOENCODING = "ascii")
 @test (["before", "after"] == splitlines(decode(out)))
 end
 
 mutable struct TestType <: AbstractTestType
 
 end
-function test_new_type(self::B)
+function test_new_type(self)
 A = type_("A", (), Dict())
 assertEqual(self, A.__name__, "A")
 assertEqual(self, A.__qualname__, "A")
@@ -2226,7 +2226,7 @@ assertIs(self, x.__class__, A)
 mutable struct B <: AbstractB
 
 end
-function ham(self::B)::String
+function ham(self)::String
 return "ham%d" % self
 end
 
@@ -2247,18 +2247,18 @@ assertEqual(self, spam(x), "spam42")
 assertEqual(self, to_bytes(x, 2, "little"), b"*\x00")
 end
 
-function test_type_nokwargs(self::TestType)
+function test_type_nokwargs(self)
 assertRaises(self, TypeError) do 
-type_("a", (), Dict(), 5)
+type_("a", (), Dict(), x = 5)
 end
 assertRaises(self, TypeError) do 
-type_("a", (), Dict())
+type_("a", (), dict = Dict())
 end
 end
 
-function test_type_name(self::TestType)
+function test_type_name(self)
 for name in ("A", "Ä", "🐍", "B.A", "42", "")
-subTest(self, name) do 
+subTest(self, name = name) do 
 A = type_(name, (), Dict())
 @test (A.__name__ == name)
 @test (A.__qualname__ == name)
@@ -2276,7 +2276,7 @@ type_(b"A", (), Dict())
 end
 C = type_("C", (), Dict())
 for name in ("A", "Ä", "🐍", "B.A", "42", "")
-subTest(self, name) do 
+subTest(self, name = name) do 
 C.__name__ = name
 @test (C.__name__ == name)
 @test (C.__qualname__ == "C")
@@ -2298,7 +2298,7 @@ end
 @test (A.__name__ == "C")
 end
 
-function test_type_qualname(self::TestType)
+function test_type_qualname(self)
 A = type_("A", (), Dict("__qualname__" => "B.C"))
 @test (A.__name__ == "A")
 @test (A.__qualname__ == "B.C")
@@ -2316,7 +2316,7 @@ end
 @test (A.__qualname__ == "D.E")
 end
 
-function test_type_doc(self::TestType)
+function test_type_doc(self)
 for doc in ("x", "Ä", "🐍", "x\0y", b"x", 42, nothing)
 A = type_("A", (), Dict("__doc__" => doc))
 @test (A.__doc__ == doc)
@@ -2332,7 +2332,7 @@ A.__doc__ = doc
 end
 end
 
-function test_bad_args(self::TestType)
+function test_bad_args(self)
 assertRaises(self, TypeError) do 
 type_()
 end
@@ -2343,7 +2343,7 @@ assertRaises(self, TypeError) do
 type_("A", (), Dict(), ())
 end
 assertRaises(self, TypeError) do 
-type_("A", (), Dict())
+type_("A", (), dict = Dict())
 end
 assertRaises(self, TypeError) do 
 type_("A", [], Dict())
@@ -2362,7 +2362,7 @@ type_("A", (int, str), Dict())
 end
 end
 
-function test_bad_slots(self::B)
+function test_bad_slots(self)
 assertRaises(self, TypeError) do 
 type_("A", (), Dict("__slots__" => b"x"))
 end
@@ -2399,7 +2399,7 @@ type_("A", (B,), Dict("__slots__" => "__weakref__"))
 end
 end
 
-function test_namespace_order(self::TestType)
+function test_namespace_order(self)
 od = OrderedDict([("a", 1), ("b", 2)])
 move_to_end(od, "a")
 expected = collect(items(od))
@@ -2468,8 +2468,8 @@ test_bug_27936(builtin_test)
 test_setattr(builtin_test)
 test_sum(builtin_test)
 test_type(builtin_test)
-get_vars_f0()
-get_vars_f2()
+get_vars_f0(builtin_test)
+get_vars_f2(builtin_test)
 test_vars(builtin_test)
 iter_error(builtin_test)
 test_zip(builtin_test)

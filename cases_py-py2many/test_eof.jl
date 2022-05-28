@@ -9,7 +9,7 @@ abstract type AbstractEOFTestCase end
 mutable struct EOFTestCase <: AbstractEOFTestCase
 
 end
-function test_EOF_single_quote(self::EOFTestCase)
+function test_EOF_single_quote(self)
 expect = "unterminated string literal (detected at line 1) (<string>, line 1)"
 for quote_ in ("\'", "\"")
 try
@@ -25,7 +25,7 @@ end
 end
 end
 
-function test_EOFS(self::EOFTestCase)
+function test_EOFS(self)
 expect = "unterminated triple-quoted string literal (detected at line 1) (<string>, line 1)"
 try
 eval("\'\'\'this is a test")
@@ -39,7 +39,7 @@ end
 end
 end
 
-function test_EOFS_with_file(self::EOFTestCase)
+function test_EOFS_with_file(self)
 expect = "(<string>, line 1)"
 temp_dir() do temp_dir 
 file_name = make_script(temp_dir, "foo", "\'\'\'this is \na \ntest")
@@ -48,10 +48,10 @@ end
 assertIn(self, b"unterminated triple-quoted string literal (detected at line 3)", err)
 end
 
-function test_eof_with_line_continuation(self::EOFTestCase)
+function test_eof_with_line_continuation(self)
 expect = "unexpected EOF while parsing (<string>, line 1)"
 try
-compile("\"\\xhh\" \\", "<string>", "exec", true)
+compile("\"\\xhh\" \\", "<string>", "exec", dont_inherit = true)
 catch exn
  let msg = exn
 if msg isa SyntaxError
@@ -61,7 +61,7 @@ end
 end
 end
 
-function test_line_continuation_EOF(self::EOFTestCase)
+function test_line_continuation_EOF(self)
 #= A continuation at the end of input must be an error; bpo2180. =#
 expect = "unexpected EOF while parsing (<string>, line 1)"
 assertRaises(self, SyntaxError) do excinfo 
@@ -74,7 +74,7 @@ end
 @test (string(excinfo.exception) == expect)
 end
 
-function test_line_continuation_EOF_from_file_bpo2180(self::EOFTestCase)
+function test_line_continuation_EOF_from_file_bpo2180(self)
 #= Ensure tok_nextc() does not add too many ending newlines. =#
 temp_dir() do temp_dir 
 file_name = make_script(temp_dir, "foo", "\\")

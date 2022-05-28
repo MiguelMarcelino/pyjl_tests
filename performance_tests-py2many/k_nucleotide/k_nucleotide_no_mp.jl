@@ -1,10 +1,6 @@
 using Distributed
 using StringEncodings
 
-
-
-
-
 lean_buffer = Dict()
 function lean_args(sequence, reading_frames, i, j)
     global lean_buffer
@@ -14,7 +10,7 @@ function lean_args(sequence, reading_frames, i, j)
 end
 
 mutable struct lean_call <: Abstractlean_call
-    func::Any
+    func
 end
 function __call__(self::lean_call, lean_key, reading_frames, i, j)::Vector
     global lean_buffer

@@ -1,6 +1,5 @@
 using Printf
 
-
 function combinations(l)
     result = []
     for x = 0:length(l)-2

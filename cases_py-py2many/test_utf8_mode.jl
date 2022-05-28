@@ -21,34 +21,34 @@ DEFAULT_ENV::Dict{String, String}
                     UTF8ModeTests(DEFAULT_ENV::Dict{String, String} = Dict("PYTHONUTF8" => "", "PYTHONLEGACYWINDOWSFSENCODING" => "", "PYTHONCOERCECLOCALE" => "0")) =
                         new(DEFAULT_ENV)
 end
-function posix_locale(self::UTF8ModeTests)::Bool
+function posix_locale(self)::Bool
 loc = setlocale(locale.LC_CTYPE, nothing)
 return loc ∈ POSIX_LOCALES
 end
 
-function get_output(self::UTF8ModeTests)
-kw = dict(self.DEFAULT_ENV, kw)
+function get_output(self)
+kw = dict(self.DEFAULT_ENV, None = kw)
 if failure
-out = assert_python_failure(args..., kw)
+out = assert_python_failure(args..., None = kw)
 out = out[3]
 else
-out = assert_python_ok(args..., kw)
+out = assert_python_ok(args..., None = kw)
 out = out[2]
 end
 return rstrip(decode(out), "\n\r")
 end
 
-function test_posix_locale(self::UTF8ModeTests)
+function test_posix_locale(self)
 code = "import sys; print(sys.flags.utf8_mode)"
 for loc in POSIX_LOCALES
-subTest(self, loc) do 
+subTest(self, LC_ALL = loc) do 
 out = get_output(self)
 @test (out == "1")
 end
 end
 end
 
-function test_xoption(self::UTF8ModeTests)
+function test_xoption(self)
 code = "import sys; print(sys.flags.utf8_mode)"
 out = get_output(self)
 @test (out == "1")
@@ -62,7 +62,7 @@ out = get_output(self)
 end
 end
 
-function test_env_var(self::UTF8ModeTests)
+function test_env_var(self)
 code = "import sys; print(sys.flags.utf8_mode)"
 out = get_output(self)
 @test (out == "1")
@@ -82,7 +82,7 @@ out = get_output(self)
 assertIn(self, "invalid PYTHONUTF8 environment variable value", rstrip(out))
 end
 
-function test_filesystemencoding(self::UTF8ModeTests)
+function test_filesystemencoding(self)
 code = dedent("\n            import sys\n            print(\"{}/{}\".format(sys.getfilesystemencoding(),\n                                 sys.getfilesystemencodeerrors()))\n        ")
 if MS_WINDOWS
 expected = "utf-8/surrogatepass"
@@ -97,7 +97,7 @@ out = get_output(self)
 end
 end
 
-function test_stdio(self::UTF8ModeTests)
+function test_stdio(self)
 code = dedent("\n            import sys\n            print(f\"stdin: {sys.stdin.encoding}/{sys.stdin.errors}\")\n            print(f\"stdout: {sys.stdout.encoding}/{sys.stdout.errors}\")\n            print(f\"stderr: {sys.stderr.encoding}/{sys.stderr.errors}\")\n        ")
 out = get_output(self)
 @test (splitlines(out) == ["stdin: utf-8/surrogateescape", "stdout: utf-8/surrogateescape", "stderr: utf-8/backslashreplace"])
@@ -107,14 +107,14 @@ out = get_output(self)
 @test (splitlines(out) == ["stdin: utf-8/namereplace", "stdout: utf-8/namereplace", "stderr: utf-8/backslashreplace"])
 end
 
-function test_io(self::UTF8ModeTests)
+function test_io(self)
 code = dedent("\n            import sys\n            filename = sys.argv[1]\n            with open(filename) as fp:\n                print(f\"{fp.encoding}/{fp.errors}\")\n        ")
 filename = __file__
 out = get_output(self)
 @test (out == "UTF-8/strict")
 end
 
-function _check_io_encoding(self::UTF8ModeTests, module_, encoding = nothing, errors = nothing)
+function _check_io_encoding(self, module_, encoding = nothing, errors = nothing)
 filename = __file__
 args = []
 if encoding
@@ -134,33 +134,33 @@ end
 @test (out == "$(encoding)/$(errors)")
 end
 
-function check_io_encoding(self::UTF8ModeTests, module_)
+function check_io_encoding(self, module_)
 _check_io_encoding(self, module_)
 _check_io_encoding(self, module_)
 _check_io_encoding(self, module_)
 end
 
-function test_io_encoding(self::UTF8ModeTests)
+function test_io_encoding(self)
 check_io_encoding(self, "io")
 end
 
-function test_pyio_encoding(self::UTF8ModeTests)
+function test_pyio_encoding(self)
 check_io_encoding(self, "_pyio")
 end
 
-function test_locale_getpreferredencoding(self::UTF8ModeTests)
+function test_locale_getpreferredencoding(self)
 code = "import locale; print(locale.getpreferredencoding(False), locale.getpreferredencoding(True))"
 out = get_output(self)
 @test (out == "UTF-8 UTF-8")
 for loc in POSIX_LOCALES
-subTest(self, loc) do 
+subTest(self, LC_ALL = loc) do 
 out = get_output(self)
 @test (out == "UTF-8 UTF-8")
 end
 end
 end
 
-function test_cmd_line(self::UTF8ModeTests)
+function test_cmd_line(self)
 arg = encode("h\xe9€", "utf-8")
 arg_utf8 = decode(arg, "utf-8")
 arg_ascii = decode(arg, "ascii", "surrogateescape")
@@ -173,7 +173,7 @@ end
 
 check("utf8", [arg_utf8])
 for loc in POSIX_LOCALES
-subTest(self, loc) do 
+subTest(self, LC_ALL = loc) do 
 check("utf8", [arg_utf8])
 end
 end
@@ -185,13 +185,13 @@ else
 c_arg = arg_ascii
 end
 for loc in POSIX_LOCALES
-subTest(self, loc) do 
+subTest(self, LC_ALL = loc) do 
 check("utf8=0", [c_arg])
 end
 end
 end
 
-function test_optim_level(self::UTF8ModeTests)
+function test_optim_level(self)
 code = "import sys; print(sys.flags.optimize)"
 out = get_output(self)
 @test (out == "1")
@@ -202,7 +202,7 @@ out = get_output(self)
 @test (out == "1")
 end
 
-function test_device_encoding(self::UTF8ModeTests)
+function test_device_encoding(self)
 if !isatty(sys.stdout)
 skipTest(self, "sys.stdout is not a TTY")
 end
@@ -210,7 +210,7 @@ filename = "out.txt"
 addCleanup(self, os_helper.unlink, filename)
 code = "import os, sys; fd = sys.stdout.fileno(); out = open($('filename'), \"w\", encoding=\"utf-8\"); print(os.isatty(fd), os.device_encoding(fd), file=out); out.close()"
 cmd = [sys.executable, "-X", "utf8", "-c", code]
-proc = run(cmd, true)
+proc = run(cmd, text = true)
 @test (proc.returncode == 0)
 readline(filename) do fp 
 out = rstrip(read(fp))

@@ -22,19 +22,19 @@ DATA::Array{UInt8}
                     BinHexTestCase(fname1, fname2, fname3, DATA::Array{UInt8} = b"Jack is my hero") =
                         new(fname1, fname2, fname3, DATA)
 end
-function setUp(self::BinHexTestCase)
+function setUp(self)
 self.fname1 = os_helper.TESTFN_ASCII + "1"
 self.fname2 = os_helper.TESTFN_ASCII + "2"
 self.fname3 = os_helper.TESTFN_ASCII + "very_long_filename__very_long_filename__very_long_filename__very_long_filename__"
 end
 
-function tearDown(self::BinHexTestCase)
+function tearDown(self)
 unlink(self.fname1)
 unlink(self.fname2)
 unlink(self.fname3)
 end
 
-function test_binhex(self::BinHexTestCase)
+function test_binhex(self)
 open(self.fname1, "wb") do f 
 write(f, self.DATA)
 end
@@ -46,7 +46,7 @@ end
 @test (self.DATA == finish)
 end
 
-function test_binhex_error_on_long_filename(self::BinHexTestCase)
+function test_binhex_error_on_long_filename(self)
 #= 
         The testcase fails if no exception is raised when a filename parameter provided to binhex.binhex()
         is too long, or if the exception raised in binhex.binhex() is not an instance of binhex.Error.
@@ -56,7 +56,7 @@ close(f3)
 @test_throws binhex.Error binhex.binhex(self.fname3, self.fname2)
 end
 
-function test_binhex_line_endings(self::BinHexTestCase)
+function test_binhex_line_endings(self)
 open(self.fname1, "wb") do f 
 write(f, self.DATA)
 end

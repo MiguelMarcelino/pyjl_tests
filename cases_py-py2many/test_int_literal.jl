@@ -8,7 +8,7 @@ abstract type AbstractTestHexOctBin end
 mutable struct TestHexOctBin <: AbstractTestHexOctBin
 
 end
-function test_hex_baseline(self::TestHexOctBin)
+function test_hex_baseline(self)
 @test (0 == 0)
 @test (1 == 1)
 @test (81985529216486895 == 81985529216486895)
@@ -26,7 +26,7 @@ function test_hex_baseline(self::TestHexOctBin)
 @test (-9223372036854775807 == -9223372036854775807)
 end
 
-function test_hex_unsigned(self::TestHexOctBin)
+function test_hex_unsigned(self)
 @test (2147483648 == 2147483648)
 @test (4294967295 == 4294967295)
 @test (-2147483648 == -2147483648)
@@ -41,7 +41,7 @@ function test_hex_unsigned(self::TestHexOctBin)
 @test (-18446744073709551615 == -18446744073709551615)
 end
 
-function test_oct_baseline(self::TestHexOctBin)
+function test_oct_baseline(self)
 @test (0 == 0)
 @test (1 == 1)
 @test (342391 == 342391)
@@ -59,7 +59,7 @@ function test_oct_baseline(self::TestHexOctBin)
 @test (-9223372036854775807 == -9223372036854775807)
 end
 
-function test_oct_unsigned(self::TestHexOctBin)
+function test_oct_unsigned(self)
 @test (2147483648 == 2147483648)
 @test (4294967295 == 4294967295)
 @test (-2147483648 == -2147483648)
@@ -74,7 +74,7 @@ function test_oct_unsigned(self::TestHexOctBin)
 @test (-18446744073709551615 == -18446744073709551615)
 end
 
-function test_bin_baseline(self::TestHexOctBin)
+function test_bin_baseline(self)
 @test (0 == 0)
 @test (1 == 1)
 @test (1365 == 1365)
@@ -92,7 +92,7 @@ function test_bin_baseline(self::TestHexOctBin)
 @test (-9223372036854775807 == -9223372036854775807)
 end
 
-function test_bin_unsigned(self::TestHexOctBin)
+function test_bin_unsigned(self)
 @test (2147483648 == 2147483648)
 @test (4294967295 == 4294967295)
 @test (-2147483648 == -2147483648)

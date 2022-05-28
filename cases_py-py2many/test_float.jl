@@ -52,7 +52,7 @@ end
 mutable struct GeneralFloatCases <: AbstractGeneralFloatCases
 value
 end
-function test_float(self::GeneralFloatCases)
+function test_float(self)
 @test (float(3.14) == 3.14)
 @test (float(314) == 314.0)
 @test (float("  3.14  ") == 3.14)
@@ -80,11 +80,11 @@ float("." * repeat("1",1000))
 @test_throws ValueError float("こんにちは")
 end
 
-function test_noargs(self::GeneralFloatCases)
+function test_noargs(self)
 @test (float() == 0.0)
 end
 
-function test_underscores(self::GeneralFloatCases)
+function test_underscores(self)
 for lit in VALID_UNDERSCORE_LITERALS
 if !any((ch ∈ lit for ch in "jJxXoObB"))
 @test (float(lit) == eval(lit))
@@ -107,7 +107,7 @@ end
 @test_throws ValueError float(b"0_.\xff9")
 end
 
-function test_non_numeric_input_types(self::CustomByteArray)
+function test_non_numeric_input_types(self)
 mutable struct CustomStr <: AbstractCustomStr
 
 end
@@ -138,7 +138,7 @@ end
 end
 end
 
-function test_float_memoryview(self::GeneralFloatCases)
+function test_float_memoryview(self)
 @test (float(memoryview(b"12.3")[2:4]) == 2.3)
 @test (float(memoryview(b"12.3\x00")[2:4]) == 2.3)
 @test (float(memoryview(b"12.3 ")[2:4]) == 2.3)
@@ -146,9 +146,9 @@ function test_float_memoryview(self::GeneralFloatCases)
 @test (float(memoryview(b"12.34")[2:4]) == 2.3)
 end
 
-function test_error_message(self::GeneralFloatCases)
+function test_error_message(self)
 function check(s)
-@test_throws ValueError "float(%r)" % (s,)() do cm 
+@test_throws ValueError msg = "float(%r)" % (s,)() do cm 
 float(s)
 end
 @test (string(cm.exception) == "could not convert string to float: %r" % (s,))
@@ -166,7 +166,7 @@ check(b"123\x00")
 check(b"123\xa0")
 end
 
-function test_float_with_comma(self::GeneralFloatCases)
+function test_float_with_comma(self)
 if !(localeconv()["decimal_point"] == ",")
 skipTest(self, "decimal_point is not \",\"")
 end
@@ -189,18 +189,18 @@ end
 assertAlmostEqual(self, float("  .25e-1  "), 0.025)
 end
 
-function test_floatconversion(self::MyInt)
+function test_floatconversion(self)
 mutable struct Foo1 <: AbstractFoo1
 
 end
-function __float__(self::Foo1)::Float64
+function __float__(self)::Float64
 return 42.0
 end
 
 mutable struct Foo2 <: AbstractFoo2
 
 end
-function __float__(self::Foo2)::Float64
+function __float__(self)::Float64
 return 42.0
 end
 
@@ -211,21 +211,21 @@ function __new__(cls, value = 0.0)
 return __new__(float, cls)
 end
 
-function __float__(self::Foo3)
+function __float__(self)
 return self
 end
 
 mutable struct Foo4 <: AbstractFoo4
 
 end
-function __float__(self::Foo4)::Int64
+function __float__(self)::Int64
 return 42
 end
 
 mutable struct FooStr <: AbstractFooStr
 
 end
-function __float__(self::FooStr)::Float64
+function __float__(self)::Float64
 return float(string(self)) + 1
 end
 
@@ -239,7 +239,7 @@ assertEqual(self, float(FooStr("8")), 9.0)
 mutable struct Foo5 <: AbstractFoo5
 
 end
-function __float__(self::Foo5)::String
+function __float__(self)::String
 return ""
 end
 
@@ -247,7 +247,7 @@ assertRaises(self, TypeError, time.sleep, Foo5())
 mutable struct F <: AbstractF
 
 end
-function __float__(self::F)::OtherFloatSubclass
+function __float__(self)::OtherFloatSubclass
 return OtherFloatSubclass(42.0)
 end
 
@@ -266,7 +266,7 @@ end
 mutable struct MyIndex <: AbstractMyIndex
 value
 end
-function __index__(self::MyIndex)
+function __index__(self)
 return self.value
 end
 
@@ -275,27 +275,27 @@ assertRaises(self, OverflowError, float, MyIndex(2^2000))
 mutable struct MyInt <: AbstractMyInt
 
 end
-function __int__(self::MyInt)::Int64
+function __int__(self)::Int64
 return 42
 end
 
 assertRaises(self, TypeError, float, MyInt())
 end
 
-function test_keyword_args(self::GeneralFloatCases)
+function test_keyword_args(self)
 assertRaisesRegex(self, TypeError, "keyword argument") do 
-float("3.14")
+float(x = "3.14")
 end
 end
 
-function test_is_integer(self::GeneralFloatCases)
+function test_is_integer(self)
 @test !(is_integer(1.1))
 @test is_integer(1.0)
 @test !(is_integer(float("nan")))
 @test !(is_integer(float("inf")))
 end
 
-function test_floatasratio(self::GeneralFloatCases)
+function test_floatasratio(self)
 for (f, ratio) in [(0.875, (7, 8)), (-0.875, (-7, 8)), (0.0, (0, 1)), (11.5, (23, 2))]
 @test (as_integer_ratio(f) == ratio)
 end
@@ -317,7 +317,7 @@ R = fractions.Fraction
 @test_throws ValueError float("nan").as_integer_ratio()
 end
 
-function test_float_containment(self::GeneralFloatCases)
+function test_float_containment(self)
 floats = (INF, -(INF), 0.0, 1.0, NAN)
 for f in floats
 assertIn(self, f, [f])
@@ -340,11 +340,11 @@ l, t, s, d = ([f], (f,), Set([f]), Dict(f => nothing))
 end
 end
 
-function assertEqualAndEqualSign(self::GeneralFloatCases, a, b)
+function assertEqualAndEqualSign(self, a, b)
 @test ((a, copysign(1.0, a)) == (b, copysign(1.0, b)))
 end
 
-function test_float_floor(self::GeneralFloatCases)
+function test_float_floor(self)
 @test isa(self, __floor__(float(0.5)))
 @test (__floor__(float(0.5)) == 0)
 @test (__floor__(float(1.0)) == 1)
@@ -359,7 +359,7 @@ function test_float_floor(self::GeneralFloatCases)
 @test_throws OverflowError float("-inf").__floor__()
 end
 
-function test_float_ceil(self::GeneralFloatCases)
+function test_float_ceil(self)
 @test isa(self, __ceil__(float(0.5)))
 @test (__ceil__(float(0.5)) == 1)
 @test (__ceil__(float(1.0)) == 1)
@@ -374,7 +374,7 @@ function test_float_ceil(self::GeneralFloatCases)
 @test_throws OverflowError float("-inf").__ceil__()
 end
 
-function test_float_mod(self::GeneralFloatCases)
+function test_float_mod(self)
 mod = operator.mod
 assertEqualAndEqualSign(self, mod(-1.0, 1.0), 0.0)
 assertEqualAndEqualSign(self, mod(-1e-100, 1.0), 1.0)
@@ -390,7 +390,7 @@ assertEqualAndEqualSign(self, mod(1e-100, -1.0), -1.0)
 assertEqualAndEqualSign(self, mod(1.0, -1.0), -0.0)
 end
 
-function test_float_pow(self::GeneralFloatCases)
+function test_float_pow(self)
 for pow_op in (pow, operator.pow)
 @test isnan(pow_op(-(INF), NAN))
 @test isnan(pow_op(-2.0, NAN))
@@ -528,7 +528,7 @@ assertEqualAndEqualSign(self, pow_op(0.5, 2001.0), 0.0)
 end
 end
 
-function test_hash(self::GeneralFloatCases)
+function test_hash(self)
 for x in -30:29
 @test (hash(float(x)) == hash(x))
 end
@@ -537,13 +537,13 @@ end
 @test (hash(float("-inf")) == -(sys.hash_info.inf))
 end
 
-function test_hash_nan(self::F)
+function test_hash_nan(self)
 value = float("nan")
 assertEqual(self, hash(value), __hash__(object, value))
 mutable struct H <: AbstractH
 
 end
-function __hash__(self::H)::Int64
+function __hash__(self)::Int64
 return 42
 end
 
@@ -558,23 +558,23 @@ end
 mutable struct FormatFunctionsTestCase <: AbstractFormatFunctionsTestCase
 save_formats::Dict{String, Any}
 end
-function setUp(self::FormatFunctionsTestCase)
+function setUp(self)
 self.save_formats = Dict("double" => __getformat__(float, "double"), "float" => __getformat__(float, "float"))
 end
 
-function tearDown(self::FormatFunctionsTestCase)
+function tearDown(self)
 __setformat__(float, "double", self.save_formats["double"])
 __setformat__(float, "float", self.save_formats["float"])
 end
 
-function test_getformat(self::FormatFunctionsTestCase)
+function test_getformat(self)
 assertIn(self, __getformat__(float, "double"), ["unknown", "IEEE, big-endian", "IEEE, little-endian"])
 assertIn(self, __getformat__(float, "float"), ["unknown", "IEEE, big-endian", "IEEE, little-endian"])
 @test_throws ValueError float.__getformat__("chicken")
 @test_throws TypeError float.__getformat__(1)
 end
 
-function test_setformat(self::FormatFunctionsTestCase)
+function test_setformat(self)
 for t in ("double", "float")
 __setformat__(float, t, "unknown")
 if self.save_formats[t + 1] == "IEEE, big-endian"
@@ -601,24 +601,24 @@ LE_FLOAT_NAN = bytes(reversed(BE_FLOAT_NAN))
 mutable struct UnknownFormatTestCase <: AbstractUnknownFormatTestCase
 save_formats::Dict{String, Any}
 end
-function setUp(self::UnknownFormatTestCase)
+function setUp(self)
 self.save_formats = Dict("double" => __getformat__(float, "double"), "float" => __getformat__(float, "float"))
 __setformat__(float, "double", "unknown")
 __setformat__(float, "float", "unknown")
 end
 
-function tearDown(self::UnknownFormatTestCase)
+function tearDown(self)
 __setformat__(float, "double", self.save_formats["double"])
 __setformat__(float, "float", self.save_formats["float"])
 end
 
-function test_double_specials_dont_unpack(self::UnknownFormatTestCase)
+function test_double_specials_dont_unpack(self)
 for (fmt, data) in [(">d", BE_DOUBLE_INF), (">d", BE_DOUBLE_NAN), ("<d", LE_DOUBLE_INF), ("<d", LE_DOUBLE_NAN)]
 @test_throws ValueError struct_.unpack(fmt, data)
 end
 end
 
-function test_float_specials_dont_unpack(self::UnknownFormatTestCase)
+function test_float_specials_dont_unpack(self)
 for (fmt, data) in [(">f", BE_FLOAT_INF), (">f", BE_FLOAT_NAN), ("<f", LE_FLOAT_INF), ("<f", LE_FLOAT_NAN)]
 @test_throws ValueError struct_.unpack(fmt, data)
 end
@@ -627,19 +627,19 @@ end
 mutable struct IEEEFormatTestCase <: AbstractIEEEFormatTestCase
 
 end
-function test_double_specials_do_unpack(self::IEEEFormatTestCase)
+function test_double_specials_do_unpack(self)
 for (fmt, data) in [(">d", BE_DOUBLE_INF), (">d", BE_DOUBLE_NAN), ("<d", LE_DOUBLE_INF), ("<d", LE_DOUBLE_NAN)]
 unpack(fmt, data)
 end
 end
 
-function test_float_specials_do_unpack(self::IEEEFormatTestCase)
+function test_float_specials_do_unpack(self)
 for (fmt, data) in [(">f", BE_FLOAT_INF), (">f", BE_FLOAT_NAN), ("<f", LE_FLOAT_INF), ("<f", LE_FLOAT_NAN)]
 unpack(fmt, data)
 end
 end
 
-function test_serialized_float_rounding(self::IEEEFormatTestCase)
+function test_serialized_float_rounding(self)
 @test (pack("<f", 3.40282356e+38) == pack("<f", FLT_MAX))
 @test (pack("<f", -3.40282356e+38) == pack("<f", -(FLT_MAX)))
 end
@@ -647,7 +647,7 @@ end
 mutable struct FormatTestCase <: AbstractFormatTestCase
 
 end
-function test_format(self::FormatTestCase)
+function test_format(self)
 @test (0.0 == "0.000000")
 @test (0.0 == "0.0")
 @test (0.01 == "0.01")
@@ -682,7 +682,7 @@ end
 @test (INF == "INF")
 end
 
-function test_format_testfile(self::FormatTestCase)
+function test_format_testfile(self)
 readline(format_testfile) do testfile 
 for line in testfile
 if startswith(line, "--")
@@ -700,13 +700,13 @@ end
 end
 end
 
-function test_issue5864(self::FormatTestCase)
+function test_issue5864(self)
 @test (123.456 == "123.5")
 @test (1234.56 == "1.235e+03")
 @test (12345.6 == "1.235e+04")
 end
 
-function test_issue35560(self::FormatTestCase)
+function test_issue35560(self)
 @test (123.0 == "123.0")
 @test (123.34 == "123.340000")
 @test (123.34 == "1.233400e+02")
@@ -728,7 +728,7 @@ end
 mutable struct ReprTestCase <: AbstractReprTestCase
 
 end
-function test_repr(self::ReprTestCase)
+function test_repr(self)
 readline(joinpath(splitdir(__file__)[1], "floating_points.txt")) do floats_file 
 for line in floats_file
 line = strip(line)
@@ -741,7 +741,7 @@ end
 end
 end
 
-function test_short_repr(self::ReprTestCase)
+function test_short_repr(self)
 test_strings = ["0.0", "1.0", "0.01", "0.02", "0.03", "0.04", "0.05", "1.23456789", "10.0", "100.0", "1000000000000000.0", "9999999999999990.0", "1e+16", "1e+17", "0.001", "0.001001", "0.00010000000000001", "0.0001", "9.999999999999e-05", "1e-05", "8.72293771110361e+25", "7.47005307342313e+26", "2.86438000439698e+28", "8.89142905246179e+28", "3.08578087079232e+35"]
 for s in test_strings
 negs = "-" * s
@@ -755,7 +755,7 @@ end
 mutable struct RoundTestCase <: AbstractRoundTestCase
 
 end
-function test_inf_nan(self::RoundTestCase)
+function test_inf_nan(self)
 @test_throws OverflowError round(INF)
 @test_throws OverflowError round(-(INF))
 @test_throws ValueError round(NAN)
@@ -765,7 +765,7 @@ function test_inf_nan(self::RoundTestCase)
 @test_throws TypeError round(-0.0, 1im)
 end
 
-function test_large_n(self::RoundTestCase)
+function test_large_n(self)
 for n in [324, 325, 400, 2^31 - 1, 2^31, 2^32, 2^100]
 @test (round(123.456, digits = n) == 123.456)
 @test (round(-123.456, digits = n) == -123.456)
@@ -779,7 +779,7 @@ end
 @test (round(1.4e-315, digits = 315) == 1e-315)
 end
 
-function test_small_n(self::RoundTestCase)
+function test_small_n(self)
 for n in [-308, -309, -400, 1 - 2^31, -(2^31), -(2^31) - 1, -(2^100)]
 @test (round(123.456, digits = n) == 0.0)
 @test (round(-123.456, digits = n) == -0.0)
@@ -788,12 +788,12 @@ for n in [-308, -309, -400, 1 - 2^31, -(2^31), -(2^31) - 1, -(2^100)]
 end
 end
 
-function test_overflow(self::RoundTestCase)
+function test_overflow(self)
 @test_throws OverflowError round(1.6e+308, -308)
 @test_throws OverflowError round(-1.7e+308, -308)
 end
 
-function test_previous_round_bugs(self::RoundTestCase)
+function test_previous_round_bugs(self)
 @test (round(562949953421312.5, digits = 1) == 562949953421312.5)
 @test (round(56294995342131.5, digits = 3) == 56294995342131.5)
 @test (round(25.0, digits = -1) == 20.0)
@@ -806,7 +806,7 @@ function test_previous_round_bugs(self::RoundTestCase)
 @test (round(95.0, digits = -1) == 100.0)
 end
 
-function test_matches_float_format(self::RoundTestCase)
+function test_matches_float_format(self)
 for i in 0:499
 x = i / 1000.0
 @test (float(x) == round(x, digits = 0))
@@ -830,7 +830,7 @@ x = random()
 end
 end
 
-function test_format_specials(self::RoundTestCase)
+function test_format_specials(self)
 function test(fmt, value, expected)
 @test (fmt % value == expected)
 fmt = fmt[2:end]
@@ -855,12 +855,12 @@ test(sfmt, -(NAN), " nan")
 end
 end
 
-function test_None_ndigits(self::RoundTestCase)
-for x in (round(1.23), round(1.23, digits = nothing), round(1.23, digits = nothing))
+function test_None_ndigits(self)
+for x in (round(1.23), round(1.23, digits = nothing), round(1.23, digits = ndigits = nothing))
 @test (x == 1)
 @test isa(self, x)
 end
-for x in (round(1.78), round(1.78, digits = nothing), round(1.78, digits = nothing))
+for x in (round(1.78), round(1.78, digits = nothing), round(1.78, digits = ndigits = nothing))
 @test (x == 2)
 @test isa(self, x)
 end
@@ -869,7 +869,7 @@ end
 mutable struct InfNanTest <: AbstractInfNanTest
 
 end
-function test_inf_from_str(self::InfNanTest)
+function test_inf_from_str(self)
 @test isinf(float("inf"))
 @test isinf(float("+inf"))
 @test isinf(float("-inf"))
@@ -910,14 +910,14 @@ function test_inf_from_str(self::InfNanTest)
 @test_throws ValueError float("--Infinity")
 end
 
-function test_inf_as_str(self::InfNanTest)
+function test_inf_as_str(self)
 @test (repr(1e+300*1e+300) == "inf")
 @test (repr(-1e+300*1e+300) == "-inf")
 @test (string(1e+300*1e+300) == "inf")
 @test (string(-1e+300*1e+300) == "-inf")
 end
 
-function test_nan_from_str(self::InfNanTest)
+function test_nan_from_str(self)
 @test isnan(float("nan"))
 @test isnan(float("+nan"))
 @test isnan(float("-nan"))
@@ -942,19 +942,19 @@ function test_nan_from_str(self::InfNanTest)
 @test_throws ValueError float("--nAn")
 end
 
-function test_nan_as_str(self::InfNanTest)
+function test_nan_as_str(self)
 @test (repr(1e+300*1e+300*0) == "nan")
 @test (repr(-1e+300*1e+300*0) == "nan")
 @test (string(1e+300*1e+300*0) == "nan")
 @test (string(-1e+300*1e+300*0) == "nan")
 end
 
-function test_inf_signs(self::InfNanTest)
+function test_inf_signs(self)
 @test (copysign(1.0, float("inf")) == 1.0)
 @test (copysign(1.0, float("-inf")) == -1.0)
 end
 
-function test_nan_signs(self::InfNanTest)
+function test_nan_signs(self)
 @test (copysign(1.0, float("nan")) == 1.0)
 @test (copysign(1.0, float("-nan")) == -1.0)
 end
@@ -971,7 +971,7 @@ TINY
                     HexFloatTestCase(foo::String, EPS = fromHex("0x0.0000000000001p0"), MAX = fromHex("0x.fffffffffffff8p+1024"), MIN = fromHex("0x1p-1022"), TINY = fromHex("0x0.0000000000001p-1022")) =
                         new(foo, EPS, MAX, MIN, TINY)
 end
-function identical(self::HexFloatTestCase, x, y)
+function identical(self, x, y)
 if isnan(x) || isnan(y)
 if isnan(x) == isnan(y)
 return
@@ -982,14 +982,14 @@ end
 fail(self, "%r not identical to %r" % (x, y))
 end
 
-function test_ends(self::HexFloatTestCase)
+function test_ends(self)
 identical(self, self.MIN, ldexp(1.0, -1022))
 identical(self, self.TINY, ldexp(1.0, -1074))
 identical(self, self.EPS, ldexp(1.0, -52))
 identical(self, self.MAX, 2.0*(ldexp(1.0, 1023) - ldexp(1.0, 970)))
 end
 
-function test_invalid_inputs(self::HexFloatTestCase)
+function test_invalid_inputs(self)
 invalid_inputs = ["infi", "-Infinit", "++inf", "-+Inf", "--nan", "+-NaN", "snan", "NaNs", "nna", "an", "nf", "nfinity", "inity", "iinity", "0xnan", "", " ", "x1.0p0", "0xX1.0p0", "+ 0x1.0p0", "- 0x1.0p0", "0 x1.0p0", "0x 1.0p0", "0x1 2.0p0", "+0x1 .0p0", "0x1. 0p0", "-0x1.0 1p0", "-0x1.0 p0", "+0x1.0p +0", "0x1.0p -0", "0x1.0p 0", "+0x1.0p+ 0", "-0x1.0p- 0", "++0x1.0p-0", "--0x1.0p0", "+-0x1.0p+0", "-+0x1.0p0", "0x1.0p++0", "+0x1.0p+-0", "-0x1.0p-+0", "0x1.0p--0", "0x1.0.p0", "0x.p0", "0x1,p0", "0x1pa", "0x1p０", "０x1p0", "0x１p0", "0x1.０p0", "0x1p0 \n 0x2p0", "0x1p0\0 0x1p0"]
 for x in invalid_inputs
 try
@@ -1002,20 +1002,20 @@ end
 end
 end
 
-function test_whitespace(self::HexFloatTestCase)
+function test_whitespace(self)
 value_pairs = [("inf", INF), ("-Infinity", -(INF)), ("nan", NAN), ("1.0", 1.0), ("-0x.2", -0.125), ("-0.0", -0.0)]
 whitespace = ["", " ", "\t", "\n", "\n \t", "\f", "\v", "\r"]
 for (inp, expected) in value_pairs
 for lead in whitespace
 for trail in whitespace
-got = fromHex((lead + inp) + trail)
+got = fromHex((lead + inp) * trail)
 identical(self, got, expected)
 end
 end
 end
 end
 
-function test_from_hex(self::HexFloatTestCase)
+function test_from_hex(self)
 MIN = self.MIN
 MAX = self.MAX
 TINY = self.TINY
@@ -1285,7 +1285,7 @@ identical(self, fromHex("-.8p-1074"), -0.0)
 identical(self, fromHex("+8p-1078"), 0.0)
 end
 
-function test_roundtrip(self::HexFloatTestCase)
+function test_roundtrip(self)
 function roundtrip(x)
 return fromHex(toHex(x))
 end
@@ -1308,7 +1308,7 @@ end
 end
 end
 
-function test_subclass(self::F2)
+function test_subclass(self)
 mutable struct F <: AbstractF
 
 end

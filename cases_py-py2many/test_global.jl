@@ -7,32 +7,32 @@ abstract type AbstractGlobalTests end
 mutable struct GlobalTests <: AbstractGlobalTests
 _warnings_manager
 end
-function setUp(self::GlobalTests)
+function setUp(self)
 self._warnings_manager = check_warnings()
 __enter__(self._warnings_manager)
-filterwarnings("error", "<test string>")
+filterwarnings("error", module_ = "<test string>")
 end
 
-function tearDown(self::GlobalTests)
+function tearDown(self)
 __exit__(self._warnings_manager, nothing, nothing, nothing)
 end
 
-function test1(self::GlobalTests)
+function test1(self)
 prog_text_1 = "def wrong1():\n    a = 1\n    b = 2\n    global a\n    global b\n"
-check_syntax_error(self, prog_text_1, 4, 5)
+check_syntax_error(self, prog_text_1, lineno = 4, offset = 5)
 end
 
-function test2(self::GlobalTests)
+function test2(self)
 prog_text_2 = "def wrong2():\n    print(x)\n    global x\n"
-check_syntax_error(self, prog_text_2, 3, 5)
+check_syntax_error(self, prog_text_2, lineno = 3, offset = 5)
 end
 
-function test3(self::GlobalTests)
+function test3(self)
 prog_text_3 = "def wrong3():\n    print(x)\n    x = 2\n    global x\n"
-check_syntax_error(self, prog_text_3, 4, 5)
+check_syntax_error(self, prog_text_3, lineno = 4, offset = 5)
 end
 
-function test4(self::GlobalTests)
+function test4(self)
 prog_text_4 = "global x\nx = 2\n"
 compile(prog_text_4, "<test string>", "exec")
 end
@@ -41,7 +41,7 @@ function setUpModule()
 cm = catch_warnings()
 __enter__(cm)
 addModuleCleanup(cm.__exit__, nothing, nothing, nothing)
-filterwarnings("error", "<test string>")
+filterwarnings("error", module_ = "<test string>")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

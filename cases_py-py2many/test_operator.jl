@@ -13,65 +13,65 @@ abstract type AbstractPyPyOperatorPickleTestCase <: AbstractOperatorPickleTestCa
 abstract type AbstractPyCOperatorPickleTestCase <: AbstractOperatorPickleTestCase end
 abstract type AbstractCPyOperatorPickleTestCase <: AbstractOperatorPickleTestCase end
 abstract type AbstractCCOperatorPickleTestCase <: AbstractOperatorPickleTestCase end
-py_operator = import_fresh_module("operator", ["_operator"])
-c_operator = import_fresh_module("operator", ["_operator"])
+py_operator = import_fresh_module("operator", blocked = ["_operator"])
+c_operator = import_fresh_module("operator", fresh = ["_operator"])
 mutable struct Seq1 <: AbstractSeq1
 lst
 end
-function __len__(self::Seq1)::Int64
+function __len__(self)::Int64
 return length(self.lst)
 end
 
-function __getitem__(self::Seq1, i)
+function __getitem__(self, i)
 return self.lst[i + 1]
 end
 
-function __add__(self::Seq1, other)::Any
+function __add__(self, other)::Any
 return self.lst + other.lst
 end
 
-function __mul__(self::Seq1, other)::Any
+function __mul__(self, other)::Any
 return self.lst*other
 end
 
-function __rmul__(self::Seq1, other)::Any
+function __rmul__(self, other)::Any
 return other*self.lst
 end
 
 mutable struct Seq2 <: AbstractSeq2
 lst
 end
-function __len__(self::Seq2)::Int64
+function __len__(self)::Int64
 return length(self.lst)
 end
 
-function __getitem__(self::Seq2, i)
+function __getitem__(self, i)
 return self.lst[i + 1]
 end
 
-function __add__(self::Seq2, other)::Any
+function __add__(self, other)::Any
 return self.lst + other.lst
 end
 
-function __mul__(self::Seq2, other)::Any
+function __mul__(self, other)::Any
 return self.lst*other
 end
 
-function __rmul__(self::Seq2, other)::Any
+function __rmul__(self, other)::Any
 return other*self.lst
 end
 
 mutable struct BadIterable <: AbstractBadIterable
 
 end
-function __iter__(self::BadIterable)
+function __iter__(self)
 throw(ZeroDivisionError)
 end
 
 mutable struct OperatorTestCase <: AbstractOperatorTestCase
 value
 end
-function test_lt(self::OperatorTestCase)
+function test_lt(self)
 operator = self.module
 assertRaises(self, TypeError, operator.lt)
 assertRaises(self, TypeError, operator.lt, 1im, 2im)
@@ -83,7 +83,7 @@ assertTrue(self, lt(operator, 1, 2))
 assertTrue(self, lt(operator, 1, 2.0))
 end
 
-function test_le(self::OperatorTestCase)
+function test_le(self)
 operator = self.module
 assertRaises(self, TypeError, operator.le)
 assertRaises(self, TypeError, operator.le, 1im, 2im)
@@ -95,12 +95,12 @@ assertTrue(self, le(operator, 1, 2))
 assertTrue(self, le(operator, 1, 2.0))
 end
 
-function test_eq(self::C)
+function test_eq(self)
 operator = self.module
 mutable struct C <: AbstractC
 
 end
-function __eq__(self::C, other)
+function __eq__(self, other)
 throw(SyntaxError)
 end
 
@@ -114,12 +114,12 @@ assertFalse(self, eq(operator, 1, 2))
 assertFalse(self, eq(operator, 1, 2.0))
 end
 
-function test_ne(self::C)
+function test_ne(self)
 operator = self.module
 mutable struct C <: AbstractC
 
 end
-function __ne__(self::C, other)
+function __ne__(self, other)
 throw(SyntaxError)
 end
 
@@ -133,7 +133,7 @@ assertTrue(self, ne(operator, 1, 2))
 assertTrue(self, ne(operator, 1, 2.0))
 end
 
-function test_ge(self::OperatorTestCase)
+function test_ge(self)
 operator = self.module
 assertRaises(self, TypeError, operator.ge)
 assertRaises(self, TypeError, operator.ge, 1im, 2im)
@@ -145,7 +145,7 @@ assertFalse(self, ge(operator, 1, 2))
 assertFalse(self, ge(operator, 1, 2.0))
 end
 
-function test_gt(self::OperatorTestCase)
+function test_gt(self)
 operator = self.module
 assertRaises(self, TypeError, operator.gt)
 assertRaises(self, TypeError, operator.gt, 1im, 2im)
@@ -157,7 +157,7 @@ assertFalse(self, gt(operator, 1, 2))
 assertFalse(self, gt(operator, 1, 2.0))
 end
 
-function test_abs(self::OperatorTestCase)
+function test_abs(self)
 operator = self.module
 assertRaises(self, TypeError, operator.abs)
 assertRaises(self, TypeError, operator.abs, nothing)
@@ -165,21 +165,21 @@ assertEqual(self, abs(operator, -1), 1)
 assertEqual(self, abs(operator, 1), 1)
 end
 
-function test_add(self::OperatorTestCase)
+function test_add(self)
 operator = self.module
 assertRaises(self, TypeError, operator.add)
 assertRaises(self, TypeError, operator.add, nothing, nothing)
 assertEqual(self, add(operator, 3, 4), 7)
 end
 
-function test_bitwise_and(self::OperatorTestCase)
+function test_bitwise_and(self)
 operator = self.module
 assertRaises(self, TypeError, operator.and_)
 assertRaises(self, TypeError, operator.and_, nothing, nothing)
 assertEqual(self, and_(operator, 15, 10), 10)
 end
 
-function test_concat(self::OperatorTestCase)
+function test_concat(self)
 operator = self.module
 assertRaises(self, TypeError, operator.concat)
 assertRaises(self, TypeError, operator.concat, nothing, nothing)
@@ -190,7 +190,7 @@ assertEqual(self, concat(operator, Seq2([5, 6]), Seq2([7])), [5, 6, 7])
 assertRaises(self, TypeError, operator.concat, 13, 29)
 end
 
-function test_countOf(self::OperatorTestCase)
+function test_countOf(self)
 operator = self.module
 assertRaises(self, TypeError, operator.countOf)
 assertRaises(self, TypeError, operator.countOf, nothing, nothing)
@@ -202,7 +202,7 @@ assertEqual(self, countOf(operator, [nan, nan, 21], nan), 2)
 assertEqual(self, countOf(operator, [Dict(), 1, Dict(), 2], Dict()), 2)
 end
 
-function test_delitem(self::OperatorTestCase)
+function test_delitem(self)
 operator = self.module
 a = [4, 3, 2, 1]
 assertRaises(self, TypeError, operator.delitem, a)
@@ -211,21 +211,21 @@ assertIsNone(self, delitem(operator, a, 1))
 assertEqual(self, a, [4, 2, 1])
 end
 
-function test_floordiv(self::OperatorTestCase)
+function test_floordiv(self)
 operator = self.module
 assertRaises(self, TypeError, operator.floordiv, 5)
 assertRaises(self, TypeError, operator.floordiv, nothing, nothing)
 assertEqual(self, floordiv(operator, 5, 2), 2)
 end
 
-function test_truediv(self::OperatorTestCase)
+function test_truediv(self)
 operator = self.module
 assertRaises(self, TypeError, operator.truediv, 5)
 assertRaises(self, TypeError, operator.truediv, nothing, nothing)
 assertEqual(self, truediv(operator, 5, 2), 2.5)
 end
 
-function test_getitem(self::OperatorTestCase)
+function test_getitem(self)
 operator = self.module
 a = 0:9
 assertRaises(self, TypeError, operator.getitem)
@@ -233,7 +233,7 @@ assertRaises(self, TypeError, operator.getitem, a, nothing)
 assertEqual(self, getitem(operator, a, 2), 2)
 end
 
-function test_indexOf(self::OperatorTestCase)
+function test_indexOf(self)
 operator = self.module
 assertRaises(self, TypeError, operator.indexOf)
 assertRaises(self, TypeError, operator.indexOf, nothing, nothing)
@@ -245,14 +245,14 @@ assertEqual(self, indexOf(operator, [nan, nan, 21], nan), 0)
 assertEqual(self, indexOf(operator, [Dict(), 1, Dict(), 2], Dict()), 0)
 end
 
-function test_invert(self::OperatorTestCase)
+function test_invert(self)
 operator = self.module
 assertRaises(self, TypeError, operator.invert)
 assertRaises(self, TypeError, operator.invert, nothing)
 assertEqual(self, inv(operator, 4), -5)
 end
 
-function test_lshift(self::OperatorTestCase)
+function test_lshift(self)
 operator = self.module
 assertRaises(self, TypeError, operator.lshift)
 assertRaises(self, TypeError, operator.lshift, nothing, 42)
@@ -261,35 +261,35 @@ assertEqual(self, lshift(operator, 5, 0), 5)
 assertRaises(self, ValueError, operator.lshift, 2, -1)
 end
 
-function test_mod(self::OperatorTestCase)
+function test_mod(self)
 operator = self.module
 assertRaises(self, TypeError, operator.mod)
 assertRaises(self, TypeError, operator.mod, nothing, 42)
 assertEqual(self, mod(operator, 5, 2), 1)
 end
 
-function test_mul(self::OperatorTestCase)
+function test_mul(self)
 operator = self.module
 assertRaises(self, TypeError, operator.mul)
 assertRaises(self, TypeError, operator.mul, nothing, nothing)
 assertEqual(self, mul(operator, 5, 2), 10)
 end
 
-function test_matmul(self::M)
+function test_matmul(self)
 operator = self.module
 assertRaises(self, TypeError, operator.matmul)
 assertRaises(self, TypeError, operator.matmul, 42, 42)
 mutable struct M <: AbstractM
 
 end
-function __matmul__(self::M, other)::Int64
+function __matmul__(self, other)::Int64
 return other - 1
 end
 
 assertEqual(self, M() * 42, 41)
 end
 
-function test_neg(self::OperatorTestCase)
+function test_neg(self)
 operator = self.module
 assertRaises(self, TypeError, operator.neg)
 assertRaises(self, TypeError, operator.neg, nothing)
@@ -299,14 +299,14 @@ assertEqual(self, neg(operator, 0), 0)
 assertEqual(self, neg(operator, -0), 0)
 end
 
-function test_bitwise_or(self::OperatorTestCase)
+function test_bitwise_or(self)
 operator = self.module
 assertRaises(self, TypeError, operator.or_)
 assertRaises(self, TypeError, operator.or_, nothing, nothing)
 assertEqual(self, or_(operator, 10, 5), 15)
 end
 
-function test_pos(self::OperatorTestCase)
+function test_pos(self)
 operator = self.module
 assertRaises(self, TypeError, operator.pos)
 assertRaises(self, TypeError, operator.pos, nothing)
@@ -316,7 +316,7 @@ assertEqual(self, pos(operator, 0), 0)
 assertEqual(self, pos(operator, -0), 0)
 end
 
-function test_pow(self::OperatorTestCase)
+function test_pow(self)
 operator = self.module
 assertRaises(self, TypeError, operator.pow)
 assertRaises(self, TypeError, operator.pow, nothing, nothing)
@@ -325,7 +325,7 @@ assertRaises(self, TypeError, operator.pow, 1)
 assertRaises(self, TypeError, operator.pow, 1, 2, 3)
 end
 
-function test_rshift(self::OperatorTestCase)
+function test_rshift(self)
 operator = self.module
 assertRaises(self, TypeError, operator.rshift)
 assertRaises(self, TypeError, operator.rshift, nothing, 42)
@@ -334,7 +334,7 @@ assertEqual(self, rshift(operator, 5, 0), 5)
 assertRaises(self, ValueError, operator.rshift, 2, -1)
 end
 
-function test_contains(self::OperatorTestCase)
+function test_contains(self)
 operator = self.module
 assertRaises(self, TypeError, operator.contains)
 assertRaises(self, TypeError, operator.contains, nothing, nothing)
@@ -343,7 +343,7 @@ assertTrue(self, contains(operator, 0:3, 2))
 assertFalse(self, contains(operator, 0:3, 5))
 end
 
-function test_setitem(self::OperatorTestCase)
+function test_setitem(self)
 operator = self.module
 a = collect(0:2)
 assertRaises(self, TypeError, operator.setitem, a)
@@ -353,19 +353,19 @@ assertEqual(self, a, [2, 1, 2])
 assertRaises(self, IndexError, operator.setitem, a, 4, 2)
 end
 
-function test_sub(self::OperatorTestCase)
+function test_sub(self)
 operator = self.module
 assertRaises(self, TypeError, operator.sub)
 assertRaises(self, TypeError, operator.sub, nothing, nothing)
 assertEqual(self, sub(operator, 5, 2), 3)
 end
 
-function test_truth(self::C)
+function test_truth(self)
 operator = self.module
 mutable struct C <: AbstractC
 
 end
-function __bool__(self::C)
+function __bool__(self)
 throw(SyntaxError)
 end
 
@@ -377,14 +377,14 @@ assertFalse(self, truth(operator, 0))
 assertFalse(self, truth(operator, []))
 end
 
-function test_bitwise_xor(self::OperatorTestCase)
+function test_bitwise_xor(self)
 operator = self.module
 assertRaises(self, TypeError, operator.xor)
 assertRaises(self, TypeError, operator.xor, nothing, nothing)
 assertEqual(self, xor(operator, 11, 12), 7)
 end
 
-function test_is(self::OperatorTestCase)
+function test_is(self)
 operator = self.module
 a = "xyzpdq"
 b = "xyzpdq"
@@ -394,7 +394,7 @@ assertTrue(self, is_(operator, a, b))
 assertFalse(self, is_(operator, a, c))
 end
 
-function test_is_not(self::OperatorTestCase)
+function test_is_not(self)
 operator = self.module
 a = "xyzpdq"
 b = "xyzpdq"
@@ -404,7 +404,7 @@ assertFalse(self, is_not(operator, a, b))
 assertTrue(self, is_not(operator, a, c))
 end
 
-function test_attrgetter(self::C)
+function test_attrgetter(self)
 operator = self.module
 mutable struct A <: AbstractA
 
@@ -416,7 +416,7 @@ f = attrgetter(operator, "name")
 assertEqual(self, f(a), "arthur")
 assertRaises(self, TypeError, f)
 assertRaises(self, TypeError, f, a, "dent")
-assertRaises(self, TypeError, f, a, "dent")
+assertRaises(self, TypeError, f, a, surname = "dent")
 f = attrgetter(operator, "rank")
 assertRaises(self, AttributeError, f, a)
 assertRaises(self, TypeError, operator.attrgetter, 2)
@@ -430,7 +430,7 @@ assertRaises(self, TypeError, operator.attrgetter, ("x", (), "y"))
 mutable struct C <: AbstractC
 
 end
-function __getattr__(self::C, name)
+function __getattr__(self, name)
 throw(SyntaxError)
 end
 
@@ -458,20 +458,20 @@ f = attrgetter(operator, "name", "child.name", "child.child.name")
 assertEqual(self, f(a), ("arthur", "thomas", "johnson"))
 end
 
-function test_itemgetter(self::T)
+function test_itemgetter(self)
 operator = self.module
 a = "ABCDE"
 f = itemgetter(operator, 2)
 assertEqual(self, f(a), "C")
 assertRaises(self, TypeError, f)
 assertRaises(self, TypeError, f, a, 3)
-assertRaises(self, TypeError, f, a, 3)
+assertRaises(self, TypeError, f, a, size = 3)
 f = itemgetter(operator, 10)
 assertRaises(self, IndexError, f, a)
 mutable struct C <: AbstractC
 
 end
-function __getitem__(self::C, name)
+function __getitem__(self, name)
 throw(SyntaxError)
 end
 
@@ -479,7 +479,7 @@ assertRaises(self, SyntaxError, itemgetter(operator, 42), C())
 f = itemgetter(operator, "name")
 assertRaises(self, TypeError, f, a)
 assertRaises(self, TypeError, operator.itemgetter)
-d = dict("val")
+d = dict(key = "val")
 f = itemgetter(operator, "key")
 assertEqual(self, f(d), "val")
 f = itemgetter(operator, "nonkey")
@@ -487,7 +487,7 @@ assertRaises(self, KeyError, f, d)
 inventory = [("apple", 3), ("banana", 2), ("pear", 5), ("orange", 1)]
 getcount = itemgetter(operator, 1)
 assertEqual(self, collect(map(getcount, inventory)), [3, 2, 5, 1])
-assertEqual(self, sorted(inventory, getcount), [("orange", 1), ("banana", 2), ("apple", 3), ("pear", 5)])
+assertEqual(self, sorted(inventory, key = getcount), [("orange", 1), ("banana", 2), ("apple", 3), ("pear", 5)])
 data = collect(map(str, 0:19))
 assertEqual(self, itemgetter(operator, 2, 10, 5)(data), ("2", "10", "5"))
 assertRaises(self, TypeError, itemgetter(operator, 2, "x", 5), data)
@@ -504,18 +504,18 @@ assertEqual(self, itemgetter(operator, 0)(["a", "b", "c"]), "a")
 assertEqual(self, itemgetter(operator, 0)(100:199), 100)
 end
 
-function test_methodcaller(self::A)
+function test_methodcaller(self)
 operator = self.module
 assertRaises(self, TypeError, operator.methodcaller)
 assertRaises(self, TypeError, operator.methodcaller, 12)
 mutable struct A <: AbstractA
 
 end
-function foo(self::A)::Any
+function foo(self)::Any
 return args[1] + args[2]
 end
 
-function bar(self::A, f = 42)
+function bar(self, f = 42)
 return f
 end
 
@@ -530,74 +530,74 @@ f = methodcaller(operator, "foo", 1, 2)
 assertEqual(self, f(a), 3)
 assertRaises(self, TypeError, f)
 assertRaises(self, TypeError, f, a, 3)
-assertRaises(self, TypeError, f, a, 3)
+assertRaises(self, TypeError, f, a, spam = 3)
 f = methodcaller(operator, "bar")
 assertEqual(self, f(a), 42)
 assertRaises(self, TypeError, f, a, a)
-f = methodcaller(operator, "bar", 5)
+f = methodcaller(operator, "bar", f = 5)
 assertEqual(self, f(a), 5)
-f = methodcaller(operator, "baz", "spam", "eggs")
+f = methodcaller(operator, "baz", name = "spam", self = "eggs")
 assertEqual(self, f(a), ("spam", "eggs"))
 end
 
-function test_inplace(self::C)
+function test_inplace(self)
 operator = self.module
 mutable struct C <: AbstractC
 
 end
-function __iadd__(self::C, other)::String
+function __iadd__(self, other)::String
 return "iadd"
 end
 
-function __iand__(self::C, other)::String
+function __iand__(self, other)::String
 return "iand"
 end
 
-function __ifloordiv__(self::C, other)::String
+function __ifloordiv__(self, other)::String
 return "ifloordiv"
 end
 
-function __ilshift__(self::C, other)::String
+function __ilshift__(self, other)::String
 return "ilshift"
 end
 
-function __imod__(self::C, other)::String
+function __imod__(self, other)::String
 return "imod"
 end
 
-function __imul__(self::C, other)::String
+function __imul__(self, other)::String
 return "imul"
 end
 
-function __imatmul__(self::C, other)::String
+function __imatmul__(self, other)::String
 return "imatmul"
 end
 
-function __ior__(self::C, other)::String
+function __ior__(self, other)::String
 return "ior"
 end
 
-function __ipow__(self::C, other)::String
+function __ipow__(self, other)::String
 return "ipow"
 end
 
-function __irshift__(self::C, other)::String
+function __irshift__(self, other)::String
 return "irshift"
 end
 
-function __isub__(self::C, other)::String
+function __isub__(self, other)::String
 return "isub"
 end
 
-function __itruediv__(self::C, other)::String
+function __itruediv__(self, other)::String
 return "itruediv"
 end
 
-function __ixor__(self::C, other)::String
+function __ixor__(self, other)::String
 return "ixor"
 end
 
-function __getitem__(self::C, other)::Int64
+function __getitem__(self, other)::Int64
 return 5
 end
 
@@ -618,12 +618,12 @@ assertEqual(self, ixor(operator, c, 5), "ixor")
 assertEqual(self, iconcat(operator, c, c), "iadd")
 end
 
-function test_length_hint(self::X)
+function test_length_hint(self)
 operator = self.module
 mutable struct X <: AbstractX
 value
 end
-function __length_hint__(self::X)
+function __length_hint__(self)
 if type_(self.value) === type_
 throw(self.value)
 else
@@ -647,7 +647,7 @@ length_hint(operator, X(LookupError))
 end
 end
 
-function test_dunder_is_original(self::OperatorTestCase)
+function test_dunder_is_original(self)
 operator = self.module
 names = [name for name in dir(operator) if !startswith(name, "_") ]
 for name in names
@@ -678,7 +678,7 @@ mutable struct OperatorPickleTestCase <: AbstractOperatorPickleTestCase
 module_
 module2
 end
-function copy(self::OperatorPickleTestCase, obj, proto)
+function copy(self, obj, proto)
 swap_item(sys.modules, "operator", self.module) do 
 pickled = dumps(obj, proto)
 end
@@ -687,7 +687,7 @@ return loads(pickled)
 end
 end
 
-function test_attrgetter(self::A)
+function test_attrgetter(self)
 attrgetter = self.module.attrgetter
 mutable struct A <: AbstractA
 
@@ -701,7 +701,7 @@ a.t = A()
 a.t.u = A()
 a.t.u.v = "V"
 for proto in 0:pickle.HIGHEST_PROTOCOL
-subTest(self, proto) do 
+subTest(self, proto = proto) do 
 f = attrgetter("x")
 f2 = copy(self, f, proto)
 assertEqual(self, repr(f2), repr(f))
@@ -718,11 +718,11 @@ end
 end
 end
 
-function test_itemgetter(self::OperatorPickleTestCase)
+function test_itemgetter(self)
 itemgetter = self.module.itemgetter
 a = "ABCDE"
 for proto in 0:pickle.HIGHEST_PROTOCOL
-subTest(self, proto) do 
+subTest(self, proto = proto) do 
 f = itemgetter(2)
 f2 = copy(self, f, proto)
 assertEqual(self, repr(f2), repr(f))
@@ -735,16 +735,16 @@ end
 end
 end
 
-function test_methodcaller(self::A)
+function test_methodcaller(self)
 methodcaller = self.module.methodcaller
 mutable struct A <: AbstractA
 
 end
-function foo(self::A)::Any
+function foo(self)::Any
 return args[1] + args[2]
 end
 
-function bar(self::A, f = 42)
+function bar(self, f = 42)
 return f
 end
 
@@ -754,7 +754,7 @@ end
 
 a = A()
 for proto in 0:pickle.HIGHEST_PROTOCOL
-subTest(self, proto) do 
+subTest(self, proto = proto) do 
 f = methodcaller("bar")
 f2 = copy(self, f, proto)
 assertEqual(self, repr(f2), repr(f))
@@ -763,11 +763,11 @@ f = methodcaller("foo", 1, 2)
 f2 = copy(self, f, proto)
 assertEqual(self, repr(f2), repr(f))
 assertEqual(self, f2(a), f(a))
-f = methodcaller("bar", 5)
+f = methodcaller("bar", f = 5)
 f2 = copy(self, f, proto)
 assertEqual(self, repr(f2), repr(f))
 assertEqual(self, f2(a), f(a))
-f = methodcaller("baz", "eggs", "spam")
+f = methodcaller("baz", self = "eggs", name = "spam")
 f2 = copy(self, f, proto)
 assertEqual(self, f2(a), f(a))
 end

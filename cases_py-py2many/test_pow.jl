@@ -5,7 +5,7 @@ abstract type AbstractPowTest end
 mutable struct PowTest <: AbstractPowTest
 
 end
-function powtest(self::PowTest, type_)
+function powtest(self, type_)
 if type_ != float
 for i in -1000:999
 @test (pow(type_(i), 0) == 1)
@@ -70,15 +70,15 @@ end
 end
 end
 
-function test_powint(self::PowTest)
+function test_powint(self)
 powtest(self, int)
 end
 
-function test_powfloat(self::PowTest)
+function test_powfloat(self)
 powtest(self, float)
 end
 
-function test_other(self::PowTest)
+function test_other(self)
 @test (pow(3, 3) % 8 == pow(3, 3, 8))
 @test (pow(3, 3) % -8 == pow(3, 3, -8))
 @test (pow(3, 2) % -2 == pow(3, 2, -2))
@@ -105,18 +105,18 @@ end
 end
 end
 
-function test_bug643260(self::TestRpow)
+function test_bug643260(self)
 mutable struct TestRpow <: AbstractTestRpow
 
 end
-function __rpow__(self::TestRpow, other)
+function __rpow__(self, other)
 return nothing
 end
 
 nothing^TestRpow()
 end
 
-function test_bug705231(self::PowTest)
+function test_bug705231(self)
 eq = self.assertEqual
 a = -1.0
 eq(pow(a, 1.23e+167), 1.0)
@@ -133,10 +133,10 @@ end
 eq(expected, 1.0)
 end
 
-function test_negative_exponent(self::PowTest)
+function test_negative_exponent(self)
 for a in -50:49
 for m in -50:49
-subTest(self, a, m) do 
+subTest(self, a = a, m = m) do 
 if m != 0 && gcd(a, m) == 1
 inv = pow(a, -1, m)
 @test (inv == inv % m)

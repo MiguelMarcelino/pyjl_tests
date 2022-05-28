@@ -18,12 +18,12 @@ mutable struct TestBasicOps <: AbstractTestBasicOps
 _items
 gen
 end
-function randomlist(self::TestBasicOps, n)
+function randomlist(self, n)
 #= Helper function to make a list of random numbers =#
 return [random(self.gen) for i in 0:n - 1]
 end
 
-function test_autoseed(self::TestBasicOps)
+function test_autoseed(self)
 seed(self.gen)
 state1 = getstate(self.gen)
 sleep(0.1)
@@ -32,7 +32,7 @@ state2 = getstate(self.gen)
 assertNotEqual(self, state1, state2)
 end
 
-function test_saverestore(self::TestBasicOps)
+function test_saverestore(self)
 N = 1000
 seed(self.gen)
 state = getstate(self.gen)
@@ -41,11 +41,11 @@ setstate(self.gen, state)
 assertEqual(self, randseq, randomlist(self, N))
 end
 
-function test_seedargs(self::MySeed)
+function test_seedargs(self)
 mutable struct MySeed <: AbstractMySeed
 
 end
-function __hash__(self::MySeed)::Int64
+function __hash__(self)::Int64
 return -1729
 end
 
@@ -57,7 +57,7 @@ assertWarns(self, DeprecationWarning) do
 seed(self.gen, arg)
 end
 end
-for arg in [collect(0:2), dict(1)]
+for arg in [collect(0:2), dict(one = 1)]
 assertWarns(self, DeprecationWarning) do 
 assertRaises(self, TypeError, self.gen.seed, arg)
 end
@@ -66,18 +66,18 @@ assertRaises(self, TypeError, self.gen.seed, 1, 2, 3, 4)
 assertRaises(self, TypeError, type_(self.gen), [])
 end
 
-function test_seed_no_mutate_bug_44018(self::TestBasicOps)
+function test_seed_no_mutate_bug_44018(self)
 a = Vector{UInt8}(b"1234")
 seed(self.gen, a)
 assertEqual(self, a, Vector{UInt8}(b"1234"))
 end
 
-function test_seed_when_randomness_source_not_found(self::TestBasicOps, urandom_mock)
+function test_seed_when_randomness_source_not_found(self, urandom_mock)
 urandom_mock.side_effect = NotImplementedError
 test_seedargs(self)
 end
 
-function test_shuffle(self::TestBasicOps)
+function test_shuffle(self)
 shuffle = self.gen.shuffle
 lst = []
 shuffle(lst)
@@ -103,9 +103,9 @@ assertTrue(self, lst !== shuffled_lst)
 assertRaises(self, TypeError, shuffle, (1, 2, 3))
 end
 
-function test_shuffle_random_argument(self::TestBasicOps)
+function test_shuffle_random_argument(self)
 shuffle = self.gen.shuffle
-mock_random = Mock(0.5)
+mock_random = Mock(return_value = 0.5)
 seq = Vector{UInt8}(b"abcdefghijk")
 assertWarns(self, DeprecationWarning) do 
 shuffle(seq, mock_random)
@@ -113,7 +113,7 @@ end
 assert_called_with(mock_random)
 end
 
-function test_choice(self::TestBasicOps)
+function test_choice(self)
 choice = self.gen.choice
 assertRaises(self, IndexError) do 
 choice([])
@@ -122,7 +122,7 @@ assertEqual(self, choice([50]), 50)
 assertIn(self, choice([25, 75]), [25, 75])
 end
 
-function test_sample(self::TestBasicOps)
+function test_sample(self)
 N = 100
 population = 0:N - 1
 for k in 0:N
@@ -137,7 +137,7 @@ assertRaises(self, ValueError, self.gen.sample, population, N + 1)
 assertRaises(self, ValueError, self.gen.sample, [], -1)
 end
 
-function test_sample_distribution(self::TestBasicOps)
+function test_sample_distribution(self)
 n = 5
 pop = 0:n - 1
 trials = 10000
@@ -158,93 +158,93 @@ end
 end
 end
 
-function test_sample_inputs(self::TestBasicOps)
+function test_sample_inputs(self)
 sample(self.gen, 0:19, 2)
 sample(self.gen, 0:19, 2)
 sample(self.gen, string("abcdefghijklmnopqrst"), 2)
 sample(self.gen, tuple("abcdefghijklmnopqrst"), 2)
 end
 
-function test_sample_on_dicts(self::TestBasicOps)
+function test_sample_on_dicts(self)
 assertRaises(self, TypeError, self.gen.sample, fromkeys(dict, "abcdef"), 2)
 end
 
-function test_sample_on_sets(self::TestBasicOps)
+function test_sample_on_sets(self)
 assertWarns(self, DeprecationWarning) do 
 population = Set([10, 20, 30, 40, 50, 60, 70])
-sample(self.gen, population, 5)
+sample(self.gen, population, k = 5)
 end
 end
 
-function test_sample_on_seqsets(self::SeqSet)
+function test_sample_on_seqsets(self)
 mutable struct SeqSet <: abc.Sequence
 _items
 end
-function __len__(self::SeqSet)::Int64
+function __len__(self)::Int64
 return length(self._items)
 end
 
-function __getitem__(self::SeqSet, index)
+function __getitem__(self, index)
 return self._items[index + 1]
 end
 
 population = SeqSet([2, 4, 1, 3])
 catch_warnings() do 
 simplefilter("error", DeprecationWarning)
-sample(self.gen, population, 2)
+sample(self.gen, population, k = 2)
 end
 end
 
-function test_sample_with_counts(self::TestBasicOps)
+function test_sample_with_counts(self)
 sample = self.gen.sample
 colors = ["red", "green", "blue", "orange", "black", "brown", "amber"]
 counts = [500, 200, 20, 10, 5, 0, 1]
 k = 700
-summary = Counter(sample(colors, counts, k))
+summary = Counter(sample(colors, counts = counts, k = k))
 assertEqual(self, sum(values(summary)), k)
 for (color, weight) in zip(colors, counts)
 assertLessEqual(self, summary[color + 1], weight)
 end
 assertNotIn(self, "brown", summary)
 k = sum(counts)
-summary = Counter(sample(colors, counts, k))
+summary = Counter(sample(colors, counts = counts, k = k))
 assertEqual(self, sum(values(summary)), k)
 for (color, weight) in zip(colors, counts)
 assertLessEqual(self, summary[color + 1], weight)
 end
 assertNotIn(self, "brown", summary)
-summary = Counter(sample(["x"], [10], 8))
-assertEqual(self, summary, Counter(8))
+summary = Counter(sample(["x"], counts = [10], k = 8))
+assertEqual(self, summary, Counter(x = 8))
 nc = length(colors)
-summary = Counter(sample(colors, repeat([10],nc), 10*nc))
+summary = Counter(sample(colors, counts = repeat([10],nc), k = 10*nc))
 assertEqual(self, summary, Counter(repeat(colors,10)))
 assertRaises(self, TypeError) do 
-sample(["red", "green", "blue"], 10, 10)
+sample(["red", "green", "blue"], counts = 10, k = 10)
 end
 assertRaises(self, ValueError) do 
-sample(["red", "green", "blue"], [-3, -7, -8], 2)
+sample(["red", "green", "blue"], counts = [-3, -7, -8], k = 2)
 end
 assertRaises(self, ValueError) do 
-sample(["red", "green", "blue"], [0, 0, 0], 2)
+sample(["red", "green", "blue"], counts = [0, 0, 0], k = 2)
 end
 assertRaises(self, ValueError) do 
-sample(["red", "green"], [10, 10], 21)
+sample(["red", "green"], counts = [10, 10], k = 21)
 end
 assertRaises(self, ValueError) do 
-sample(["red", "green", "blue"], [1, 2], 2)
+sample(["red", "green", "blue"], counts = [1, 2], k = 2)
 end
 assertRaises(self, ValueError) do 
-sample(["red", "green", "blue"], [1, 2, 3, 4], 2)
+sample(["red", "green", "blue"], counts = [1, 2, 3, 4], k = 2)
 end
 end
 
-function test_choices(self::TestBasicOps)
+function test_choices(self)
 choices = self.gen.choices
 data = ["red", "green", "blue", "yellow"]
 str_data = "abcd"
 range_data = 0:3
 set_data = set(0:3)
-for sample in [choices(data, 5), choices(data, 0:3, 5), choices(5, data, 0:3), choices(5, data, 0:3)]
+for sample in [choices(data, k = 5), choices(data, 0:3, k = 5), choices(k = 5, population = data, weights = 0:3), choices(k = 5, population = data, cum_weights = 0:3)]
 assertEqual(self, length(sample), 5)
 assertEqual(self, type_(sample), list)
 assertTrue(self, set(sample) <= set(data))
@@ -252,78 +252,78 @@ end
 assertRaises(self, TypeError) do 
 choices(2)
 end
-assertEqual(self, choices(data, 0), [])
-assertEqual(self, choices(data, -1), [])
+assertEqual(self, choices(data, k = 0), [])
+assertEqual(self, choices(data, k = -1), [])
 assertRaises(self, TypeError) do 
-choices(data, 2.5)
+choices(data, k = 2.5)
 end
-assertTrue(self, set(choices(str_data, 5)) <= set(str_data))
-assertTrue(self, set(choices(range_data, 5)) <= set(range_data))
+assertTrue(self, set(choices(str_data, k = 5)) <= set(str_data))
+assertTrue(self, set(choices(range_data, k = 5)) <= set(range_data))
 assertRaises(self, TypeError) do 
-choices(set_data, 2)
+choices(set_data, k = 2)
 end
-assertTrue(self, set(choices(data, nothing, 5)) <= set(data))
-assertTrue(self, set(choices(data, nothing, 5)) <= set(data))
+assertTrue(self, set(choices(data, nothing, k = 5)) <= set(data))
+assertTrue(self, set(choices(data, weights = nothing, k = 5)) <= set(data))
 assertRaises(self, ValueError) do 
-choices(data, [1, 2], 5)
+choices(data, [1, 2], k = 5)
 end
 assertRaises(self, TypeError) do 
-choices(data, 10, 5)
+choices(data, 10, k = 5)
 end
 assertRaises(self, TypeError) do 
-choices(data, repeat([nothing],4), 5)
+choices(data, repeat([nothing],4), k = 5)
 end
 for weights in [[15, 10, 25, 30], [15.1, 10.2, 25.2, 30.3], [Fraction(1, 3), Fraction(2, 6), Fraction(3, 6), Fraction(4, 6)], [true, false, true, false]]
-assertTrue(self, set(choices(data, weights, 5)) <= set(data))
+assertTrue(self, set(choices(data, weights, k = 5)) <= set(data))
 end
 assertRaises(self, ValueError) do 
-choices(data, [1, 2], 5)
+choices(data, cum_weights = [1, 2], k = 5)
 end
 assertRaises(self, TypeError) do 
-choices(data, 10, 5)
+choices(data, cum_weights = 10, k = 5)
 end
 assertRaises(self, TypeError) do 
-choices(data, repeat([nothing],4), 5)
+choices(data, cum_weights = repeat([nothing],4), k = 5)
 end
 assertRaises(self, TypeError) do 
-choices(data, 0:3, 0:3, 5)
+choices(data, 0:3, cum_weights = 0:3, k = 5)
 end
 for weights in [[15, 10, 25, 30], [15.1, 10.2, 25.2, 30.3], [Fraction(1, 3), Fraction(2, 6), Fraction(3, 6), Fraction(4, 6)]]
-assertTrue(self, set(choices(data, weights, 5)) <= set(data))
+assertTrue(self, set(choices(data, cum_weights = weights, k = 5)) <= set(data))
 end
 assertEqual(self, choices("abcd", [1, 0, 0, 0]), ["a"])
 assertEqual(self, choices("abcd", [0, 1, 0, 0]), ["b"])
 assertEqual(self, choices("abcd", [0, 0, 1, 0]), ["c"])
 assertEqual(self, choices("abcd", [0, 0, 0, 1]), ["d"])
 assertRaises(self, IndexError) do 
-choices([], 1)
+choices([], k = 1)
 end
 assertRaises(self, IndexError) do 
-choices([], [], 1)
+choices([], weights = [], k = 1)
 end
 assertRaises(self, IndexError) do 
-choices([], [], 5)
+choices([], cum_weights = [], k = 5)
 end
 end
 
-function test_choices_subnormal(self::TestBasicOps)
+function test_choices_subnormal(self)
 choices = self.gen.choices
-choices([1, 2], [1e-323, 1e-323], 5000)
+choices(population = [1, 2], weights = [1e-323, 1e-323], k = 5000)
 end
 
-function test_choices_with_all_zero_weights(self::TestBasicOps)
+function test_choices_with_all_zero_weights(self)
 assertRaises(self, ValueError) do 
 choices(self.gen, "AB", [0.0, 0.0])
 end
 end
 
-function test_choices_negative_total(self::TestBasicOps)
+function test_choices_negative_total(self)
 assertRaises(self, ValueError) do 
 choices(self.gen, "ABC", [3, -5, 1])
 end
 end
 
-function test_choices_infinite_total(self::TestBasicOps)
+function test_choices_infinite_total(self)
 assertRaises(self, ValueError) do 
 choices(self.gen, "A", [float("inf")])
 end
@@ -341,7 +341,7 @@ choices(self.gen, "AB", [float("-inf"), float("inf")])
 end
 end
 
-function test_gauss(self::TestBasicOps)
+function test_gauss(self)
 for seed in (1, 12, 123, 1234, 12345, 123456, 654321)
 seed(self.gen, seed)
 x1 = random(self.gen)
@@ -354,7 +354,7 @@ assertEqual(self, y1, y2)
 end
 end
 
-function test_getrandbits(self::TestBasicOps)
+function test_getrandbits(self)
 for k in 1:999
 assertTrue(self, 0 <= getrandbits(self.gen, k) < (2^k))
 end
@@ -378,7 +378,7 @@ assertRaises(self, ValueError, self.gen.getrandbits, -1)
 assertRaises(self, TypeError, self.gen.getrandbits, 10.1)
 end
 
-function test_pickling(self::TestBasicOps)
+function test_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 state = dumps(self.gen, proto)
 origseq = [random(self.gen) for i in 0:9]
@@ -388,21 +388,21 @@ assertEqual(self, origseq, restoredseq)
 end
 end
 
-function test_bug_41052(self::TestBasicOps)
+function test_bug_41052(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 r = Random()
 assertRaises(self, TypeError, pickle.dumps, r, proto)
 end
 end
 
-function test_bug_42008(self::TestBasicOps)
+function test_bug_42008(self)
 r1 = Random()
 seed(r1, 8675309)
 r2 = Random(8675309)
 assertEqual(self, random(r1), random(r2))
 end
 
-function test_bug_1727780(self::TestBasicOps)
+function test_bug_1727780(self)
 files = [("randv2_32.pck", 780), ("randv2_64.pck", 866), ("randv3.pck", 343)]
 for (file, value) in files
 readline(findfile(file)) do f 
@@ -412,14 +412,14 @@ assertEqual(self, Int(random(r)*1000), value)
 end
 end
 
-function test_bug_9025(self::TestBasicOps)
+function test_bug_9025(self)
 n = 100000
 randrange = self.gen.randrange
 k = sum(((randrange(6755399441055744) % 3) == 2 for i in 0:n - 1))
 assertTrue(self, 0.3 < (k / n) < 0.37, k / n)
 end
 
-function test_randbytes(self::TestBasicOps)
+function test_randbytes(self)
 for n in 1:9
 data = randbytes(self.gen, n)
 assertEqual(self, type_(data), bytes)
@@ -462,32 +462,32 @@ gen
                     SystemRandom_TestBasicOps(gen = SystemRandom()) =
                         new(gen)
 end
-function test_autoseed(self::SystemRandom_TestBasicOps)
+function test_autoseed(self)
 seed(self.gen)
 end
 
-function test_saverestore(self::SystemRandom_TestBasicOps)
+function test_saverestore(self)
 @test_throws NotImplementedError self.gen.getstate()
 @test_throws NotImplementedError self.gen.setstate(nothing)
 end
 
-function test_seedargs(self::SystemRandom_TestBasicOps)
+function test_seedargs(self)
 seed(self.gen, 100)
 end
 
-function test_gauss(self::SystemRandom_TestBasicOps)
+function test_gauss(self)
 self.gen.gauss_next = nothing
 seed(self.gen, 100)
 @test (self.gen.gauss_next == nothing)
 end
 
-function test_pickling(self::SystemRandom_TestBasicOps)
+function test_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 @test_throws NotImplementedError pickle.dumps(self.gen, proto)
 end
 end
 
-function test_53_bits_per_float(self::SystemRandom_TestBasicOps)
+function test_53_bits_per_float(self)
 span = 2^53
 cum = 0
 for i in 0:99
@@ -496,7 +496,7 @@ end
 @test (cum == span - 1)
 end
 
-function test_bigrand(self::SystemRandom_TestBasicOps)
+function test_bigrand(self)
 span = 2^500
 cum = 0
 for i in 0:99
@@ -507,7 +507,7 @@ end
 @test (cum == span - 1)
 end
 
-function test_bigrand_ranges(self::SystemRandom_TestBasicOps)
+function test_bigrand_ranges(self)
 for i in [40, 80, 160, 200, 211, 250, 375, 512, 550]
 start = randrange(self.gen, 2^(i - 2))
 stop = randrange(self.gen, 2^i)
@@ -518,20 +518,20 @@ end
 end
 end
 
-function test_rangelimits(self::SystemRandom_TestBasicOps)
+function test_rangelimits(self)
 for (start, stop) in [(-2, 0), (-(2^60) - 2, -(2^60)), (2^60, 2^60 + 2)]
 @test (set(start:stop - 1) == set([randrange(self.gen, start, stop) for i in 0:99]))
 end
 end
 
-function test_randrange_nonunit_step(self::SystemRandom_TestBasicOps)
+function test_randrange_nonunit_step(self)
 rint = randrange(self.gen, 0, 10, 2)
 assertIn(self, rint, (0, 2, 4, 6, 8))
 rint = randrange(self.gen, 0, 2, 2)
 @test (rint == 0)
 end
 
-function test_randrange_errors(self::SystemRandom_TestBasicOps)
+function test_randrange_errors(self)
 raises = partial(self.assertRaises, ValueError, self.gen.randrange)
 raises(3, 3)
 raises(-721)
@@ -555,7 +555,7 @@ assertWarns(self, DeprecationWarning, self.gen.randrange, 0, 42, 1.0)
 assertWarns(self, DeprecationWarning, raises, 0, 0, 1.0)
 end
 
-function test_randrange_argument_handling(self::SystemRandom_TestBasicOps)
+function test_randrange_argument_handling(self)
 randrange = self.gen.randrange
 assertWarns(self, DeprecationWarning) do 
 randrange(10.0, 20, 2)
@@ -586,17 +586,17 @@ end
 end
 end
 
-function test_randrange_step(self::SystemRandom_TestBasicOps)
+function test_randrange_step(self)
 randrange = self.gen.randrange
 assertRaises(self, TypeError) do 
-randrange(1000, 100)
+randrange(1000, step = 100)
 end
 assertRaises(self, TypeError) do 
-randrange(1000, nothing, 100)
+randrange(1000, nothing, step = 100)
 end
 end
 
-function test_randbelow_logic(self::SystemRandom_TestBasicOps, _log = log, int = int)
+function test_randbelow_logic(self, _log = log, int = int)
 for i in 1:999
 n = 1 << i
 numbits = i + 1
@@ -620,27 +620,27 @@ gen
                     MersenneTwister_TestBasicOps(gen = Random()) =
                         new(gen)
 end
-function test_guaranteed_stable(self::MersenneTwister_TestBasicOps)
-seed(self.gen, 3456147, 1)
+function test_guaranteed_stable(self)
+seed(self.gen, 3456147, version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.ac362300d90d2p-1", "0x1.9d16f74365005p-1", "0x1.1ebb4352e4c4dp-1", "0x1.1a7422abf9c11p-1"])
-seed(self.gen, "the quick brown fox", 2)
+seed(self.gen, "the quick brown fox", version = 2)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.1239ddfb11b7cp-3", "0x1.b3cbb5c51b120p-4", "0x1.8c4f55116b60fp-1", "0x1.63eb525174a27p-1"])
 end
 
-function test_bug_27706(self::MersenneTwister_TestBasicOps)
-seed(self.gen, "nofar", 1)
+function test_bug_27706(self)
+seed(self.gen, "nofar", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.8645314505ad7p-1", "0x1.afb1f82e40a40p-5", "0x1.2a59d2285e971p-1", "0x1.56977142a7880p-6"])
-seed(self.gen, "rachel", 1)
+seed(self.gen, "rachel", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.0b294cc856fcdp-1", "0x1.2ad22d79e77b8p-3", "0x1.3052b9c072678p-2", "0x1.578f332106574p-3"])
-seed(self.gen, "", 1)
+seed(self.gen, "", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.b0580f98a7dbep-1", "0x1.84129978f9c1ap-1", "0x1.aeaa51052e978p-2", "0x1.092178fb945a6p-2"])
 end
 
-function test_bug_31478(self::BadInt)
+function test_bug_31478(self)
 mutable struct BadInt <: AbstractBadInt
 
 end
-function __abs__(self::BadInt)
+function __abs__(self)
 return nothing
 end
 
@@ -653,23 +653,23 @@ end
 end
 end
 
-function test_bug_31482(self::MersenneTwister_TestBasicOps)
-seed(self.gen, b"nofar", 1)
+function test_bug_31482(self)
+seed(self.gen, b"nofar", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.8645314505ad7p-1", "0x1.afb1f82e40a40p-5", "0x1.2a59d2285e971p-1", "0x1.56977142a7880p-6"])
-seed(self.gen, b"rachel", 1)
+seed(self.gen, b"rachel", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.0b294cc856fcdp-1", "0x1.2ad22d79e77b8p-3", "0x1.3052b9c072678p-2", "0x1.578f332106574p-3"])
-seed(self.gen, b"", 1)
+seed(self.gen, b"", version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.b0580f98a7dbep-1", "0x1.84129978f9c1ap-1", "0x1.aeaa51052e978p-2", "0x1.092178fb945a6p-2"])
 b = b"\x00 @`\x80\xa0\xc0\xe0\xf0"
-seed(self.gen, b, 1)
+seed(self.gen, b, version = 1)
 @test ([hex(random(self.gen)) for i in 0:3] == ["0x1.52c2fde444d23p-1", "0x1.875174f0daea4p-2", "0x1.9e9b2c50e5cd2p-1", "0x1.fa57768bd321cp-2"])
 end
 
-function test_setstate_first_arg(self::MersenneTwister_TestBasicOps)
+function test_setstate_first_arg(self)
 @test_throws ValueError self.gen.setstate((1, nothing, nothing))
 end
 
-function test_setstate_middle_arg(self::MersenneTwister_TestBasicOps)
+function test_setstate_middle_arg(self)
 start_state = getstate(self.gen)
 @test_throws TypeError self.gen.setstate((2, nothing, nothing))
 @test_throws ValueError self.gen.setstate((2, (1, 2, 3), nothing))
@@ -691,16 +691,16 @@ state = (parse(Int, x) for x in state_values)
 @test_throws TypeError self.gen.setstate((2, state, nothing))
 end
 
-function test_referenceImplementation(self::MersenneTwister_TestBasicOps)
+function test_referenceImplementation(self)
 expected = [0.4583980307371326, 0.8605781520197878, 0.9284833172678215, 0.3593268111978246, 0.08182349376244957, 0.1433222647016933, 0.08429782382352002, 0.5381486467183145, 0.0892150249119934, 0.7848619610537291]
 seed(self.gen, ((61731 + (24903 << 32)) + (614 << 64)) + (42143 << 96))
 actual = randomlist(self, 2000)[length(randomlist(self, 2000)) - -9:end]
 for (a, e) in zip(actual, expected)
-assertAlmostEqual(self, a, e, 14)
+assertAlmostEqual(self, a, e, places = 14)
 end
 end
 
-function test_strong_reference_implementation(self::MersenneTwister_TestBasicOps)
+function test_strong_reference_implementation(self)
 expected = [4128882400830239, 7751398889519013, 8363034243334166, 3236528186029503, 737000512037440, 1290932195808883, 759287295919497, 4847212089661076, 803577505899006, 7069408070677702]
 seed(self.gen, ((61731 + (24903 << 32)) + (614 << 64)) + (42143 << 96))
 actual = randomlist(self, 2000)[length(randomlist(self, 2000)) - -9:end]
@@ -709,12 +709,12 @@ for (a, e) in zip(actual, expected)
 end
 end
 
-function test_long_seed(self::MersenneTwister_TestBasicOps)
+function test_long_seed(self)
 seed = (1 << 10000*8) - 1
 seed(self.gen, seed)
 end
 
-function test_53_bits_per_float(self::MersenneTwister_TestBasicOps)
+function test_53_bits_per_float(self)
 span = 2^53
 cum = 0
 for i in 0:99
@@ -723,7 +723,7 @@ end
 @test (cum == span - 1)
 end
 
-function test_bigrand(self::MersenneTwister_TestBasicOps)
+function test_bigrand(self)
 span = 2^500
 cum = 0
 for i in 0:99
@@ -734,7 +734,7 @@ end
 @test (cum == span - 1)
 end
 
-function test_bigrand_ranges(self::MersenneTwister_TestBasicOps)
+function test_bigrand_ranges(self)
 for i in [40, 80, 160, 200, 211, 250, 375, 512, 550]
 start = randrange(self.gen, 2^(i - 2))
 stop = randrange(self.gen, 2^i)
@@ -745,24 +745,24 @@ end
 end
 end
 
-function test_rangelimits(self::MersenneTwister_TestBasicOps)
+function test_rangelimits(self)
 for (start, stop) in [(-2, 0), (-(2^60) - 2, -(2^60)), (2^60, 2^60 + 2)]
 @test (set(start:stop - 1) == set([randrange(self.gen, start, stop) for i in 0:99]))
 end
 end
 
-function test_getrandbits(self::MersenneTwister_TestBasicOps)
+function test_getrandbits(self)
 test_getrandbits(super())
 seed(self.gen, 1234567)
 @test (getrandbits(self.gen, 100) == 97904845777343510404718956115)
 end
 
-function test_randrange_uses_getrandbits(self::MersenneTwister_TestBasicOps)
+function test_randrange_uses_getrandbits(self)
 seed(self.gen, 1234567)
 @test (randrange(self.gen, 2^99) == 97904845777343510404718956115)
 end
 
-function test_randbelow_logic(self::MersenneTwister_TestBasicOps, _log = log, int = int)
+function test_randbelow_logic(self, _log = log, int = int)
 for i in 1:999
 n = 1 << i
 numbits = i + 1
@@ -780,26 +780,26 @@ k = Int(floor(1.00001 + _log(n, 2)))
 end
 end
 
-function test_randbelow_without_getrandbits(self::MersenneTwister_TestBasicOps)
+function test_randbelow_without_getrandbits(self)
 maxsize = 1 << random.BPF
 catch_warnings() do 
 simplefilter("ignore", UserWarning)
-_randbelow_without_getrandbits(self.gen, maxsize + 1, maxsize)
+_randbelow_without_getrandbits(self.gen, maxsize + 1, maxsize = maxsize)
 end
-_randbelow_without_getrandbits(self.gen, 5640, maxsize)
-x = _randbelow_without_getrandbits(self.gen, 0, maxsize)
+_randbelow_without_getrandbits(self.gen, 5640, maxsize = maxsize)
+x = _randbelow_without_getrandbits(self.gen, 0, maxsize = maxsize)
 @test (x == 0)
 n = 42
 epsilon = 0.01
 limit = (maxsize - (maxsize % n)) / maxsize
 object(unittest.mock.patch, random.Random, "random") do random_mock 
 random_mock.side_effect = [limit + epsilon, limit - epsilon]
-_randbelow_without_getrandbits(self.gen, n, maxsize)
+_randbelow_without_getrandbits(self.gen, n, maxsize = maxsize)
 @test (random_mock.call_count == 2)
 end
 end
 
-function test_randrange_bug_1590891(self::MersenneTwister_TestBasicOps)
+function test_randrange_bug_1590891(self)
 start = 1000000000000
 stop = -100000000000000000000
 step = -200
@@ -808,32 +808,32 @@ x = randrange(self.gen, start, stop, step)
 @test ((x + stop) % step == 0)
 end
 
-function test_choices_algorithms(self::MersenneTwister_TestBasicOps)
+function test_choices_algorithms(self)
 choices = self.gen.choices
 n = 104729
 seed(self.gen, 8675309)
-a = choices(self.gen, 0:n - 1, 10000)
+a = choices(self.gen, 0:n - 1, k = 10000)
 seed(self.gen, 8675309)
-b = choices(self.gen, 0:n - 1, repeat([1],n), 10000)
+b = choices(self.gen, 0:n - 1, repeat([1],n), k = 10000)
 @test (a == b)
 seed(self.gen, 8675309)
-c = choices(self.gen, 0:n - 1, 1:n, 10000)
+c = choices(self.gen, 0:n - 1, cum_weights = 1:n, k = 10000)
 @test (a == c)
 population = ["Red", "Black", "Green"]
 weights = [18, 18, 2]
 cum_weights = [18, 36, 38]
 expanded_population = append!(append!(repeat(["Red"],18), repeat(["Black"],18)), repeat(["Green"],2))
 seed(self.gen, 9035768)
-a = choices(self.gen, expanded_population, 10000)
+a = choices(self.gen, expanded_population, k = 10000)
 seed(self.gen, 9035768)
-b = choices(self.gen, population, weights, 10000)
+b = choices(self.gen, population, weights, k = 10000)
 @test (a == b)
 seed(self.gen, 9035768)
-c = choices(self.gen, population, cum_weights, 10000)
+c = choices(self.gen, population, cum_weights = cum_weights, k = 10000)
 @test (a == c)
 end
 
-function test_randbytes(self::MersenneTwister_TestBasicOps)
+function test_randbytes(self)
 test_randbytes(super())
 seed = 8675309
 expected = b"3\xa8\xf9f\xf4\xa4\xd06\x19\x8f\x9f\x82\x02oe\xf0"
@@ -855,7 +855,7 @@ expected3 = join((expected[i + 2:i + 4] for i in 0:4:length(expected) - 1), b"")
 @test (join((randbytes(self.gen, 3) for _ in 0:3), b"") == expected3)
 end
 
-function test_randbytes_getrandbits(self::MersenneTwister_TestBasicOps)
+function test_randbytes_getrandbits(self)
 seed = 2849427419
 gen2 = Random()
 seed(self.gen, seed)
@@ -865,26 +865,26 @@ for n in 0:8
 end
 end
 
-function test_sample_counts_equivalence(self::MersenneTwister_TestBasicOps)
+function test_sample_counts_equivalence(self)
 sample = self.gen.sample
 seed = self.gen.seed
 colors = ["red", "green", "blue", "orange", "black", "amber"]
 counts = [500, 200, 20, 10, 5, 1]
 k = 700
 seed(8675309)
-s1 = sample(colors, counts, k)
+s1 = sample(colors, counts = counts, k = k)
 seed(8675309)
 expanded = [color for (color, count) in zip(colors, counts) for i in 0:count - 1]
 @test (length(expanded) == sum(counts))
-s2 = sample(expanded, k)
+s2 = sample(expanded, k = k)
 @test (s1 == s2)
 pop = "abcdefghi"
 counts = [10, 9, 8, 7, 6, 5, 4, 3, 2]
 seed(8675309)
-s1 = join(sample(pop, counts, 30), "")
+s1 = join(sample(pop, counts = counts, k = 30), "")
 expanded = join([letter for (letter, count) in zip(pop, counts) for i in 0:count - 1], "")
 seed(8675309)
-s2 = join(sample(expanded, 30), "")
+s2 = join(sample(expanded, k = 30), "")
 @test (s1 == s2)
 end
 
@@ -899,7 +899,7 @@ end
 mutable struct TestDistributions <: AbstractTestDistributions
 
 end
-function test_zeroinputs(self::TestDistributions)
+function test_zeroinputs(self)
 g = Random()
 x = [random(g) for i in 0:49] + repeat([0.0],5)
 g.random = x[begin:end].pop
@@ -932,7 +932,7 @@ g.random = x[begin:end].pop
 triangular(g, 0.0, 1.0, 1.0 / 3.0)
 end
 
-function test_avg_std(self::TestDistributions)
+function test_avg_std(self)
 g = Random()
 N = 5000
 x = [i / float(N) for i in 1:N - 1]
@@ -955,12 +955,12 @@ s1 += e
 s2 += (e - mu)^2
 end
 N = length(y)
-assertAlmostEqual(self, s1 / N, mu, 2, "%s%r" % (variate.__name__, args))
-assertAlmostEqual(self, s2 / (N - 1), sigmasqrd, 2, "%s%r" % (variate.__name__, args))
+assertAlmostEqual(self, s1 / N, mu, places = 2, msg = "%s%r" % (variate.__name__, args))
+assertAlmostEqual(self, s2 / (N - 1), sigmasqrd, places = 2, msg = "%s%r" % (variate.__name__, args))
 end
 end
 
-function test_constant(self::TestDistributions)
+function test_constant(self)
 g = Random()
 N = 100
 for (variate, args, expected) in [(g.uniform, (10.0, 10.0), 10.0), (g.triangular, (10.0, 10.0), 10.0), (g.triangular, (10.0, 10.0, 10.0), 10.0), (g.expovariate, (float("inf"),), 0.0), (g.vonmisesvariate, (3.0, float("inf")), 3.0), (g.gauss, (10.0, 0.0), 10.0), (g.lognormvariate, (0.0, 0.0), 1.0), (g.lognormvariate, (-float("inf"), 0.0), 0.0), (g.normalvariate, (10.0, 0.0), 10.0), (g.paretovariate, (float("inf"),), 1.0), (g.weibullvariate, (10.0, float("inf")), 10.0), (g.weibullvariate, (0.0, 10.0), 0.0)]
@@ -970,7 +970,7 @@ end
 end
 end
 
-function test_von_mises_range(self::TestDistributions)
+function test_von_mises_range(self)
 g = Random()
 N = 100
 for mu in (0.0, 0.1, 3.1, 6.2)
@@ -983,31 +983,31 @@ end
 end
 end
 
-function test_von_mises_large_kappa(self::TestDistributions)
+function test_von_mises_large_kappa(self)
 vonmisesvariate(0, 1000000000000000.0)
 vonmisesvariate(0, 1e+100)
 end
 
-function test_gammavariate_errors(self::TestDistributions)
+function test_gammavariate_errors(self)
 @test_throws ValueError random.gammavariate(-1, 3)
 @test_throws ValueError random.gammavariate(0, 2)
 @test_throws ValueError random.gammavariate(2, 0)
 @test_throws ValueError random.gammavariate(1, -3)
 end
 
-function test_gammavariate_alpha_greater_one(self::TestDistributions, random_mock)
+function test_gammavariate_alpha_greater_one(self, random_mock)
 random_mock.side_effect = [1e-08, 0.5, 0.3]
 returned_value = gammavariate(1.1, 2.3)
 assertAlmostEqual(self, returned_value, 2.53)
 end
 
-function test_gammavariate_alpha_equal_one(self::TestDistributions, random_mock)
+function test_gammavariate_alpha_equal_one(self, random_mock)
 random_mock.side_effect = [0.45]
 returned_value = gammavariate(1.0, 3.14)
 assertAlmostEqual(self, returned_value, 1.877208182372648)
 end
 
-function test_gammavariate_alpha_equal_one_equals_expovariate(self::TestDistributions, random_mock)
+function test_gammavariate_alpha_equal_one_equals_expovariate(self, random_mock)
 beta = 3.14
 random_mock.side_effect = [1e-08, 1e-08]
 gammavariate_returned_value = gammavariate(1.0, beta)
@@ -1015,7 +1015,7 @@ expovariate_returned_value = expovariate(1.0 / beta)
 assertAlmostEqual(self, gammavariate_returned_value, expovariate_returned_value)
 end
 
-function test_gammavariate_alpha_between_zero_and_one(self::TestDistributions, random_mock)
+function test_gammavariate_alpha_between_zero_and_one(self, random_mock)
 _e = random._e
 _exp = random._exp
 _log = random._log
@@ -1035,7 +1035,7 @@ returned_value = gammavariate(alpha, beta)
 assertAlmostEqual(self, returned_value, 1.5830349561760781)
 end
 
-function test_betavariate_return_zero(self::TestDistributions, gammavariate_mock)
+function test_betavariate_return_zero(self, gammavariate_mock)
 gammavariate_mock.return_value = 0.0
 @test (0.0 == betavariate(2.71828, 3.14159))
 end
@@ -1046,7 +1046,7 @@ newarg
                     TestRandomSubclassing(newarg = nothing) =
                         new(newarg)
 end
-function test_random_subclass_with_kwargs(self::Subclass)
+function test_random_subclass_with_kwargs(self)
 mutable struct Subclass <: AbstractSubclass
 newarg
 
@@ -1059,16 +1059,16 @@ end
 Subclass(1)
 end
 
-function test_subclasses_overriding_methods(self::SubClass8)
+function test_subclasses_overriding_methods(self)
 mutable struct SubClass1 <: AbstractSubClass1
 
 end
-function random(self::SubClass1)
+function random(self)
 add(called, "SubClass1.random")
 return random(random.Random)
 end
 
-function getrandbits(self::SubClass1, n)
+function getrandbits(self, n)
 add(called, "SubClass1.getrandbits")
 return getrandbits(random.Random, self)
 end
@@ -1079,7 +1079,7 @@ assertEqual(self, called, Set(["SubClass1.getrandbits"]))
 mutable struct SubClass2 <: AbstractSubClass2
 
 end
-function random(self::SubClass2)
+function random(self)
 add(called, "SubClass2.random")
 return random(random.Random)
 end
@@ -1090,7 +1090,7 @@ assertEqual(self, called, Set(["SubClass2.random"]))
 mutable struct SubClass3 <: AbstractSubClass3
 
 end
-function getrandbits(self::SubClass3, n)
+function getrandbits(self, n)
 add(called, "SubClass3.getrandbits")
 return getrandbits(random.Random, self)
 end
@@ -1101,7 +1101,7 @@ assertEqual(self, called, Set(["SubClass3.getrandbits"]))
 mutable struct SubClass4 <: AbstractSubClass4
 
 end
-function random(self::SubClass4)
+function random(self)
 add(called, "SubClass4.random")
 return random(random.Random)
 end
@@ -1112,7 +1112,7 @@ assertEqual(self, called, Set(["SubClass4.random"]))
 mutable struct Mixin1 <: AbstractMixin1
 
 end
-function random(self::Mixin1)
+function random(self)
 add(called, "Mixin1.random")
 return random(random.Random)
 end
@@ -1120,7 +1120,7 @@ end
 mutable struct Mixin2 <: AbstractMixin2
 
 end
-function getrandbits(self::Mixin2, n)
+function getrandbits(self, n)
 add(called, "Mixin2.getrandbits")
 return getrandbits(random.Random, self)
 end
@@ -1158,18 +1158,18 @@ end
 mutable struct TestModule <: AbstractTestModule
 
 end
-function testMagicConstants(self::TestModule)
+function testMagicConstants(self)
 assertAlmostEqual(self, random.NV_MAGICCONST, 1.71552776992141)
 assertAlmostEqual(self, random.TWOPI, 6.28318530718)
 assertAlmostEqual(self, random.LOG4, 1.38629436111989)
 assertAlmostEqual(self, random.SG_MAGICCONST, 2.50407739677627)
 end
 
-function test__all__(self::TestModule)
+function test__all__(self)
 @test set(random.__all__) <= set(dir(random))
 end
 
-function test_after_fork(self::TestModule)
+function test_after_fork(self)
 r, w = pipe()
 pid = fork()
 if pid == 0
@@ -1188,7 +1188,7 @@ readline(r) do f
 child_val = eval(read(f))
 end
 assertNotEqual(self, val, child_val)
-wait_process(pid, 0)
+wait_process(pid, exitcode = 0)
 end
 end
 

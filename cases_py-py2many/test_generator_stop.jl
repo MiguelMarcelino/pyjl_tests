@@ -5,7 +5,7 @@ abstract type AbstractTestPEP479 end
 mutable struct TestPEP479 <: AbstractTestPEP479
 
 end
-function test_stopiteration_wrapping(self::TestPEP479)
+function test_stopiteration_wrapping(self)
 Channel() do ch_test_stopiteration_wrapping 
 function f()
 throw(StopIteration)
@@ -23,7 +23,7 @@ end
 end
 end
 
-function test_stopiteration_wrapping_context(self::TestPEP479)
+function test_stopiteration_wrapping_context(self)
 Channel() do ch_test_stopiteration_wrapping_context 
 function f()
 throw(StopIteration)

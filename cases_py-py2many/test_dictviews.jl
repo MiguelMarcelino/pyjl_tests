@@ -10,7 +10,7 @@ abstract type AbstractExc <: Exception end
 mutable struct DictSetTest <: AbstractDictSetTest
 
 end
-function test_constructors_not_callable(self::DictSetTest)
+function test_constructors_not_callable(self)
 kt = type_(keys(Dict()))
 @test_throws TypeError kt(Dict())
 @test_throws TypeError kt()
@@ -22,7 +22,7 @@ vt = type_(values(Dict()))
 @test_throws TypeError vt()
 end
 
-function test_dict_keys(self::DictSetTest)
+function test_dict_keys(self)
 d = Dict(1 => 10, "a" => "ABC")
 keys = keys(d)
 @test (length(keys) == 2)
@@ -43,7 +43,7 @@ delete!(e, "a")
 assertNotEqual(self, keys(d), keys(e))
 end
 
-function test_dict_items(self::DictSetTest)
+function test_dict_items(self)
 d = Dict(1 => 10, "a" => "ABC")
 items = collect(d)
 @test (length(items) == 2)
@@ -67,21 +67,21 @@ e["a"] = "def"
 assertNotEqual(self, collect(d), items(e))
 end
 
-function test_dict_mixed_keys_items(self::DictSetTest)
+function test_dict_mixed_keys_items(self)
 d = Dict((1, 1) => 11, (2, 2) => 22)
 e = Dict(1 => 1, 2 => 2)
 @test (keys(d) == collect(e))
 assertNotEqual(self, collect(d), keys(e))
 end
 
-function test_dict_values(self::DictSetTest)
+function test_dict_values(self)
 d = Dict(1 => 10, "a" => "ABC")
 values = values(d)
 @test (set(values) == Set([10, "ABC"]))
 @test (length(values) == 2)
 end
 
-function test_dict_repr(self::DictSetTest)
+function test_dict_repr(self)
 d = Dict(1 => 10, "a" => "ABC")
 @test isa(self, repr(d))
 r = repr(collect(d))
@@ -95,7 +95,7 @@ r = repr(values(d))
 @test r === "dict_values([\'ABC\', 10])" || r === "dict_values([10, \'ABC\'])"
 end
 
-function test_keys_set_operations(self::CustomSet)
+function test_keys_set_operations(self)
 d1 = Dict("a" => 1, "b" => 2)
 d2 = Dict("b" => 3, "c" => 2)
 d3 = Dict("d" => 4, "e" => 5)
@@ -103,7 +103,7 @@ d4 = Dict("d" => 4)
 mutable struct CustomSet <: AbstractCustomSet
 
 end
-function intersection(self::CustomSet, other)::CustomSet
+function intersection(self, other)::CustomSet
 return CustomSet(intersection(super(), other))
 end
 
@@ -161,7 +161,7 @@ assertTrue(self, isdisjoint(keys(de), keys(de)))
 assertTrue(self, isdisjoint(keys(de), [1]))
 end
 
-function test_items_set_operations(self::DictSetTest)
+function test_items_set_operations(self)
 d1 = Dict("a" => 1, "b" => 2)
 d2 = Dict("a" => 2, "b" => 2)
 d3 = Dict("d" => 4, "e" => 5)
@@ -203,7 +203,7 @@ de = Dict()
 @test isdisjoint(collect(de), [1])
 end
 
-function test_set_operations_with_iterator(self::DictSetTest)
+function test_set_operations_with_iterator(self)
 origin = Dict(1 => 2, 3 => 4)
 @test (keys(origin) & (x for x in [1, 2]) == Set([1]))
 @test (keys(origin) | (x for x in [1, 2]) == Set([1, 2, 3]))
@@ -216,7 +216,7 @@ items = collect(origin)
 @test (items - (x for x in [(1, 2)]) == Set([(3, 4)]))
 end
 
-function test_set_operations_with_noniterable(self::DictSetTest)
+function test_set_operations_with_noniterable(self)
 assertRaises(self, TypeError) do 
 keys(Dict()) & 1
 end
@@ -243,7 +243,7 @@ collect(Dict()) - 1
 end
 end
 
-function test_recursive_repr(self::DictSetTest)
+function test_recursive_repr(self)
 d = Dict()
 d[42] = values(d)
 r = repr(d)
@@ -253,7 +253,7 @@ r = repr(d)
 @test isa(self, r)
 end
 
-function test_deeply_nested_repr(self::DictSetTest)
+function test_deeply_nested_repr(self)
 d = Dict()
 for i in 0:getrecursionlimit() + 99
 d = Dict(42 => values(d))
@@ -261,14 +261,14 @@ end
 @test_throws RecursionError repr(d)
 end
 
-function test_copy(self::DictSetTest)
+function test_copy(self)
 d = Dict(1 => 10, "a" => "ABC")
 @test_throws TypeError copy.copy(keys(d))
 @test_throws TypeError copy.copy(values(d))
 @test_throws TypeError copy.copy(collect(d))
 end
 
-function test_compare_error(self::BadEq)
+function test_compare_error(self)
 mutable struct Exc <: AbstractExc
 
 end
@@ -276,11 +276,11 @@ end
 mutable struct BadEq <: AbstractBadEq
 
 end
-function __hash__(self::BadEq)::Int64
+function __hash__(self)::Int64
 return 7
 end
 
-function __eq__(self::BadEq, other)
+function __eq__(self, other)
 throw(Exc)
 end
 
@@ -300,7 +300,7 @@ v2 ∈ values(d)
 end
 end
 
-function test_pickle(self::DictSetTest)
+function test_pickle(self)
 d = Dict(1 => 10, "a" => "ABC")
 for proto in 0:pickle.HIGHEST_PROTOCOL
 @test_throws (TypeError, pickle.PicklingError) pickle.dumps(keys(d), proto)
@@ -309,8 +309,8 @@ for proto in 0:pickle.HIGHEST_PROTOCOL
 end
 end
 
-function test_abc_registry(self::DictSetTest)
-d = dict(1)
+function test_abc_registry(self)
+d = dict(a = 1)
 @test isa(self, keys(d))
 @test isa(self, keys(d))
 @test isa(self, keys(d))

@@ -8,7 +8,7 @@ abstract type AbstractTestFrozen end
 mutable struct TestFrozen <: AbstractTestFrozen
 
 end
-function test_frozen(self::TestFrozen)
+function test_frozen(self)
 name = "__hello__"
 if name ∈ sys.modules
 #Delete Unsupported

@@ -13,17 +13,17 @@ _PyHASH_INF = sys.hash_info.inf
 mutable struct HashTest <: AbstractHashTest
 
 end
-function check_equal_hash(self::HashTest, x, y)
+function check_equal_hash(self, x, y)
 @test (hash(x) == hash(y))
 @test (x == y)
 end
 
-function test_bools(self::HashTest)
+function test_bools(self)
 check_equal_hash(self, false, 0)
 check_equal_hash(self, true, 1)
 end
 
-function test_integers(self::HashTest)
+function test_integers(self)
 for i in -1000:999
 check_equal_hash(self, i, float(i))
 check_equal_hash(self, i, D(i))
@@ -58,7 +58,7 @@ end
 end
 end
 
-function test_binary_floats(self::HashTest)
+function test_binary_floats(self)
 check_equal_hash(self, 0.0, -0.0)
 check_equal_hash(self, 0.0, D(0))
 check_equal_hash(self, -0.0, D(0))
@@ -73,7 +73,7 @@ check_equal_hash(self, x, from_float(F, x))
 end
 end
 
-function test_complex(self::HashTest)
+function test_complex(self)
 test_values = [0.0, -0.0, 1.0, -1.0, 0.40625, -5136.5, float("inf"), float("-inf")]
 for zero in (-0.0, 0.0)
 for value in test_values
@@ -82,7 +82,7 @@ end
 end
 end
 
-function test_decimals(self::HashTest)
+function test_decimals(self)
 zeros = ["0", "-0", "0.0", "-0.0e10", "000e-10"]
 for zero in zeros
 check_equal_hash(self, D(zero), D(0))
@@ -99,22 +99,22 @@ check_equal_hash(self, D("12300.00"), D(12300))
 check_equal_hash(self, D("12300.000"), D(12300))
 end
 
-function test_fractions(self::HashTest)
+function test_fractions(self)
 @test (hash(F(1, _PyHASH_MODULUS)) == _PyHASH_INF)
 @test (hash(F(-1, 3*_PyHASH_MODULUS)) == -(_PyHASH_INF))
 @test (hash(F(7*_PyHASH_MODULUS, 1)) == 0)
 @test (hash(F(-(_PyHASH_MODULUS), 1)) == 0)
 end
 
-function test_hash_normalization(self::HalibutProxy)
+function test_hash_normalization(self)
 mutable struct HalibutProxy <: AbstractHalibutProxy
 
 end
-function __hash__(self::HalibutProxy)
+function __hash__(self)
 return hash("halibut")
 end
 
-function __eq__(self::HalibutProxy, other)::Bool
+function __eq__(self, other)::Bool
 return other == "halibut"
 end
 
@@ -125,7 +125,7 @@ end
 mutable struct ComparisonTest <: AbstractComparisonTest
 
 end
-function test_mixed_comparisons(self::ComparisonTest)
+function test_mixed_comparisons(self)
 test_values = [float("-inf"), D("-1e425000000"), -1e+308, F(-22, 7), -3.14, -2, 0.0, 1e-320, true, F("1.2"), D("1.3"), float("1.4"), F(275807, 195025), D("1.414213562373095048801688724"), F(114243, 80782), F(473596569, 84615), 7e+200, D("infinity")]
 for (i, first) in enumerate(test_values)
 for second in test_values[i + 2:end]
@@ -137,7 +137,7 @@ end
 end
 end
 
-function test_complex(self::ComparisonTest)
+function test_complex(self)
 z = 1.0 + 0im
 w = -3.14 + 2.7im
 for v in (1, 1.0, F(1), D(1), complex(1))

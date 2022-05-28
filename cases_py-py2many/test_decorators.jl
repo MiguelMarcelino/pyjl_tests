@@ -46,7 +46,7 @@ function check()
 if !eval(expr, globals, locals)
 throw(DbcheckError(exprstr, func, args, kwds))
 end
-return func(args..., kwds)
+return func(args..., None = kwds)
 end
 
 return check
@@ -62,7 +62,7 @@ func_name = func.__name__
 counts[func_name + 1] = 0
 function call()
 counts[func_name + 1] += 1
-return func(args..., kwds)
+return func(args..., None = kwds)
 end
 
 call.__name__ = func_name
@@ -98,7 +98,7 @@ index
 __wrapped__
 func
 end
-function test_single(self::C)
+function test_single(self)
 mutable struct C <: AbstractC
 
 end
@@ -110,7 +110,7 @@ assertEqual(self, C.foo(), 42)
 assertEqual(self, foo(C()), 42)
 end
 
-function check_wrapper_attrs(self::TestDecorators, method_wrapper, format_str)
+function check_wrapper_attrs(self, method_wrapper, format_str)
 function func(x)
 return x
 end
@@ -125,17 +125,17 @@ end
 return wrapper
 end
 
-function test_staticmethod(self::TestDecorators)
+function test_staticmethod(self)
 wrapper = check_wrapper_attrs(self, staticmethod, "<staticmethod({!r})>")
 @test (wrapper(1) == 1)
 end
 
-function test_classmethod(self::TestDecorators)
+function test_classmethod(self)
 wrapper = check_wrapper_attrs(self, classmethod, "<classmethod({!r})>")
 @test_throws TypeError wrapper(1)
 end
 
-function test_dotted(self::TestDecorators)
+function test_dotted(self)
 decorators = MiscDecorators()
 function foo()::Int64
 return 42
@@ -145,7 +145,7 @@ end
 @test (foo.author == "Cleese")
 end
 
-function test_argforms(self::TestDecorators)
+function test_argforms(self)
 function noteargs()
 function decorate(func)
 setattr(func, "dbval", (args, kwds))
@@ -156,7 +156,7 @@ return decorate
 end
 
 args = ("Now", "is", "the", "time")
-kwds = dict(1, 2)
+kwds = dict(one = 1, two = 2)
 function f1()::Int64
 return 42
 end
@@ -168,7 +168,7 @@ return 84
 end
 
 @test (f2() == 84)
-@test (f2.dbval == (("terry", "gilliam"), dict("idle", "cleese")))
+@test (f2.dbval == (("terry", "gilliam"), dict(eric = "idle", john = "cleese")))
 function f3()
 #= pass =#
 end
@@ -176,7 +176,7 @@ end
 @test (f3.dbval == ((1, 2), Dict()))
 end
 
-function test_dbcheck(self::TestDecorators)
+function test_dbcheck(self)
 function f(a, b)::Any
 return a + b
 end
@@ -185,14 +185,14 @@ end
 @test_throws DbcheckError f(1, nothing)
 end
 
-function test_memoize(self::TestDecorators)
+function test_memoize(self)
 counts = Dict()
 function double(x)::Int64
 return x*2
 end
 
 @test (double.__name__ == "double")
-@test (counts == dict(0))
+@test (counts == dict(double = 0))
 @test (double(2) == 4)
 @test (counts["double"] == 1)
 @test (double(2) == 4)
@@ -205,7 +205,7 @@ end
 @test (counts["double"] == 4)
 end
 
-function test_errors(self::TestDecorators)
+function test_errors(self)
 for stmt in ("x,", "x, y", "x = y", "pass", "import sys")
 compile(stmt, "test", "exec")
 assertRaises(self, SyntaxError) do 
@@ -222,7 +222,7 @@ function unimp(func)
 throw(NotImplementedError)
 end
 
-context = dict(nothing, unimp)
+context = dict(nullval = nothing, unimp = unimp)
 for (expr, exc) in [("undef", NameError), ("nullval", TypeError), ("nullval.attr", AttributeError), ("unimp", NotImplementedError)]
 codestr = "@%s\ndef f(): pass\nassert f() is None" % expr
 code = compile(codestr, "test", "exec")
@@ -230,17 +230,17 @@ code = compile(codestr, "test", "exec")
 end
 end
 
-function test_expressions(self::TestDecorators)
+function test_expressions(self)
 for expr in ("(x,)", "(x, y)", "x := y", "(x := y)", "x @y", "(x @ y)", "x[0]", "w[x].y.z", "w + x - (y + z)", "x(y)()(z)", "[w, x, y][z]", "x.y")
 compile("@$(expr)\ndef f(): pass", "test", "exec")
 end
 end
 
-function test_double(self::C)
+function test_double(self)
 mutable struct C <: AbstractC
 
 end
-function foo(self::C)::Int64
+function foo(self)::Int64
 return 42
 end
 
@@ -250,7 +250,7 @@ assertEqual(self, C.foo.xyz, "haha")
 assertEqual(self, C.foo.booh, 42)
 end
 
-function test_order(self::TestDecorators)
+function test_order(self)
 function callnum(num)
 #= Decorator factory that returns a decorator that replaces the
             passed-in function with one that returns the value of 'num' =#
@@ -268,7 +268,7 @@ end
 @test (foo() == 2)
 end
 
-function test_eval_order(self::NameLookupTracer)
+function test_eval_order(self)
 actions = []
 function make_decorator(tag)
 push!(actions, "makedec" + tag)
@@ -283,7 +283,7 @@ end
 mutable struct NameLookupTracer <: AbstractNameLookupTracer
 index
 end
-function __getattr__(self::NameLookupTracer, fname)
+function __getattr__(self, fname)
 if fname == "make_decorator"
 opname, res = ("evalname", make_decorator)
 elseif fname == "arg"
@@ -314,18 +314,18 @@ assertEqual(self, bar(), 42)
 assertEqual(self, actions, expected_actions)
 end
 
-function test_wrapped_descriptor_inside_classmethod(self::Class)
+function test_wrapped_descriptor_inside_classmethod(self)
 mutable struct BoundWrapper <: AbstractBoundWrapper
 __wrapped__
 end
-function __call__(self::BoundWrapper)
-return __wrapped__(self, args..., kwargs)
+function __call__(self)
+return __wrapped__(self, args..., None = kwargs)
 end
 
 mutable struct Wrapper <: AbstractWrapper
 __wrapped__
 end
-function __get__(self::Wrapper, instance, owner)::BoundWrapper
+function __get__(self, instance, owner)::BoundWrapper
 bound_function = __get__(self.__wrapped__, instance, owner)
 return BoundWrapper(bound_function)
 end
@@ -351,18 +351,18 @@ assertEqual(self, inner(Class()), "spam")
 assertEqual(self, outer(Class()), "eggs")
 end
 
-function test_wrapped_classmethod_inside_classmethod(self::A)
+function test_wrapped_classmethod_inside_classmethod(self)
 mutable struct MyClassMethod1 <: AbstractMyClassMethod1
 func
 end
-function __call__(self::MyClassMethod1, cls)
+function __call__(self, cls)
 if hasfield(typeof(self.func), :__get__)
 return __get__(self.func, cls, cls)()
 end
 return func(self, cls)
 end
 
-function __get__(self::MyClassMethod1, instance, owner = nothing)
+function __get__(self, instance, owner = nothing)
 if owner === nothing
 owner = type_(instance)
 end
@@ -379,11 +379,11 @@ end
                 new(func)
             end
 end
-function __call__(self::MyClassMethod2, cls)
+function __call__(self, cls)
 return func(self, cls)
 end
 
-function __get__(self::MyClassMethod2, instance, owner = nothing)
+function __get__(self, instance, owner = nothing)
 if owner === nothing
 owner = type_(instance)
 end
@@ -449,7 +449,7 @@ end
 mutable struct TestClassDecorators <: AbstractTestClassDecorators
 
 end
-function test_simple(self::C)
+function test_simple(self)
 function plain(x)
 x.extra = "Hello"
 return x
@@ -462,7 +462,7 @@ end
 assertEqual(self, C.extra, "Hello")
 end
 
-function test_double(self::C)
+function test_double(self)
 function ten(x)
 x.extra = 10
 return x
@@ -480,7 +480,7 @@ end
 assertEqual(self, C.extra, 15)
 end
 
-function test_order(self::C)
+function test_order(self)
 function applied_first(x)
 x.extra = "first"
 return x

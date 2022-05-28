@@ -94,7 +94,7 @@ end
 mutable struct FormatTest <: AbstractFormatTest
 
 end
-function test_common_format(self::FormatTest)
+function test_common_format(self)
 testcommon("%%", (), "%")
 testcommon("%.1d", (1,), "1")
 testcommon("%.*d", (sys.maxsize, 1))
@@ -244,7 +244,7 @@ test_exc_common("%x", "1", TypeError, "%x format: an integer is required, not st
 test_exc_common("%x", 3.14, TypeError, "%x format: an integer is required, not float")
 end
 
-function test_str_format(self::FormatTest)
+function test_str_format(self)
 testformat("%r", "͸", "\'\\u0378\'")
 testformat("%a", "͸", "\'\\u0378\'")
 testformat("%r", "ʹ", "\'ʹ\'")
@@ -271,7 +271,7 @@ end
 end
 end
 
-function test_bytes_and_bytearray_format(self::FakeBytes)
+function test_bytes_and_bytearray_format(self)
 testcommon(b"%c", 7, b"\x07")
 testcommon(b"%c", b"Z", b"Z")
 testcommon(b"%c", Vector{UInt8}(b"Z"), b"Z")
@@ -280,7 +280,7 @@ testcommon(b"%-5c", 65, b"A    ")
 mutable struct FakeBytes <: AbstractFakeBytes
 
 end
-function __bytes__(self::FakeBytes)::Array{UInt8}
+function __bytes__(self)::Array{UInt8}
 return b"123"
 end
 
@@ -328,14 +328,14 @@ end
 end
 end
 
-function test_nul(self::FormatTest)
+function test_nul(self)
 testcommon("a\0b", (), "a\0b")
 testcommon("a%cb", (0,), "a\0b")
 testformat("a%sb", ("c\0d",), "ac\0db")
 testcommon(b"a%sb", (b"c\x00d",), b"ac\x00db")
 end
 
-function test_non_ascii(self::FormatTest)
+function test_non_ascii(self)
 testformat("€=%f", (1.0,), "€=1.000000")
 @test ("abc" == "abc  ")
 @test (123 == "123  ")
@@ -354,7 +354,7 @@ testformat("€=%f", (1.0,), "€=1.000000")
 @test (0im == " 0j ")
 end
 
-function test_locale(self::FormatTest)
+function test_locale(self)
 try
 oldloc = setlocale(locale.LC_ALL)
 setlocale(locale.LC_ALL, "")
@@ -386,7 +386,7 @@ setlocale(locale.LC_ALL, oldloc)
 end
 end
 
-function test_optimisations(self::FormatTest)
+function test_optimisations(self)
 text = "abcde"
 assertIs(self, "%s" % text, text)
 assertIs(self, "%.5s" % text, text)
@@ -403,7 +403,7 @@ assertIs(self, text % (), text)
 assertIs(self, text, text)
 end
 
-function test_precision(self::FormatTest)
+function test_precision(self)
 f = 1.2
 @test (f == "1")
 @test (f == "1.200")
@@ -418,7 +418,7 @@ c
 end
 end
 
-function test_precision_c_limits(self::FormatTest)
+function test_precision_c_limits(self)
 f = 1.2
 assertRaises(self, ValueError) do cm 
 f
@@ -429,7 +429,7 @@ c
 end
 end
 
-function test_g_format_has_no_trailing_zeros(self::FormatTest)
+function test_g_format_has_no_trailing_zeros(self)
 @test ("%.3g" % 1505.0 == "1.5e+03")
 @test ("%#.3g" % 1505.0 == "1.50e+03")
 @test (1505.0 == "1.5e+03")
@@ -438,28 +438,28 @@ function test_g_format_has_no_trailing_zeros(self::FormatTest)
 @test (12300050.0 == "1.23000e+07")
 end
 
-function test_with_two_commas_in_format_specifier(self::FormatTest)
+function test_with_two_commas_in_format_specifier(self)
 error_msg = escape("Cannot specify \',\' with \',\'.")
 assertRaisesRegex(self, ValueError, error_msg) do 
 "$(:,,)"
 end
 end
 
-function test_with_two_underscore_in_format_specifier(self::FormatTest)
+function test_with_two_underscore_in_format_specifier(self)
 error_msg = escape("Cannot specify \'_\' with \'_\'.")
 assertRaisesRegex(self, ValueError, error_msg) do 
 "$(:__)"
 end
 end
 
-function test_with_a_commas_and_an_underscore_in_format_specifier(self::FormatTest)
+function test_with_a_commas_and_an_underscore_in_format_specifier(self)
 error_msg = escape("Cannot specify both \',\' and \'_\'.")
 assertRaisesRegex(self, ValueError, error_msg) do 
 "$(:,_)"
 end
 end
 
-function test_with_an_underscore_and_a_comma_in_format_specifier(self::FormatTest)
+function test_with_an_underscore_and_a_comma_in_format_specifier(self)
 error_msg = escape("Cannot specify both \',\' and \'_\'.")
 assertRaisesRegex(self, ValueError, error_msg) do 
 "$(:_,)"

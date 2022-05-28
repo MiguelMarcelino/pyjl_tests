@@ -1,5 +1,4 @@
 
-
 function sieve(n)
     primes = ones(Float64, n)
     primes[1], primes[2] = (false, false)

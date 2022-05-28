@@ -204,7 +204,7 @@ end
 mutable struct FloatLike <: AbstractFloatLike
 value
 end
-function __float__(self::FloatLike)
+function __float__(self)
 return self.value
 end
 
@@ -215,7 +215,7 @@ end
 mutable struct MyIndexable <: AbstractMyIndexable
 value
 end
-function __index__(self::MyIndexable)
+function __index__(self)
 return self.value
 end
 
@@ -223,7 +223,7 @@ mutable struct MathTests <: AbstractMathTests
 converted::Bool
 value
 end
-function ftest(self::MathTests, name, got, expected, ulp_tol = 5, abs_tol = 0.0)
+function ftest(self, name, got, expected, ulp_tol = 5, abs_tol = 0.0)
 #= Compare arguments expected and got, as floats, if either
         is a float, using a tolerance expressed in multiples of
         ulp(expected) or absolutely, whichever is greater.
@@ -238,13 +238,13 @@ fail(self, "$(): $()")
 end
 end
 
-function testConstants(self::MathTests)
+function testConstants(self)
 ftest(self, "pi", math.pi, 3.141592653589793)
 ftest(self, "e", math.e, 2.718281828459045)
 @test (math.tau == 2*math.pi)
 end
 
-function testAcos(self::MathTests)
+function testAcos(self)
 @test_throws TypeError math.acos()
 ftest(self, "acos(-1)", acos(-1), math.pi)
 ftest(self, "acos(0)", acos(0), math.pi / 2)
@@ -256,7 +256,7 @@ ftest(self, "acos(1)", acos(1), 0)
 @test isnan(acos(NAN))
 end
 
-function testAcosh(self::MathTests)
+function testAcosh(self)
 @test_throws TypeError math.acosh()
 ftest(self, "acosh(1)", acosh(1), 0)
 ftest(self, "acosh(2)", acosh(2), 1.3169578969248168)
@@ -267,7 +267,7 @@ ftest(self, "acosh(2)", acosh(2), 1.3169578969248168)
 @test isnan(acosh(NAN))
 end
 
-function testAsin(self::MathTests)
+function testAsin(self)
 @test_throws TypeError math.asin()
 ftest(self, "asin(-1)", asin(-1), -(math.pi) / 2)
 ftest(self, "asin(0)", asin(0), 0)
@@ -279,7 +279,7 @@ ftest(self, "asin(1)", asin(1), math.pi / 2)
 @test isnan(asin(NAN))
 end
 
-function testAsinh(self::MathTests)
+function testAsinh(self)
 @test_throws TypeError math.asinh()
 ftest(self, "asinh(0)", asinh(0), 0)
 ftest(self, "asinh(1)", asinh(1), 0.881373587019543)
@@ -289,7 +289,7 @@ ftest(self, "asinh(-1)", asinh(-1), -0.881373587019543)
 @test isnan(asinh(NAN))
 end
 
-function testAtan(self::MathTests)
+function testAtan(self)
 @test_throws TypeError math.atan()
 ftest(self, "atan(-1)", atan(-1), -(math.pi) / 4)
 ftest(self, "atan(0)", atan(0), 0)
@@ -299,7 +299,7 @@ ftest(self, "atan(-inf)", atan(NINF), -(math.pi) / 2)
 @test isnan(atan(NAN))
 end
 
-function testAtanh(self::MathTests)
+function testAtanh(self)
 @test_throws TypeError math.atan()
 ftest(self, "atanh(0)", atanh(0), 0)
 ftest(self, "atanh(0.5)", atanh(0.5), 0.5493061443340549)
@@ -311,7 +311,7 @@ ftest(self, "atanh(-0.5)", atanh(-0.5), -0.5493061443340549)
 @test isnan(atanh(NAN))
 end
 
-function testAtan2(self::MathTests)
+function testAtan2(self)
 @test_throws TypeError math.atan2()
 ftest(self, "atan2(-1, 0)", atan2(-1, 0), -(math.pi) / 2)
 ftest(self, "atan2(-1, 1)", atan2(-1, 1), -(math.pi) / 4)
@@ -365,7 +365,7 @@ ftest(self, "atan2(-2.3, 0.)", atan2(-2.3, 0.0), -(math.pi) / 2)
 @test isnan(atan2(NAN, NAN))
 end
 
-function testCeil(self::TestNoCeil)
+function testCeil(self)
 assertRaises(self, TypeError, math.ceil)
 assertEqual(self, int, type_(ceil(0.5)))
 assertEqual(self, ceil(0.5), 1)
@@ -379,14 +379,14 @@ assertEqual(self, ceil(-0.0), 0)
 mutable struct TestCeil <: AbstractTestCeil
 
 end
-function __ceil__(self::TestCeil)::Int64
+function __ceil__(self)::Int64
 return 42
 end
 
 mutable struct FloatCeil <: AbstractFloatCeil
 
 end
-function __ceil__(self::FloatCeil)::Int64
+function __ceil__(self)::Int64
 return 42
 end
 
@@ -404,7 +404,7 @@ assertRaises(self, TypeError, math.ceil, t)
 assertRaises(self, TypeError, math.ceil, t, 0)
 end
 
-function testCopysign(self::MathTests)
+function testCopysign(self)
 @test (copysign(1, 42) == 1.0)
 @test (copysign(0.0, 42) == 0.0)
 @test (copysign(1.0, -42) == -1.0)
@@ -431,7 +431,7 @@ function testCopysign(self::MathTests)
 @test (abs(copysign(2.0, NAN)) == 2.0)
 end
 
-function testCos(self::MathTests)
+function testCos(self)
 @test_throws TypeError math.cos()
 ftest(self, "cos(-pi/2)", cos(-(math.pi) / 2), 0)
 ftest(self, "cos(0)", cos(0), 1)
@@ -449,7 +449,7 @@ end
 @test isnan(cos(NAN))
 end
 
-function testCosh(self::MathTests)
+function testCosh(self)
 @test_throws TypeError math.cosh()
 ftest(self, "cosh(0)", cosh(0), 1)
 ftest(self, "cosh(2)-2*cosh(1)**2", cosh(2) - 2*cosh(1)^2, -1)
@@ -458,7 +458,7 @@ ftest(self, "cosh(2)-2*cosh(1)**2", cosh(2) - 2*cosh(1)^2, -1)
 @test isnan(cosh(NAN))
 end
 
-function testDegrees(self::MathTests)
+function testDegrees(self)
 @test_throws TypeError math.degrees()
 ftest(self, "degrees(pi)", degrees(math.pi), 180.0)
 ftest(self, "degrees(pi/2)", degrees(math.pi / 2), 90.0)
@@ -466,7 +466,7 @@ ftest(self, "degrees(-pi/4)", degrees(-(math.pi) / 4), -45.0)
 ftest(self, "degrees(0)", degrees(0), 0)
 end
 
-function testExp(self::MathTests)
+function testExp(self)
 @test_throws TypeError math.exp()
 ftest(self, "exp(-1)", exp(-1), 1 / math.e)
 ftest(self, "exp(0)", exp(0), 1)
@@ -477,14 +477,14 @@ ftest(self, "exp(1)", exp(1), math.e)
 @test_throws OverflowError math.exp(1000000)
 end
 
-function testFabs(self::MathTests)
+function testFabs(self)
 @test_throws TypeError math.fabs()
 ftest(self, "fabs(-1)", fabs(-1), 1)
 ftest(self, "fabs(0)", fabs(0), 0)
 ftest(self, "fabs(1)", fabs(1), 1)
 end
 
-function testFactorial(self::MathTests)
+function testFactorial(self)
 @test (factorial(0) == 1)
 total = 1
 for i in 1:999
@@ -496,7 +496,7 @@ end
 @test_throws ValueError math.factorial(-(10^100))
 end
 
-function testFactorialNonIntegers(self::MathTests)
+function testFactorialNonIntegers(self)
 @test_throws TypeError math.factorial(5.0)
 @test_throws TypeError math.factorial(5.2)
 @test_throws TypeError math.factorial(-1.0)
@@ -506,12 +506,12 @@ function testFactorialNonIntegers(self::MathTests)
 @test_throws TypeError math.factorial("5")
 end
 
-function testFactorialHugeInputs(self::MathTests)
+function testFactorialHugeInputs(self)
 @test_throws OverflowError math.factorial(10^100)
 @test_throws TypeError math.factorial(1e+100)
 end
 
-function testFloor(self::TestNoFloor)
+function testFloor(self)
 assertRaises(self, TypeError, math.floor)
 assertEqual(self, int, type_(floor(0.5)))
 assertEqual(self, floor(0.5), 0)
@@ -523,14 +523,14 @@ assertEqual(self, floor(-1.5), -2)
 mutable struct TestFloor <: AbstractTestFloor
 
 end
-function __floor__(self::TestFloor)::Int64
+function __floor__(self)::Int64
 return 42
 end
 
 mutable struct FloatFloor <: AbstractFloatFloor
 
 end
-function __floor__(self::FloatFloor)::Int64
+function __floor__(self)::Int64
 return 42
 end
 
@@ -548,7 +548,7 @@ assertRaises(self, TypeError, math.floor, t)
 assertRaises(self, TypeError, math.floor, t, 0)
 end
 
-function testFmod(self::MathTests)
+function testFmod(self)
 @test_throws TypeError math.fmod()
 ftest(self, "fmod(10, 1)", fmod(10, 1), 0.0)
 ftest(self, "fmod(10, 0.5)", fmod(10, 0.5), 0.0)
@@ -571,7 +571,7 @@ ftest(self, "fmod(-10, 1.5)", fmod(-10, 1.5), -1.0)
 @test (fmod(0.0, NINF) == 0.0)
 end
 
-function testFrexp(self::MathTests)
+function testFrexp(self)
 @test_throws TypeError math.frexp()
 function testfrexp(name, result, expected)
 (mant, exp), (emant, eexp) = (result, expected)
@@ -589,7 +589,7 @@ testfrexp("frexp(2)", frexp(2), (0.5, 2))
 @test isnan(frexp(NAN)[1])
 end
 
-function testFsum(self::MathTests)
+function testFsum(self)
 mant_dig = float_info.mant_dig
 etiny = float_info.min_exp - mant_dig
 function msum(iterable)
@@ -621,7 +621,7 @@ end
 
 test_values = [([], 0.0), ([0.0], 0.0), ([1e+100, 1.0, -1e+100, 1e-100, 1e+50, -1.0, -1e+50], 1e-100), ([2.0^53, -0.5, -(2.0^-54)], 2.0^53 - 1.0), ([2.0^53, 1.0, 2.0^-100], 2.0^53 + 2.0), ([2.0^53 + 10.0, 1.0, 2.0^-100], 2.0^53 + 12.0), ([2.0^53 - 4.0, 0.5, 2.0^-54], 2.0^53 - 3.0), ([1.0 / n for n in 1:1000], fromhex(float, "0x1.df11f45f4e61ap+2")), ([-1.0^n / n for n in 1:1000], fromhex(float, "-0x1.62a2af1bd3624p-1")), ([1e+16, 1.0, 1e-16], 1.0000000000000002e+16), ([1e+16 - 2.0, 1.0 - 2.0^-53, -(1e+16 - 2.0), -(1.0 - 2.0^-53)], 0.0), ([(2.0^n - 2.0^(n + 50)) + 2.0^(n + 52) for n in -1074:2:971] + [-(2.0^1022)], fromhex(float, "0x1.5555555555555p+970"))]
 terms = [1.7^i for i in 0:1000]
-push!(test_values, ([terms[i + 2] - terms[i + 1] for i in 0:999] + [-(terms[1001])], -(terms[1])))
+append(test_values, ([terms[i + 2] - terms[i + 1] for i in 0:999] + [-(terms[1001])], -(terms[1])))
 for (i, (vals, expected)) in enumerate(test_values)
 try
 actual = fsum(vals)
@@ -649,7 +649,7 @@ s = msum(vals)
 end
 end
 
-function testGcd(self::MathTests)
+function testGcd(self)
 gcd = math.gcd
 @test (gcd(0, 0) == 0)
 @test (gcd(1, 0) == 1)
@@ -688,7 +688,7 @@ end
 @test (gcd(MyIndexable(120), MyIndexable(84)) == 12)
 end
 
-function testHypot(self::MathTests)
+function testHypot(self)
 hypot = math.hypot
 args = (math.e, math.pi, sqrt(2.0), gamma(3.5), sin(2.1))
 for i in 0:length(args)
@@ -705,7 +705,7 @@ end
 @test (1.0 == copysign(1.0, hypot(-0.0)))
 @test (hypot(1.5, 1.5, 0.5) == hypot(1.5, 0.5, 1.5))
 assertRaises(self, TypeError) do 
-hypot(1)
+hypot(x = 1)
 end
 assertRaises(self, TypeError) do 
 hypot(1.1, "string", 2.2)
@@ -741,14 +741,14 @@ scale = FLOAT_MIN / 2.0^exp
 end
 end
 
-function testHypotAccuracy(self::MathTests)
+function testHypotAccuracy(self)
 hypot = math.hypot
 Decimal = decimal.Decimal
-high_precision = Context(500)
+high_precision = Context(prec = 500)
 for (hx, hy) in [("0x1.10e89518dca48p+29", "0x1.1970f7565b7efp+30"), ("0x1.10106eb4b44a2p+29", "0x1.ef0596cdc97f8p+29"), ("0x1.459c058e20bb7p+30", "0x1.993ca009b9178p+29"), ("0x1.378371ae67c0cp+30", "0x1.fbe6619854b4cp+29"), ("0x1.f4cd0574fb97ap+29", "0x1.50fe31669340ep+30"), ("0x1.494b2cdd3d446p+29", "0x1.212a5367b4c7cp+29"), ("0x1.f84e649f1e46dp+29", "0x1.1fa56bef8eec4p+30"), ("0x1.2e817edd3d6fap+30", "0x1.eb0814f1e9602p+29"), ("0x1.0d3a6e3d04245p+29", "0x1.32a62fea52352p+30"), ("0x1.888e19611bfc5p+29", "0x1.52b8e70b24353p+29"), ("0x1.538816d48a13fp+29", "0x1.7967c5ca43e16p+29"), ("0x1.57b47b7234530p+29", "0x1.74e2c7040e772p+29"), ("0x1.821b685e9b168p+30", "0x1.677dc1c1e3dc6p+29"), ("0x1.9e8247f67097bp+29", "0x1.24bd2dc4f4baep+29"), ("0x1.b73b59e0cb5f9p+29", "0x1.da899ab784a97p+28"), ("0x1.94a8d2842a7cfp+30", "0x1.326a51d4d8d8ap+30"), ("0x1.e930b9cd99035p+29", "0x1.5a1030e18dff9p+30"), ("0x1.1592bbb0e4690p+29", "0x1.a9c337b33fb9ap+29"), ("0x1.1243a50751fd4p+29", "0x1.a5a10175622d9p+29"), ("0x1.57a8596e74722p+30", "0x1.42d1af9d04da9p+30"), ("0x1.ee7dbd9565899p+29", "0x1.7ab4d6fc6e4b4p+29"), ("0x1.5c6bfbec5c4dcp+30", "0x1.02511184b4970p+30"), ("0x1.59dcebba995cap+30", "0x1.50ca7e7c38854p+29"), ("0x1.768cdd94cf5aap+29", "0x1.9cfdc5571d38ep+29"), ("0x1.dcf137d60262ep+29", "0x1.1101621990b3ep+30"), ("0x1.3a2d006e288b0p+30", "0x1.e9a240914326cp+29"), ("0x1.62a32f7f53c61p+29", "0x1.47eb6cd72684fp+29"), ("0x1.d3bcb60748ef2p+29", "0x1.3f13c4056312cp+30"), ("0x1.282bdb82f17f3p+30", "0x1.640ba4c4eed3ap+30"), ("0x1.89d8c423ea0c6p+29", "0x1.d35dcfe902bc3p+29")]
 x = fromhex(float, hx)
 y = fromhex(float, hy)
-subTest(self, hx, hy, x, y) do 
+subTest(self, hx = hx, hy = hy, x = x, y = y) do 
 localcontext(high_precision) do 
 z = float(sqrt(Decimal(x)^2 + Decimal(y)^2))
 end
@@ -757,7 +757,7 @@ end
 end
 end
 
-function testDist(self::T)
+function testDist(self)
 dist = math.dist
 sqrt = math.sqrt
 assertEqual(self, dist((1.0, 2.0, 3.0), (4.0, 2.0, -1.0)), 5.0)
@@ -787,7 +787,7 @@ end
 
 assertEqual(self, dist(T((1, 2, 3)), (4, 2, -1)), 5.0)
 assertRaises(self, TypeError) do 
-dist((1, 2, 3), (4, 5, 6))
+dist(p = (1, 2, 3), q = (4, 5, 6))
 end
 assertRaises(self, TypeError) do 
 dist((1, 2, 3))
@@ -822,8 +822,8 @@ p, q = (random(), random())
 assertEqual(self, dist((p,), (q,)), abs(p - q))
 end
 values = [NINF, -10.5, -0.0, 0.0, 10.5, INF, NAN]
-for p in product(values, 3)
-for q in product(values, 3)
+for p in product(values, repeat = 3)
+for q in product(values, repeat = 3)
 diffs = [px - qx for (px, qx) in zip(p, q)]
 if any(map(math.isinf, diffs))
 assertEqual(self, dist(p, q), INF)
@@ -848,10 +848,10 @@ assertEqual(self, dist(q, p), 5*scale)
 end
 end
 
-function testIsqrt(self::IntegerLike)
+function testIsqrt(self)
 test_values = append!((append!(collect(0:999), collect(10^6:10^6)) + [2^e + i for e in 60:199 for i in -40:39]), [3^9999, 10^5001])
 for value in test_values
-subTest(self, value) do 
+subTest(self, value = value) do 
 s = isqrt(value)
 assertIs(self, type_(s), int)
 assertLessEqual(self, s*s, value)
@@ -870,7 +870,7 @@ assertEqual(self, s, 0)
 mutable struct IntegerLike <: AbstractIntegerLike
 value
 end
-function __index__(self::IntegerLike)
+function __index__(self)
 return self.value
 end
 
@@ -882,7 +882,7 @@ isqrt(IntegerLike(-3))
 end
 bad_values = [3.5, "a string", Decimal("3.5"), 3.5im, 100.0, -4.0]
 for value in bad_values
-subTest(self, value) do 
+subTest(self, value = value) do 
 assertRaises(self, TypeError) do 
 isqrt(value)
 end
@@ -890,7 +890,7 @@ end
 end
 end
 
-function test_lcm(self::MathTests)
+function test_lcm(self)
 lcm = math.lcm
 @test (lcm(0, 0) == 0)
 @test (lcm(1, 0) == 0)
@@ -930,7 +930,7 @@ end
 @test (lcm(MyIndexable(120), MyIndexable(84)) == 840)
 end
 
-function testLdexp(self::MathTests)
+function testLdexp(self)
 @test_throws TypeError math.ldexp()
 ftest(self, "ldexp(0,1)", ldexp(0, 1), 0)
 ftest(self, "ldexp(1,1)", ldexp(1, 1), 2)
@@ -961,7 +961,7 @@ for n in [10^5, 10^10, 10^20, 10^40]
 end
 end
 
-function testLog(self::MathTests)
+function testLog(self)
 @test_throws TypeError math.log()
 ftest(self, "log(1/e)", log(1 / math.e), -1)
 ftest(self, "log(1)", log(1), 0)
@@ -977,7 +977,7 @@ ftest(self, "log(10**1000)", log(10^1000), 2302.5850929940457)
 @test isnan(log(NAN))
 end
 
-function testLog1p(self::MathTests)
+function testLog1p(self)
 @test_throws TypeError math.log1p()
 for n in [2, 2^90, 2^300]
 assertAlmostEqual(self, log1p(n), log1p(float(n)))
@@ -986,7 +986,7 @@ end
 @test (log1p(INF) == INF)
 end
 
-function testLog2(self::MathTests)
+function testLog2(self)
 @test_throws TypeError math.log2()
 @test (log2(1) == 0.0)
 @test (log2(2) == 1.0)
@@ -999,13 +999,13 @@ function testLog2(self::MathTests)
 @test isnan(log2(NAN))
 end
 
-function testLog2Exact(self::MathTests)
+function testLog2Exact(self)
 actual = [log2(ldexp(1.0, n)) for n in -1074:1023]
 expected = [float(n) for n in -1074:1023]
 @test (actual == expected)
 end
 
-function testLog10(self::MathTests)
+function testLog10(self)
 @test_throws TypeError math.log10()
 ftest(self, "log10(0.1)", log10(0.1), -1)
 ftest(self, "log10(1)", log10(1), 0)
@@ -1018,7 +1018,7 @@ ftest(self, "log10(10**1000)", log10(10^1000), 1000.0)
 @test isnan(log10(NAN))
 end
 
-function testModf(self::MathTests)
+function testModf(self)
 @test_throws TypeError math.modf()
 function testmodf(name, result, expected)
 (v1, v2), (e1, e2) = (result, expected)
@@ -1036,7 +1036,7 @@ modf_nan = modf(NAN)
 @test isnan(modf_nan[2])
 end
 
-function testPow(self::MathTests)
+function testPow(self)
 @test_throws TypeError math.pow()
 ftest(self, "pow(0,1)", pow(0, 1), 0)
 ftest(self, "pow(1,0)", pow(1, 0), 1)
@@ -1152,7 +1152,7 @@ ftest(self, "(-2.)**-3.", pow(-2.0, -3.0), -0.125)
 @test_throws ValueError math.pow(-2.0, 0.5)
 end
 
-function testRadians(self::MathTests)
+function testRadians(self)
 @test_throws TypeError math.radians()
 ftest(self, "radians(180)", radians(180), math.pi)
 ftest(self, "radians(90)", radians(90), math.pi / 2)
@@ -1160,7 +1160,7 @@ ftest(self, "radians(-45)", radians(-45), -(math.pi) / 4)
 ftest(self, "radians(0)", radians(0), 0)
 end
 
-function testRemainder(self::MathTests)
+function testRemainder(self)
 function validate_spec(x, y, r)
 #= 
             Check that r matches remainder(x, y) according to the IEEE 754
@@ -1177,7 +1177,7 @@ end
 
 testcases = ["-4.0 1 -0.0", "-3.8 1  0.8", "-3.0 1 -0.0", "-2.8 1 -0.8", "-2.0 1 -0.0", "-1.8 1  0.8", "-1.0 1 -0.0", "-0.8 1 -0.8", "-0.0 1 -0.0", " 0.0 1  0.0", " 0.8 1  0.8", " 1.0 1  0.0", " 1.8 1 -0.8", " 2.0 1  0.0", " 2.8 1  0.8", " 3.0 1  0.0", " 3.8 1 -0.8", " 4.0 1  0.0", "0x0.0p+0 0x1.921fb54442d18p+2 0x0.0p+0", "0x1.921fb54442d18p+0 0x1.921fb54442d18p+2  0x1.921fb54442d18p+0", "0x1.921fb54442d17p+1 0x1.921fb54442d18p+2  0x1.921fb54442d17p+1", "0x1.921fb54442d18p+1 0x1.921fb54442d18p+2  0x1.921fb54442d18p+1", "0x1.921fb54442d19p+1 0x1.921fb54442d18p+2 -0x1.921fb54442d17p+1", "0x1.921fb54442d17p+2 0x1.921fb54442d18p+2 -0x0.0000000000001p+2", "0x1.921fb54442d18p+2 0x1.921fb54442d18p+2  0x0p0", "0x1.921fb54442d19p+2 0x1.921fb54442d18p+2  0x0.0000000000001p+2", "0x1.2d97c7f3321d1p+3 0x1.921fb54442d18p+2  0x1.921fb54442d14p+1", "0x1.2d97c7f3321d2p+3 0x1.921fb54442d18p+2 -0x1.921fb54442d18p+1", "0x1.2d97c7f3321d3p+3 0x1.921fb54442d18p+2 -0x1.921fb54442d14p+1", "0x1.921fb54442d17p+3 0x1.921fb54442d18p+2 -0x0.0000000000001p+3", "0x1.921fb54442d18p+3 0x1.921fb54442d18p+2  0x0p0", "0x1.921fb54442d19p+3 0x1.921fb54442d18p+2  0x0.0000000000001p+3", "0x1.f6a7a2955385dp+3 0x1.921fb54442d18p+2  0x1.921fb54442d14p+1", "0x1.f6a7a2955385ep+3 0x1.921fb54442d18p+2  0x1.921fb54442d18p+1", "0x1.f6a7a2955385fp+3 0x1.921fb54442d18p+2 -0x1.921fb54442d14p+1", "0x1.1475cc9eedf00p+5 0x1.921fb54442d18p+2  0x1.921fb54442d10p+1", "0x1.1475cc9eedf01p+5 0x1.921fb54442d18p+2 -0x1.921fb54442d10p+1", " 1  0.c  0.4", "-1  0.c -0.4", " 1 -0.c  0.4", "-1 -0.c -0.4", " 1.4  0.c -0.4", "-1.4  0.c  0.4", " 1.4 -0.c -0.4", "-1.4 -0.c  0.4", "0x1.dp+1023 0x1.4p+1023  0x0.9p+1023", "0x1.ep+1023 0x1.4p+1023 -0x0.ap+1023", "0x1.fp+1023 0x1.4p+1023 -0x0.9p+1023"]
 for case in testcases
-subTest(self, case) do 
+subTest(self, case = case) do 
 x_hex, y_hex, expected_hex = split(case)
 x = fromhex(float, x_hex)
 y = fromhex(float, y_hex)
@@ -1225,7 +1225,7 @@ end
 end
 end
 
-function testSin(self::MathTests)
+function testSin(self)
 @test_throws TypeError math.sin()
 ftest(self, "sin(0)", sin(0), 0)
 ftest(self, "sin(pi/2)", sin(math.pi / 2), 1)
@@ -1242,7 +1242,7 @@ end
 @test isnan(sin(NAN))
 end
 
-function testSinh(self::MathTests)
+function testSinh(self)
 @test_throws TypeError math.sinh()
 ftest(self, "sinh(0)", sinh(0), 0)
 ftest(self, "sinh(1)**2-cosh(1)**2", sinh(1)^2 - cosh(1)^2, -1)
@@ -1252,7 +1252,7 @@ ftest(self, "sinh(1)+sinh(-1)", sinh(1) + sinh(-1), 0)
 @test isnan(sinh(NAN))
 end
 
-function testSqrt(self::MathTests)
+function testSqrt(self)
 @test_throws TypeError math.sqrt()
 ftest(self, "sqrt(0)", sqrt(0), 0)
 ftest(self, "sqrt(1)", sqrt(1), 1)
@@ -1263,7 +1263,7 @@ ftest(self, "sqrt(4)", sqrt(4), 2)
 @test isnan(sqrt(NAN))
 end
 
-function testTan(self::MathTests)
+function testTan(self)
 @test_throws TypeError math.tan()
 ftest(self, "tan(0)", tan(0), 0)
 ftest(self, "tan(pi/4)", tan(math.pi / 4), 1)
@@ -1278,7 +1278,7 @@ end
 @test isnan(tan(NAN))
 end
 
-function testTanh(self::MathTests)
+function testTanh(self)
 @test_throws TypeError math.tanh()
 ftest(self, "tanh(0)", tanh(0), 0)
 ftest(self, "tanh(1)+tanh(-1)", tanh(1) + tanh(-1), 0)
@@ -1287,12 +1287,12 @@ ftest(self, "tanh(-inf)", tanh(NINF), -1)
 @test isnan(tanh(NAN))
 end
 
-function testTanhSign(self::MathTests)
+function testTanhSign(self)
 @test (tanh(-0.0) == -0.0)
 @test (copysign(1.0, tanh(-0.0)) == copysign(1.0, -0.0))
 end
 
-function test_trunc(self::TestNoTrunc)
+function test_trunc(self)
 assertEqual(self, trunc(1), 1)
 assertEqual(self, trunc(-1), -1)
 assertEqual(self, type_(trunc(1)), int)
@@ -1306,14 +1306,14 @@ assertEqual(self, trunc(-100.999), -100)
 mutable struct TestTrunc <: AbstractTestTrunc
 
 end
-function __trunc__(self::TestTrunc)::Int64
+function __trunc__(self)::Int64
 return 23
 end
 
 mutable struct FloatTrunc <: AbstractFloatTrunc
 
 end
-function __trunc__(self::FloatTrunc)::Int64
+function __trunc__(self)::Int64
 return 23
 end
 
@@ -1329,7 +1329,7 @@ assertRaises(self, TypeError, math.trunc, FloatLike(23.5))
 assertRaises(self, TypeError, math.trunc, TestNoTrunc())
 end
 
-function testIsfinite(self::MathTests)
+function testIsfinite(self)
 @test isfinite(0.0)
 @test isfinite(-0.0)
 @test isfinite(1.0)
@@ -1339,7 +1339,7 @@ function testIsfinite(self::MathTests)
 @test !(isfinite(float("-inf")))
 end
 
-function testIsnan(self::MathTests)
+function testIsnan(self)
 @test isnan(float("nan"))
 @test isnan(float("-nan"))
 @test isnan(float("inf")*0.0)
@@ -1348,7 +1348,7 @@ function testIsnan(self::MathTests)
 @test !(isnan(1.0))
 end
 
-function testIsinf(self::MathTests)
+function testIsinf(self)
 @test isinf(float("inf"))
 @test isinf(float("-inf"))
 @test isinf(inf)
@@ -1358,18 +1358,18 @@ function testIsinf(self::MathTests)
 @test !(isinf(1.0))
 end
 
-function test_nan_constant(self::MathTests)
+function test_nan_constant(self)
 @test isnan(math.nan)
 end
 
-function test_inf_constant(self::MathTests)
+function test_inf_constant(self)
 @test isinf(math.inf)
 assertGreater(self, math.inf, 0.0)
 @test (math.inf == float("inf"))
 @test (-(math.inf) == float("-inf"))
 end
 
-function test_exceptions(self::MathTests)
+function test_exceptions(self)
 try
 x = exp(-1000000000)
 catch exn
@@ -1394,7 +1394,7 @@ end
 end
 end
 
-function test_testfile(self::MathTests)
+function test_testfile(self)
 SKIP_ON_TIGER = Set(["tan0064"])
 osx_version = nothing
 if sys.platform == "darwin"
@@ -1450,7 +1450,7 @@ fail(self, "Failures in test_testfile:\n  " + join(failures, "\n  "))
 end
 end
 
-function test_mtestfile(self::MathTests)
+function test_mtestfile(self)
 fail_fmt = "{}: {}({!r}): {}"
 failures = []
 for (id, fn, arg, expected, flags) in parse_mtestfile(math_testcases)
@@ -1496,13 +1496,13 @@ fail(self, "Failures in test_mtestfile:\n  " + join(failures, "\n  "))
 end
 end
 
-function test_prod(self::MathTests)
+function test_prod(self)
 prod = math.prod
 @test (prod([]) == 1)
-@test (prod([], 5) == 5)
+@test (prod([], start = 5) == 5)
 @test (prod(collect(2:7)) == 5040)
 @test (prod((x for x in collect(2:7))) == 5040)
-@test (prod(1:9, 10) == 3628800)
+@test (prod(1:9, start = 10) == 3628800)
 @test (prod([1, 2, 3, 4, 5]) == 120)
 @test (prod([1.0, 2.0, 3.0, 4.0, 5.0]) == 120.0)
 @test (prod([1, 2, 3, 4.0, 5.0]) == 120.0)
@@ -1512,17 +1512,17 @@ prod = math.prod
 @test_throws TypeError prod()
 @test_throws TypeError prod(42)
 @test_throws TypeError prod(["a", "b", "c"])
-@test_throws TypeError prod(["a", "b", "c"], "")
-@test_throws TypeError prod([b"a", b"c"], b"")
+@test_throws TypeError prod(["a", "b", "c"], start = "")
+@test_throws TypeError prod([b"a", b"c"], start = b"")
 values = [Vector{UInt8}(b"a"), Vector{UInt8}(b"b")]
-@test_throws TypeError prod(values, Vector{UInt8}(b""))
+@test_throws TypeError prod(values, start = Vector{UInt8}(b""))
 @test_throws TypeError prod([[1], [2], [3]])
 @test_throws TypeError prod([Dict(2 => 3)])
-@test_throws TypeError prod(repeat([Dict(2 => 3)],2), Dict(2 => 3))
-@test_throws TypeError prod([[1], [2], [3]], [])
-@test (prod([2, 3], "ab") == "abababababab")
-@test (prod([2, 3], [1, 2]) == [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
-@test (prod([], Dict(2 => 3)) == Dict(2 => 3))
+@test_throws TypeError prod(repeat([Dict(2 => 3)],2), start = Dict(2 => 3))
+@test_throws TypeError prod([[1], [2], [3]], start = [])
+@test (prod([2, 3], start = "ab") == "abababababab")
+@test (prod([2, 3], start = [1, 2]) == [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+@test (prod([], start = Dict(2 => 3)) == Dict(2 => 3))
 assertRaises(self, TypeError) do 
 prod([10, 20], 1)
 end
@@ -1564,11 +1564,11 @@ assertIsNaN(self, prod([1, 2, 3, float("-inf"), -3, 0, 2]))
 @test (type_(prod([1, 2, 3, 4, 5, 6])) == int)
 @test (type_(prod([1, 2.0, 3, 4, 5, 6])) == float)
 @test (type_(prod(1:9999)) == int)
-@test (type_(prod(1:9999, 1.0)) == float)
+@test (type_(prod(1:9999, start = 1.0)) == float)
 @test (type_(prod([1, Decimal(2.0), 3, 4, 5, 6])) == decimal.Decimal)
 end
 
-function testPerm(self::MathTests)
+function testPerm(self)
 perm = math.perm
 factorial = math.factorial
 for n in 0:99
@@ -1609,7 +1609,7 @@ n = 2^1000
 @test (perm(n, 0) == 1)
 @test (perm(n, 1) == n)
 @test (perm(n, 2) == n*(n - 1))
-if check_impl_detail(true)
+if check_impl_detail(cpython = true)
 @test_throws OverflowError perm(n, n)
 end
 for (n, k) in ((true, true), (true, false), (false, false))
@@ -1624,7 +1624,7 @@ assertIs(self, type_(perm(MyIndexable(5), MyIndexable(k))), int)
 end
 end
 
-function testComb(self::MathTests)
+function testComb(self)
 comb = math.comb
 factorial = math.factorial
 for n in 0:99
@@ -1672,7 +1672,7 @@ n = 2^1000
 @test (comb(n, n) == 1)
 @test (comb(n, n - 1) == n)
 @test (comb(n, n - 2) == n*(n - 1) ÷ 2)
-if check_impl_detail(true)
+if check_impl_detail(cpython = true)
 @test_throws OverflowError comb(n, n ÷ 2)
 end
 for (n, k) in ((true, true), (true, false), (false, false))
@@ -1687,7 +1687,7 @@ assertIs(self, type_(comb(MyIndexable(5), MyIndexable(k))), int)
 end
 end
 
-function test_nextafter(self::MathTests)
+function test_nextafter(self)
 @test (nextafter(4503599627370496.0, -(INF)) == 4503599627370495.5)
 @test (nextafter(4503599627370496.0, INF) == 4503599627370497.0)
 @test (nextafter(9.223372036854776e+18, 0.0) == 9.223372036854775e+18)
@@ -1716,7 +1716,7 @@ assertIsNaN(self, nextafter(1.0, NAN))
 assertIsNaN(self, nextafter(NAN, NAN))
 end
 
-function test_ulp(self::MathTests)
+function test_ulp(self)
 @test (ulp(1.0) == sys.float_info.epsilon)
 @test (ulp(2^52) == 1.0)
 @test (ulp(2^53) == 2.0)
@@ -1726,17 +1726,17 @@ function test_ulp(self::MathTests)
 @test (ulp(INF) == INF)
 assertIsNaN(self, ulp(math.nan))
 for x in (0.0, 1.0, 2^52, 2^64, INF)
-subTest(self, x) do 
+subTest(self, x = x) do 
 @test (ulp(-(x)) == ulp(x))
 end
 end
 end
 
-function test_issue39871(self::F)
+function test_issue39871(self)
 mutable struct F <: AbstractF
 converted::Bool
 end
-function __float__(self::F)
+function __float__(self)
 self.converted = true
 1 / 0
 end
@@ -1751,13 +1751,13 @@ assertFalse(self, (hasfield(typeof(y), :converted) ?
 end
 end
 
-function assertIsNaN(self::MathTests, value)
+function assertIsNaN(self, value)
 if !isnan(value)
 fail(self, "Expected a NaN, got $(!r).")
 end
 end
 
-function assertEqualSign(self::MathTests, x, y)
+function assertEqualSign(self, x, y)
 #= Similar to assertEqual(), but compare also the sign with copysign().
 
         Function useful to compare signed zeros.
@@ -1772,27 +1772,27 @@ isclose
                     IsCloseTests(isclose = math.isclose) =
                         new(isclose)
 end
-function assertIsClose(self::IsCloseTests, a, b)
-@test isclose(self, a, b, args..., kwargs)
+function assertIsClose(self, a, b)
+@test isclose(self, a, b, args..., None = kwargs)
 end
 
-function assertIsNotClose(self::IsCloseTests, a, b)
-@test !(isclose(self, a, b, args..., kwargs))
+function assertIsNotClose(self, a, b)
+@test !(isclose(self, a, b, args..., None = kwargs))
 end
 
-function assertAllClose(self::IsCloseTests, examples)
+function assertAllClose(self, examples)
 for (a, b) in examples
 assertIsClose(self, a, b)
 end
 end
 
-function assertAllNotClose(self::IsCloseTests, examples)
+function assertAllNotClose(self, examples)
 for (a, b) in examples
 assertIsNotClose(self, a, b)
 end
 end
 
-function test_negative_tolerances(self::IsCloseTests)
+function test_negative_tolerances(self)
 assertRaises(self, ValueError) do 
 assertIsClose(self, 1, 1)
 end
@@ -1801,59 +1801,59 @@ assertIsClose(self, 1, 1)
 end
 end
 
-function test_identical(self::IsCloseTests)
+function test_identical(self)
 identical_examples = [(2.0, 2.0), (1e+199, 1e+199), (1.123e-300, 1.123e-300), (12345, 12345.0), (0.0, -0.0), (345678, 345678)]
 assertAllClose(self, identical_examples)
 end
 
-function test_eight_decimal_places(self::IsCloseTests)
+function test_eight_decimal_places(self)
 eight_decimal_places_examples = [(100000000.0, 100000000.0 + 1), (-1e-08, -1.000000009e-08), (1.12345678, 1.12345679)]
 assertAllClose(self, eight_decimal_places_examples)
 assertAllNotClose(self, eight_decimal_places_examples)
 end
 
-function test_near_zero(self::IsCloseTests)
+function test_near_zero(self)
 near_zero_examples = [(1e-09, 0.0), (-1e-09, 0.0), (-1e-150, 0.0)]
 assertAllNotClose(self, near_zero_examples)
 assertAllClose(self, near_zero_examples)
 end
 
-function test_identical_infinite(self::IsCloseTests)
+function test_identical_infinite(self)
 assertIsClose(self, INF, INF)
 assertIsClose(self, INF, INF)
 assertIsClose(self, NINF, NINF)
 assertIsClose(self, NINF, NINF)
 end
 
-function test_inf_ninf_nan(self::IsCloseTests)
+function test_inf_ninf_nan(self)
 not_close_examples = [(NAN, NAN), (NAN, 1e-100), (1e-100, NAN), (INF, NAN), (NAN, INF), (INF, NINF), (INF, 1.0), (1.0, INF), (INF, 1e+308), (1e+308, INF)]
 assertAllNotClose(self, not_close_examples)
 end
 
-function test_zero_tolerance(self::IsCloseTests)
+function test_zero_tolerance(self)
 zero_tolerance_close_examples = [(1.0, 1.0), (-3.4, -3.4), (-1e-300, -1e-300)]
 assertAllClose(self, zero_tolerance_close_examples)
 zero_tolerance_not_close_examples = [(1.0, 1.000000000000001), (0.99999999999999, 1.0), (1e+200, 9.99999999999999e+199)]
 assertAllNotClose(self, zero_tolerance_not_close_examples)
 end
 
-function test_asymmetry(self::IsCloseTests)
+function test_asymmetry(self)
 assertAllClose(self, [(9, 10), (10, 9)])
 end
 
-function test_integers(self::IsCloseTests)
+function test_integers(self)
 integer_examples = [(100000001, 100000000), (123456789, 123456788)]
 assertAllClose(self, integer_examples)
 assertAllNotClose(self, integer_examples)
 end
 
-function test_decimals(self::IsCloseTests)
+function test_decimals(self)
 decimal_examples = [(Decimal("1.00000001"), Decimal("1.0")), (Decimal("1.00000001e-20"), Decimal("1.0e-20")), (Decimal("1.00000001e-100"), Decimal("1.0e-100")), (Decimal("1.00000001e20"), Decimal("1.0e20"))]
 assertAllClose(self, decimal_examples)
 assertAllNotClose(self, decimal_examples)
 end
 
-function test_fractions(self::IsCloseTests)
+function test_fractions(self)
 fraction_examples = [(Fraction(1, 100000000) + 1, Fraction(1)), (Fraction(100000001), Fraction(100000000)), (Fraction(10^8 + 1, 10^28), Fraction(1, 10^20))]
 assertAllClose(self, fraction_examples)
 assertAllNotClose(self, fraction_examples)

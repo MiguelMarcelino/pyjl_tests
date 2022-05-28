@@ -27,18 +27,18 @@ end
 mutable struct Context <: AbstractContext
 
 end
-function __enter__(self::Context)
+function __enter__(self)
 return self
 end
 
-function __exit__(self::Context, exc_type, exc_value, exc_tb)::Bool
+function __exit__(self, exc_type, exc_value, exc_tb)::Bool
 return true
 end
 
 mutable struct TestRaise <: AbstractTestRaise
 
 end
-function test_invalid_reraise(self::TestRaise)
+function test_invalid_reraise(self)
 try
 error()
 catch exn
@@ -50,7 +50,7 @@ end
 end
 end
 
-function test_reraise(self::TestRaise)
+function test_reraise(self)
 try
 try
 throw(IndexError())
@@ -71,7 +71,7 @@ end
 end
 end
 
-function test_except_reraise(self::TestRaise)
+function test_except_reraise(self)
 function reraise()
 try
 throw(TypeError("foo"))
@@ -90,7 +90,7 @@ end
 @test_throws TypeError reraise()
 end
 
-function test_finally_reraise(self::TestRaise)
+function test_finally_reraise(self)
 function reraise()
 try
 throw(TypeError("foo"))
@@ -106,7 +106,7 @@ end
 @test_throws KeyError reraise()
 end
 
-function test_nested_reraise(self::TestRaise)
+function test_nested_reraise(self)
 function nested_reraise()
 error()
 end
@@ -122,7 +122,7 @@ end
 @test_throws TypeError reraise()
 end
 
-function test_raise_from_None(self::TestRaise)
+function test_raise_from_None(self)
 try
 try
 throw(TypeError("foo"))
@@ -139,7 +139,7 @@ end
 end
 end
 
-function test_with_reraise1(self::TestRaise)
+function test_with_reraise1(self)
 function reraise()
 try
 throw(TypeError("foo"))
@@ -154,7 +154,7 @@ end
 @test_throws TypeError reraise()
 end
 
-function test_with_reraise2(self::TestRaise)
+function test_with_reraise2(self)
 function reraise()
 try
 throw(TypeError("foo"))
@@ -169,7 +169,7 @@ end
 @test_throws TypeError reraise()
 end
 
-function test_yield_reraise(self::TestRaise)
+function test_yield_reraise(self)
 function reraise()
 try
 throw(TypeError("foo"))
@@ -185,7 +185,7 @@ next(g)
 @test_throws StopIteration () -> next(g)()
 end
 
-function test_erroneous_exception(self::MyException)
+function test_erroneous_exception(self)
 mutable struct MyException <: AbstractMyException
 
 
@@ -204,7 +204,7 @@ end
 end
 end
 
-function test_new_returns_invalid_instance(self::MyException)
+function test_new_returns_invalid_instance(self)
 mutable struct MyException <: AbstractMyException
 
 end
@@ -217,7 +217,7 @@ throw(MyException)
 end
 end
 
-function test_assert_with_tuple_arg(self::TestRaise)
+function test_assert_with_tuple_arg(self)
 try
 @assert(false)
 catch exn
@@ -232,7 +232,7 @@ end
 mutable struct TestCause <: AbstractTestCause
 
 end
-function testCauseSyntax(self::TestCause)
+function testCauseSyntax(self)
 try
 try
 try
@@ -264,7 +264,7 @@ assertIsNone(self, e.__cause__)
 @test isa(self, e.__context__)
 end
 
-function test_invalid_cause(self::TestCause)
+function test_invalid_cause(self)
 try
 throw(IndexError)
 catch exn
@@ -276,7 +276,7 @@ end
 end
 end
 
-function test_class_cause(self::TestCause)
+function test_class_cause(self)
 try
 throw(IndexError)
 catch exn
@@ -288,7 +288,7 @@ end
 end
 end
 
-function test_instance_cause(self::TestCause)
+function test_instance_cause(self)
 cause = KeyError()
 try
 throw(IndexError)
@@ -301,7 +301,7 @@ end
 end
 end
 
-function test_erroneous_cause(self::MyException)
+function test_erroneous_cause(self)
 mutable struct MyException <: AbstractMyException
 
 
@@ -323,7 +323,7 @@ end
 mutable struct TestTraceback <: AbstractTestTraceback
 
 end
-function test_sets_traceback(self::TestTraceback)
+function test_sets_traceback(self)
 try
 throw(IndexError())
 catch exn
@@ -335,7 +335,7 @@ end
 end
 end
 
-function test_accepts_traceback(self::TestTraceback)
+function test_accepts_traceback(self)
 tb = get_tb()
 try
 throw(with_traceback(IndexError(), tb))
@@ -352,11 +352,11 @@ end
 mutable struct TestTracebackType <: AbstractTestTracebackType
 
 end
-function raiser(self::TestTracebackType)
+function raiser(self)
 throw(ValueError)
 end
 
-function test_attrs(self::TestTracebackType)
+function test_attrs(self)
 try
 raiser(self)
 catch exn
@@ -391,7 +391,7 @@ tb.tb_next = new_tb
 assertIs(self, tb.tb_next, new_tb)
 end
 
-function test_constructor(self::TestTracebackType)
+function test_constructor(self)
 other_tb = get_tb()
 frame = _getframe()
 tb = TracebackType(other_tb, frame, 1, 2)
@@ -418,7 +418,7 @@ end
 mutable struct TestContext <: AbstractTestContext
 
 end
-function test_instance_context_instance_raise(self::TestContext)
+function test_instance_context_instance_raise(self)
 context = IndexError()
 try
 try
@@ -435,7 +435,7 @@ end
 end
 end
 
-function test_class_context_instance_raise(self::TestContext)
+function test_class_context_instance_raise(self)
 context = IndexError
 try
 try
@@ -453,7 +453,7 @@ end
 end
 end
 
-function test_class_context_class_raise(self::TestContext)
+function test_class_context_class_raise(self)
 context = IndexError
 try
 try
@@ -471,7 +471,7 @@ end
 end
 end
 
-function test_c_exception_context(self::TestContext)
+function test_c_exception_context(self)
 try
 try
 1 / 0
@@ -487,7 +487,7 @@ end
 end
 end
 
-function test_c_exception_raise(self::TestContext)
+function test_c_exception_raise(self)
 try
 try
 1 / 0
@@ -503,7 +503,7 @@ end
 end
 end
 
-function test_noraise_finally(self::TestContext)
+function test_noraise_finally(self)
 try
 try
 #= pass =#
@@ -519,7 +519,7 @@ end
 end
 end
 
-function test_raise_finally(self::TestContext)
+function test_raise_finally(self)
 try
 try
 1 / 0
@@ -535,15 +535,15 @@ end
 end
 end
 
-function test_context_manager(self::ContextManager)
+function test_context_manager(self)
 mutable struct ContextManager <: AbstractContextManager
 
 end
-function __enter__(self::ContextManager)
+function __enter__(self)
 #= pass =#
 end
 
-function __exit__(self::ContextManager, t, v, tb)
+function __exit__(self, t, v, tb)
 xyzzy
 end
 
@@ -560,7 +560,7 @@ end
 end
 end
 
-function test_cycle_broken(self::TestContext)
+function test_cycle_broken(self)
 try
 try
 1 / 0
@@ -580,7 +580,7 @@ end
 end
 end
 
-function test_reraise_cycle_broken(self::TestContext)
+function test_reraise_cycle_broken(self)
 try
 try
 xyzzy
@@ -606,7 +606,7 @@ end
 end
 end
 
-function test_not_last(self::TestContext)
+function test_not_last(self)
 context = Exception("context")
 try
 throw(context)
@@ -633,7 +633,7 @@ end
 assertIs(self, raised.__context__, context)
 end
 
-function test_3118(self::TestContext)
+function test_3118(self)
 Channel() do ch_test_3118 
 function gen()
 Channel() do ch_gen 
@@ -669,11 +669,11 @@ f()
 end
 end
 
-function test_3611(self::C)
+function test_3611(self)
 mutable struct C <: AbstractC
 
 end
-function __del__(self::C)
+function __del__(self)
 try
 1 / 0
 catch exn
@@ -713,7 +713,7 @@ end
 mutable struct TestRemovedFunctionality <: AbstractTestRemovedFunctionality
 
 end
-function test_tuples(self::TestRemovedFunctionality)
+function test_tuples(self)
 try
 throw((IndexError, KeyError))
 catch exn
@@ -723,7 +723,7 @@ end
 end
 end
 
-function test_strings(self::TestRemovedFunctionality)
+function test_strings(self)
 try
 throw("foo")
 catch exn

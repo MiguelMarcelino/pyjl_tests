@@ -29,30 +29,30 @@ return ((((a + b) + k1) + k2) + sum(arg)) + sum(values(kwargs))
 end
 
 function sortnum()
-return sorted(collect(nums), reverse)
+return sorted(collect(nums), reverse = reverse)
 end
 
 function sortwords()
-return sorted(collect(words), reverse)
+return sorted(collect(words), reverse = reverse)
 end
 
 mutable struct Foo <: AbstractFoo
 k1
 k2
 end
-function set(self::Foo, p1)
+function set(self, p1)
 self.k1 = k1
 self.k2 = k2
 end
 
-function sum(self::Foo)::Any
+function sum(self)::Any
 return self.k1 + self.k2
 end
 
 mutable struct KeywordOnlyArgTestCase <: AbstractKeywordOnlyArgTestCase
 
 end
-function assertRaisesSyntaxError(self::KeywordOnlyArgTestCase, codestr)
+function assertRaisesSyntaxError(self, codestr)
 function shouldRaiseSyntaxError(s)
 compile(s, "<test>", "single")
 end
@@ -60,7 +60,7 @@ end
 @test_throws SyntaxError shouldRaiseSyntaxError(codestr)
 end
 
-function testSyntaxErrorForFunctionDefinition(self::KeywordOnlyArgTestCase)
+function testSyntaxErrorForFunctionDefinition(self)
 assertRaisesSyntaxError(self, "def f(p, *):\n  pass\n")
 assertRaisesSyntaxError(self, "def f(p1, *, p1=100):\n  pass\n")
 assertRaisesSyntaxError(self, "def f(p1, *k1, k1=100):\n  pass\n")
@@ -71,14 +71,14 @@ assertRaisesSyntaxError(self, "def f(p1, *, None, **k1):\n  pass\n")
 assertRaisesSyntaxError(self, "def f(p, *, (k1, k2), **kw):\n  pass\n")
 end
 
-function testSyntaxForManyArguments(self::KeywordOnlyArgTestCase)
+function testSyntaxForManyArguments(self)
 fundef = "def f(%s):\n  pass\n" % join(("i%d" % i for i in 0:299), ", ")
 compile(fundef, "<test>", "single")
 fundef = "def f(*, %s):\n  pass\n" % join(("i%d" % i for i in 0:299), ", ")
 compile(fundef, "<test>", "single")
 end
 
-function testTooManyPositionalErrorMessage(self::KeywordOnlyArgTestCase)
+function testTooManyPositionalErrorMessage(self)
 function f(a, b = nothing)
 #= pass =#
 end
@@ -90,12 +90,12 @@ expected = "$(f.__qualname__)() takes from 1 to 2 positional arguments but 3 wer
 @test (string(exc.exception) == expected)
 end
 
-function testSyntaxErrorForFunctionCall(self::KeywordOnlyArgTestCase)
+function testSyntaxErrorForFunctionCall(self)
 assertRaisesSyntaxError(self, "f(p, k=1, p2)")
 assertRaisesSyntaxError(self, "f(p, k1=50, *(1,2), k1=100)")
 end
 
-function testRaiseErrorFuncallWithUnexpectedKeywordArgument(self::KeywordOnlyArgTestCase)
+function testRaiseErrorFuncallWithUnexpectedKeywordArgument(self)
 @test_throws TypeError keywordonly_sum(())
 @test_throws TypeError keywordonly_nodefaults_sum(())
 @test_throws TypeError Foo(())
@@ -117,7 +117,7 @@ end
 end
 end
 
-function testFunctionCall(self::KeywordOnlyArgTestCase)
+function testFunctionCall(self)
 @test (1 == posonly_sum(1))
 @test (1 + 2 == posonly_sum(1))
 @test ((1 + 2) + 3 == posonly_sum(1))
@@ -146,7 +146,7 @@ function testFunctionCall(self::KeywordOnlyArgTestCase)
 @test (["c", "b", "a"] == sortwords())
 end
 
-function testKwDefaults(self::KeywordOnlyArgTestCase)
+function testKwDefaults(self)
 function foo(p1, p2 = 0)::Any
 return ((p1 + p2) + k1) + k2
 end
@@ -164,35 +164,35 @@ end
 end
 end
 
-function test_kwonly_methods(self::Example)
+function test_kwonly_methods(self)
 mutable struct Example <: AbstractExample
 
 end
-function f(self::Example)::Tuple
+function f(self)::Tuple
 return (k1, k2)
 end
 
-assertEqual(self, f(Example(), 1, 2), (1, 2))
-assertEqual(self, Example.f(Example(), 1, 2), (1, 2))
-assertRaises(self, TypeError, Example.f, 1, 2)
+assertEqual(self, f(Example(), k1 = 1, k2 = 2), (1, 2))
+assertEqual(self, Example.f(Example(), k1 = 1, k2 = 2), (1, 2))
+assertRaises(self, TypeError, Example.f, k1 = 1, k2 = 2)
 end
 
-function test_issue13343(self::KeywordOnlyArgTestCase)
+function test_issue13343(self)
 () -> nothing
 end
 
-function test_mangling(self::X)
+function test_mangling(self)
 mutable struct X <: AbstractX
 
 end
-function f(self::X)
+function f(self)
 return __a
 end
 
 assertEqual(self, f(X()), 42)
 end
 
-function test_default_evaluation_order(self::KeywordOnlyArgTestCase)
+function test_default_evaluation_order(self)
 a = 42
 assertRaises(self, NameError) do err 
 function f(v = a, x = b)

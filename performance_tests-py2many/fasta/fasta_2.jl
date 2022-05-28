@@ -1,12 +1,6 @@
 using BisectPy
 using ResumableFunctions
 
-
-
-
-
-
-
 write = sys.stdout.buffer.write
 function acquired_lock()
     lock = Lock()

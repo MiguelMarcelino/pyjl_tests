@@ -1,14 +1,10 @@
 #= Unit tests for numbers.py. =#
 using Test
 
-
-
-
 abstract type AbstractTestNumbers end
 mutable struct TestNumbers <: AbstractTestNumbers
-
 end
-function test_int(self::TestNumbers)
+function test_int(self)
     @test Int64 <: Integer
     @test (7 == Int(7).real)
     @test (0 == Int(7).imag)
@@ -18,7 +14,7 @@ function test_int(self::TestNumbers)
     @test (1 == Int(7).denominator)
 end
 
-function test_float(self::TestNumbers)
+function test_float(self)
     @test !(Float64 <: Rational)
     @test Float64 <: Real
     @test (7.3 == float(7.3).real)
@@ -27,7 +23,7 @@ function test_float(self::TestNumbers)
     @test (-7.3 == conj(float(-7.3)))
 end
 
-function test_complex(self::TestNumbers)
+function test_complex(self)
     @test !(Complex <: Real)
     @test Complex <: Complex
     c1, c2 = (complex(3, 2), complex(4, 1))

@@ -20,14 +20,14 @@ __class__
                     TestIsInstanceExceptions(__bases__ = property(getbases), __class__ = property(getclass)) =
                         new(__bases__, __class__)
 end
-function test_class_has_no_bases(self::C)
+function test_class_has_no_bases(self)
 mutable struct I <: AbstractI
 __class__
 
                     I(__class__ = property(getclass)) =
                         new(__class__)
 end
-function getclass(self::I)
+function getclass(self)
 return nothing
 end
 
@@ -37,21 +37,21 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)::Tuple
+function getbases(self)::Tuple
 return ()
 end
 
 assertEqual(self, false, isa(I(), C()))
 end
 
-function test_bases_raises_other_than_attribute_error(self::C)
+function test_bases_raises_other_than_attribute_error(self)
 mutable struct E <: AbstractE
 __bases__
 
                     E(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::E)
+function getbases(self)
 throw(RuntimeError)
 end
 
@@ -61,7 +61,7 @@ __class__
                     I(__class__ = property(getclass)) =
                         new(__class__)
 end
-function getclass(self::I)::E
+function getclass(self)::E
 return E()
 end
 
@@ -71,14 +71,14 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)::Tuple
+function getbases(self)::Tuple
 return ()
 end
 
 assertRaises(self, RuntimeError, isinstance, I(), C())
 end
 
-function test_dont_mask_non_attribute_error(self::C)
+function test_dont_mask_non_attribute_error(self)
 mutable struct I <: AbstractI
 
 end
@@ -89,14 +89,14 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(RuntimeError)
 end
 
 assertRaises(self, RuntimeError, isinstance, I(), C())
 end
 
-function test_mask_attribute_error(self::C)
+function test_mask_attribute_error(self)
 mutable struct I <: AbstractI
 
 end
@@ -107,21 +107,21 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(AttributeError)
 end
 
 assertRaises(self, TypeError, isinstance, I(), C())
 end
 
-function test_isinstance_dont_mask_non_attribute_error(self::D)
+function test_isinstance_dont_mask_non_attribute_error(self)
 mutable struct C <: AbstractC
 __class__
 
                     C(__class__ = property(getclass)) =
                         new(__class__)
 end
-function getclass(self::C)
+function getclass(self)
 throw(RuntimeError)
 end
 
@@ -140,14 +140,14 @@ __bases__
                     TestIsSubclassExceptions(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function test_dont_mask_non_attribute_error(self::S)
+function test_dont_mask_non_attribute_error(self)
 mutable struct C <: AbstractC
 __bases__
 
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(RuntimeError)
 end
 
@@ -158,14 +158,14 @@ end
 assertRaises(self, RuntimeError, issubclass, C(), S())
 end
 
-function test_mask_attribute_error(self::S)
+function test_mask_attribute_error(self)
 mutable struct C <: AbstractC
 __bases__
 
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(AttributeError)
 end
 
@@ -176,7 +176,7 @@ end
 assertRaises(self, TypeError, issubclass, C(), S())
 end
 
-function test_dont_mask_non_attribute_error_in_cls_arg(self::C)
+function test_dont_mask_non_attribute_error_in_cls_arg(self)
 mutable struct B <: AbstractB
 
 end
@@ -187,14 +187,14 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(RuntimeError)
 end
 
 assertRaises(self, RuntimeError, issubclass, B, C())
 end
 
-function test_mask_attribute_error_in_cls_arg(self::C)
+function test_mask_attribute_error_in_cls_arg(self)
 mutable struct B <: AbstractB
 
 end
@@ -205,7 +205,7 @@ __bases__
                     C(__bases__ = property(getbases)) =
                         new(__bases__)
 end
-function getbases(self::C)
+function getbases(self)
 throw(AttributeError)
 end
 
@@ -219,11 +219,11 @@ __bases__
                     AbstractClass(bases, __bases__ = property(getbases)) =
                         new(bases, __bases__)
 end
-function getbases(self::AbstractClass)
+function getbases(self)
 return self.bases
 end
 
-function __call__(self::AbstractClass)::AbstractInstance
+function __call__(self)::AbstractInstance
 return AbstractInstance(self)
 end
 
@@ -234,7 +234,7 @@ __class__
                     AbstractInstance(klass, __class__ = property(getclass)) =
                         new(klass, __class__)
 end
-function getclass(self::AbstractInstance)
+function getclass(self)
 return self.klass
 end
 
@@ -252,7 +252,7 @@ mutable struct TestIsInstanceIsSubclass <: AbstractTestIsInstanceIsSubclass
 x::Int64
 __bases__
 end
-function test_isinstance_normal(self::TestIsInstanceIsSubclass)
+function test_isinstance_normal(self)
 @test (true == isa(Super(), Super))
 @test (false == isa(Super(), Child))
 @test (false == isa(Super(), AbstractSuper))
@@ -261,7 +261,7 @@ function test_isinstance_normal(self::TestIsInstanceIsSubclass)
 @test (false == isa(Child(), AbstractSuper))
 end
 
-function test_isinstance_abstract(self::TestIsInstanceIsSubclass)
+function test_isinstance_abstract(self)
 @test (true == isa(AbstractSuper(), AbstractSuper))
 @test (false == isa(AbstractSuper(), AbstractChild))
 @test (false == isa(AbstractSuper(), Super))
@@ -272,7 +272,7 @@ function test_isinstance_abstract(self::TestIsInstanceIsSubclass)
 @test (false == isa(AbstractChild(), Child))
 end
 
-function test_isinstance_with_or_union(self::TestIsInstanceIsSubclass)
+function test_isinstance_with_or_union(self)
 @test isa(Super(), __or__(Super, int))
 @test !(isa(nothing, str | int))
 @test isa(3, str | int)
@@ -293,7 +293,7 @@ isa(2, ((int | str) | list[int + 1]) | float)
 end
 end
 
-function test_subclass_normal(self::TestIsInstanceIsSubclass)
+function test_subclass_normal(self)
 @test (true == Super <: Super)
 @test (false == Super <: AbstractSuper)
 @test (false == Super <: Child)
@@ -304,7 +304,7 @@ function test_subclass_normal(self::TestIsInstanceIsSubclass)
 @test !(Int64 <: typing.List | typing.Tuple)
 end
 
-function test_subclass_abstract(self::TestIsInstanceIsSubclass)
+function test_subclass_abstract(self)
 @test (true == AbstractSuper <: AbstractSuper)
 @test (false == AbstractSuper <: AbstractChild)
 @test (false == AbstractSuper <: Child)
@@ -314,7 +314,7 @@ function test_subclass_abstract(self::TestIsInstanceIsSubclass)
 @test (false == AbstractChild <: Child)
 end
 
-function test_subclass_tuple(self::TestIsInstanceIsSubclass)
+function test_subclass_tuple(self)
 @test (true == Child <: (Child,))
 @test (true == Child <: (Super,))
 @test (false == Super <: (Child,))
@@ -325,19 +325,19 @@ function test_subclass_tuple(self::TestIsInstanceIsSubclass)
 @test (true == String <: (str, (Child, str)))
 end
 
-function test_subclass_recursion_limit(self::TestIsInstanceIsSubclass)
+function test_subclass_recursion_limit(self)
 infinite_recursion() do 
 @test_throws RecursionError blowstack(issubclass, str, str)
 end
 end
 
-function test_isinstance_recursion_limit(self::TestIsInstanceIsSubclass)
+function test_isinstance_recursion_limit(self)
 infinite_recursion() do 
 @test_throws RecursionError blowstack(isinstance, "", str)
 end
 end
 
-function test_subclass_with_union(self::TestIsInstanceIsSubclass)
+function test_subclass_with_union(self)
 @test Int64 <: (int | float) | int
 @test String <: __or__(str, Child) | str
 @test !(dict <: float | str)
@@ -350,29 +350,29 @@ Int64 <: __or__(list[int + 1], Child)
 end
 end
 
-function test_issubclass_refcount_handling(self::B)
+function test_issubclass_refcount_handling(self)
 mutable struct A <: AbstractA
 
 end
-function __bases__(self::A)::Tuple
+function __bases__(self)::Tuple
 return (int,)
 end
 
 mutable struct B <: AbstractB
 x::Int64
 end
-function __bases__(self::B)
+function __bases__(self)
 return (A(),)
 end
 
 assertEqual(self, true, B() <: Int64)
 end
 
-function test_infinite_recursion_in_bases(self::X)
+function test_infinite_recursion_in_bases(self)
 mutable struct X <: AbstractX
 __bases__
 end
-function __bases__(self::X)
+function __bases__(self)
 return self.__bases__
 end
 
@@ -383,12 +383,12 @@ assertRaises(self, RecursionError, isinstance, 1, X())
 end
 end
 
-function test_infinite_recursion_via_bases_tuple(self::Failure)
+function test_infinite_recursion_via_bases_tuple(self)
 #= Regression test for bpo-30570. =#
 mutable struct Failure <: AbstractFailure
 
 end
-function __getattr__(self::Failure, attr)::Tuple
+function __getattr__(self, attr)::Tuple
 return (self, nothing)
 end
 
@@ -399,12 +399,12 @@ end
 end
 end
 
-function test_infinite_cycle_in_bases(self::X)
+function test_infinite_cycle_in_bases(self)
 #= Regression test for bpo-30570. =#
 mutable struct X <: AbstractX
 
 end
-function __bases__(self::X)::Tuple
+function __bases__(self)::Tuple
 return (self, self, self)
 end
 
@@ -413,12 +413,12 @@ assertRaises(self, RecursionError, issubclass, X(), int)
 end
 end
 
-function test_infinitely_many_bases(self::X)
+function test_infinitely_many_bases(self)
 #= Regression test for bpo-30570. =#
 mutable struct X <: AbstractX
 
 end
-function __getattr__(self::B, attr)
+function __getattr__(self, attr)
 assertEqual(self, attr, "__bases__")
 mutable struct A <: AbstractA
 

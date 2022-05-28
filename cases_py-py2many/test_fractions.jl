@@ -29,7 +29,7 @@ end
                 new(value, __rsub__ )
             end
 end
-function _richcmp(self::DummyFloat, other, op)
+function _richcmp(self, other, op)
 if isa(other, numbers.Rational)
 return op(from_float(F, self.value), other)
 elseif isa(other, DummyFloat)
@@ -39,31 +39,31 @@ return NotImplemented
 end
 end
 
-function __eq__(self::DummyFloat, other)
+function __eq__(self, other)
 return _richcmp(self, other, operator.eq)
 end
 
-function __le__(self::DummyFloat, other)
+function __le__(self, other)
 return _richcmp(self, other, operator.le)
 end
 
-function __lt__(self::DummyFloat, other)
+function __lt__(self, other)
 return _richcmp(self, other, operator.lt)
 end
 
-function __ge__(self::DummyFloat, other)
+function __ge__(self, other)
 return _richcmp(self, other, operator.ge)
 end
 
-function __gt__(self::DummyFloat, other)
+function __gt__(self, other)
 return _richcmp(self, other, operator.gt)
 end
 
-function __float__(self::DummyFloat)
+function __float__(self)
 @assert(false)
 end
 
-function __sub__(self::DummyFloat, other)
+function __sub__(self, other)
 @assert(false)
 end
 
@@ -72,7 +72,7 @@ mutable struct DummyRational <: AbstractDummyRational
 num
 den
 end
-function __eq__(self::DummyRational, other)
+function __eq__(self, other)
 if isa(other, fractions.Fraction)
 return self.num == other._numerator && self.den == other._denominator
 else
@@ -80,23 +80,23 @@ return NotImplemented
 end
 end
 
-function __lt__(self::DummyRational, other)::Bool
+function __lt__(self, other)::Bool
 return (self.num*other._denominator) < (self.den*other._numerator)
 end
 
-function __gt__(self::DummyRational, other)::Bool
+function __gt__(self, other)::Bool
 return (self.num*other._denominator) > (self.den*other._numerator)
 end
 
-function __le__(self::DummyRational, other)::Bool
+function __le__(self, other)::Bool
 return (self.num*other._denominator) <= (self.den*other._numerator)
 end
 
-function __ge__(self::DummyRational, other)::Bool
+function __ge__(self, other)::Bool
 return (self.num*other._denominator) >= (self.den*other._numerator)
 end
 
-function __float__(self::DummyRational)
+function __float__(self)
 @assert(false)
 end
 
@@ -117,22 +117,22 @@ denominator::Int64
                     FractionTest(value, __lt__ = __eq__, denominator::Int64 = 1) =
                         new(value, __lt__, denominator)
 end
-function assertTypedEquals(self::FractionTest, expected, actual)
+function assertTypedEquals(self, expected, actual)
 #= Asserts that both the types and values are the same. =#
 @test (type_(expected) == type_(actual))
 @test (expected == actual)
 end
 
-function assertTypedTupleEquals(self::FractionTest, expected, actual)
+function assertTypedTupleEquals(self, expected, actual)
 #= Asserts that both the types and values in the tuples are the same. =#
 assertTupleEqual(self, expected, actual)
 assertListEqual(self, collect(map(type_, expected)), collect(map(type_, actual)))
 end
 
-function assertRaisesMessage(self::FractionTest, exc_type, message, callable)
+function assertRaisesMessage(self, exc_type, message, callable)
 #= Asserts that callable(*args, **kwargs) raises exc_type(message). =#
 try
-callable(args..., kwargs)
+callable(args..., None = kwargs)
 catch exn
  let e = exn
 if e isa exc_type
@@ -142,7 +142,7 @@ end
 end
 end
 
-function testInit(self::FractionTest)
+function testInit(self)
 @test ((0, 1) == _components(F()))
 @test ((7, 1) == _components(F(7)))
 @test ((7, 3) == _components(F(F(7, 3))))
@@ -163,7 +163,7 @@ assertRaisesMessage(self, ZeroDivisionError, "Fraction(12, 0)", F)
 @test_throws TypeError F(1, 2, 3)
 end
 
-function testInitFromFloat(self::FractionTest)
+function testInitFromFloat(self)
 @test ((5, 2) == _components(F(2.5)))
 @test ((0, 1) == _components(F(-0.0)))
 @test ((3602879701896397, 36028797018963968) == _components(F(0.1)))
@@ -172,7 +172,7 @@ function testInitFromFloat(self::FractionTest)
 @test_throws OverflowError F(float("-inf"))
 end
 
-function testInitFromDecimal(self::FractionTest)
+function testInitFromDecimal(self)
 @test ((11, 10) == _components(F(Decimal("1.1"))))
 @test ((7, 200) == _components(F(Decimal("3.5e-2"))))
 @test ((0, 1) == _components(F(Decimal(".000e20"))))
@@ -182,7 +182,7 @@ function testInitFromDecimal(self::FractionTest)
 @test_throws OverflowError F(Decimal("-inf"))
 end
 
-function testFromString(self::FractionTest)
+function testFromString(self)
 @test ((5, 1) == _components(F("5")))
 @test ((3, 2) == _components(F("3/2")))
 @test ((3, 2) == _components(F(" \n  +3/2")))
@@ -209,7 +209,7 @@ assertRaisesMessage(self, ValueError, "Invalid literal for Fraction: \'3.2/7\'",
 assertRaisesMessage(self, ValueError, "Invalid literal for Fraction: \'.\'", F)
 end
 
-function testImmutable(self::FractionTest)
+function testImmutable(self)
 r = F(7, 3)
 __init__(r, 2, 15)
 @test ((7, 3) == _components(r))
@@ -222,7 +222,7 @@ r._denominator = 2
 assertNotEqual(self, F(4, 2), r)
 end
 
-function testFromFloat(self::FractionTest)
+function testFromFloat(self)
 @test_throws TypeError F.from_float(3 + 4im)
 @test ((10, 1) == _components(from_float(F, 10)))
 bigint = 1234567890123456789
@@ -241,7 +241,7 @@ assertRaisesMessage(self, OverflowError, "cannot convert Infinity to integer rat
 assertRaisesMessage(self, ValueError, "cannot convert NaN to integer ratio", F.from_float)
 end
 
-function testFromDecimal(self::FractionTest)
+function testFromDecimal(self)
 @test_throws TypeError F.from_decimal(3 + 4im)
 @test (F(10, 1) == from_decimal(F, 10))
 @test (F(0) == from_decimal(F, Decimal("-0")))
@@ -255,14 +255,14 @@ assertRaisesMessage(self, ValueError, "cannot convert NaN to integer ratio", F.f
 assertRaisesMessage(self, ValueError, "cannot convert NaN to integer ratio", F.from_decimal)
 end
 
-function test_as_integer_ratio(self::FractionTest)
+function test_as_integer_ratio(self)
 @test (as_integer_ratio(F(4, 6)) == (2, 3))
 @test (as_integer_ratio(F(-4, 6)) == (-2, 3))
 @test (as_integer_ratio(F(4, -6)) == (-2, 3))
 @test (as_integer_ratio(F(0, 6)) == (0, 1))
 end
 
-function testLimitDenominator(self::FractionTest)
+function testLimitDenominator(self)
 rpi = F("3.1415926535897932")
 @test (limit_denominator(rpi, 10000) == F(355, 113))
 @test (-limit_denominator(rpi, 10000) == F(-355, 113))
@@ -276,7 +276,7 @@ assertRaisesMessage(self, ValueError, "max_denominator should be at least 1", F(
 end
 end
 
-function testConversions(self::FractionTest)
+function testConversions(self)
 assertTypedEquals(self, -1, trunc(F(-11, 10)))
 assertTypedEquals(self, 1, trunc(F(11, 10)))
 assertTypedEquals(self, -2, floor(F(-11, 10)))
@@ -295,7 +295,7 @@ assertAlmostEqual(self, 2.0 / 3, float(F(parse(Int, repeat("2",400) * "7"), pars
 assertTypedEquals(self, 0.1 + 0im, complex(F(1, 10)))
 end
 
-function testBoolGuarateesBoolReturn(self::CustomValue)
+function testBoolGuarateesBoolReturn(self)
 mutable struct CustomValue <: AbstractCustomValue
 value
 __lt__
@@ -304,15 +304,15 @@ denominator::Int64
                     CustomValue(value, __lt__ = __eq__, denominator::Int64 = 1) =
                         new(value, __lt__, denominator)
 end
-function __bool__(self::CustomValue)::Bool
+function __bool__(self)::Bool
 return Bool(self.value)
 end
 
-function numerator(self::CustomValue)
+function numerator(self)
 return self
 end
 
-function __eq__(self::CustomValue, other)
+function __eq__(self, other)
 throw(AssertionError("Avoid comparisons in Fraction.__bool__"))
 end
 
@@ -326,7 +326,7 @@ r = F(numerator)
 assertIs(self, Bool(r), false)
 end
 
-function testRound(self::FractionTest)
+function testRound(self)
 assertTypedEquals(self, F(-200), round(F(-150), digits = -2))
 assertTypedEquals(self, F(-200), round(F(-250), digits = -2))
 assertTypedEquals(self, F(30), round(F(26), digits = -1))
@@ -334,7 +334,7 @@ assertTypedEquals(self, F(-2, 10), round(F(-15, 100), digits = 1))
 assertTypedEquals(self, F(-2, 10), round(F(-25, 100), digits = 1))
 end
 
-function testArithmetic(self::FractionTest)
+function testArithmetic(self)
 @test (F(1, 2) == F(1, 10) + F(2, 5))
 @test (F(-3, 10) == F(1, 10) - F(2, 5))
 @test (F(1, 25) == F(1, 10)*F(2, 5))
@@ -368,7 +368,7 @@ p = F(-1, 2)^-2
 @test (p.denominator == 1)
 end
 
-function testLargeArithmetic(self::FractionTest)
+function testLargeArithmetic(self)
 assertTypedEquals(self, F(10101010100808080808080808101010101010000000000000000, 1010101010101010101010101011111111101010101010101010101010101), F(10^35 + 1, 10^27 + 1) % F(10^27 + 1, 10^35 - 1))
 assertTypedEquals(self, F(7, 1901475900342344102245054808064), F(-(2^100), 3) % F(5, 2^100))
 assertTypedTupleEquals(self, (9999999999999999, F(10101010100808080808080808101010101010000000000000000, 1010101010101010101010101011111111101010101010101010101010101)), div(F(10^35 + 1, 10^27 + 1)))
@@ -378,7 +378,7 @@ assertTypedEquals(self, (1, F(2, 2^100)), div(F(5, 2^100)))
 assertTypedTupleEquals(self, (-(2^200) ÷ 15, F(7, 1901475900342344102245054808064)), div(F(-(2^100), 3)))
 end
 
-function testMixedArithmetic(self::FractionTest)
+function testMixedArithmetic(self)
 assertTypedEquals(self, F(11, 10), F(1, 10) + 1)
 assertTypedEquals(self, 1.1, F(1, 10) + 1.0)
 assertTypedEquals(self, 1.1 + 0im, F(1, 10) + (1.0 + 0im))
@@ -439,12 +439,12 @@ assertTypedEquals(self, 1.0 + 0im, (1.0 + 0im)^F(1, 10))
 @test_throws ZeroDivisionError operator.pow(F(0, 1), -2)
 end
 
-function testMixingWithDecimal(self::FractionTest)
+function testMixingWithDecimal(self)
 @test_throws TypeError operator.add(F(3, 11), Decimal("3.1415926"))
 @test_throws TypeError operator.add(Decimal("3.1415926"), F(3, 11))
 end
 
-function testComparisons(self::FractionTest)
+function testComparisons(self)
 @test F(1, 2) < F(2, 3)
 @test !(F(1, 2) < F(1, 2))
 @test F(1, 2) <= F(2, 3)
@@ -456,7 +456,7 @@ function testComparisons(self::FractionTest)
 @test F(1, 2) != F(1, 3)
 end
 
-function testComparisonsDummyRational(self::FractionTest)
+function testComparisonsDummyRational(self)
 @test F(1, 2) == DummyRational(1, 2)
 @test DummyRational(1, 2) == F(1, 2)
 @test !(F(1, 2) == DummyRational(3, 4))
@@ -487,7 +487,7 @@ function testComparisonsDummyRational(self::FractionTest)
 @test DummyRational(1, 2) >= F(1, 7)
 end
 
-function testComparisonsDummyFloat(self::FractionTest)
+function testComparisonsDummyFloat(self)
 x = DummyFloat(1.0 / 3.0)
 y = F(1, 3)
 @test x != y
@@ -500,7 +500,7 @@ y = F(1, 3)
 @test !(y <= x && y >= x)
 end
 
-function testMixedLess(self::FractionTest)
+function testMixedLess(self)
 @test 2 < F(5, 2)
 @test !(2 < F(4, 2))
 @test F(5, 2) < 3
@@ -517,7 +517,7 @@ function testMixedLess(self::FractionTest)
 @test !(F(144, -89) < float("nan"))
 end
 
-function testMixedLessEqual(self::FractionTest)
+function testMixedLessEqual(self)
 @test 0.5 <= F(1, 2)
 @test !(0.6 <= F(1, 2))
 @test F(1, 2) <= 0.5
@@ -534,7 +534,7 @@ function testMixedLessEqual(self::FractionTest)
 @test !(F(144, -89) <= float("nan"))
 end
 
-function testBigFloatComparisons(self::FractionTest)
+function testBigFloatComparisons(self)
 @test !(F(10^23) == float(10^23))
 @test !(1e+23 < float(F(trunc(1e+23) + 1)))
 @test 1e+23 < F(trunc(1e+23) + 1)
@@ -543,7 +543,7 @@ function testBigFloatComparisons(self::FractionTest)
 @test !(1e+23 >= F(trunc(1e+23) + 1))
 end
 
-function testBigComplexComparisons(self::FractionTest)
+function testBigComplexComparisons(self)
 @test !(F(10^23) == complex(10^23))
 @test_throws TypeError operator.gt(F(10^23), complex(10^23))
 @test_throws TypeError operator.le(F(10^23), complex(10^23))
@@ -562,7 +562,7 @@ for op in (operator.lt, operator.le, operator.gt, operator.ge)
 end
 end
 
-function testMixedEqual(self::FractionTest)
+function testMixedEqual(self)
 @test 0.5 == F(1, 2)
 @test !(0.6 == F(1, 2))
 @test F(1, 2) == 0.5
@@ -577,7 +577,7 @@ function testMixedEqual(self::FractionTest)
 @test !(float("-inf") == F(2, 5))
 end
 
-function testStringification(self::FractionTest)
+function testStringification(self)
 @test ("Fraction(7, 3)" == repr(F(7, 3)))
 @test ("Fraction(6283185307, 2000000000)" == repr(F("3.1415926535")))
 @test ("Fraction(-1, 100000000000000000000)" == repr(F(1, -(10^20))))
@@ -585,7 +585,7 @@ function testStringification(self::FractionTest)
 @test ("7" == string(F(7, 1)))
 end
 
-function testHash(self::FractionTest)
+function testHash(self)
 hmod = sys.hash_info.modulus
 hinf = sys.hash_info.inf
 @test (hash(2.5) == hash(F(5, 2)))
@@ -595,7 +595,7 @@ assertNotEqual(self, hash(float(10^23)), hash(F(10^23)))
 @test (hash(F(-1)) == __hash__(F(-1)))
 end
 
-function testApproximatePi(self::FractionTest)
+function testApproximatePi(self)
 three = F(3)
 lasts, t, s, n, na, d, da = (0, three, 3, 1, 0, 0, 24)
 while abs(s - lasts) > F(1, 10^9)
@@ -608,7 +608,7 @@ end
 assertAlmostEqual(self, math.pi, s)
 end
 
-function testApproximateCos1(self::FractionTest)
+function testApproximateCos1(self)
 x = F(1)
 i, lasts, s, fact, num, sign = (0, 0, F(1), 1, 1, 1)
 while abs(s - lasts) > F(1, 10^9)
@@ -622,7 +622,7 @@ end
 assertAlmostEqual(self, cos(1), s)
 end
 
-function test_copy_deepcopy_pickle(self::FractionTest)
+function test_copy_deepcopy_pickle(self)
 r = F(13, 7)
 dr = DummyFraction(13, 7)
 @test (r == loads(dumps(r)))
@@ -634,33 +634,33 @@ assertTypedEquals(self, dr, copy(dr))
 assertTypedEquals(self, dr, deepcopy(dr))
 end
 
-function test_slots(self::FractionTest)
+function test_slots(self)
 r = F(13, 7)
 @test_throws AttributeError setattr(r, "a", 10)
 end
 
-function test_int_subclass(self::myint)
+function test_int_subclass(self)
 mutable struct myint <: Abstractmyint
 
 end
-function __mul__(self::myint, other)
+function __mul__(self, other)
 return type_(self)(parse(Int, self)*parse(Int, other))
 end
 
-function __floordiv__(self::myint, other)
+function __floordiv__(self, other)
 return type_(self)(parse(Int, self) ÷ parse(Int, other))
 end
 
-function __mod__(self::myint, other)
+function __mod__(self, other)
 x = type_(self)(parse(Int, self) % parse(Int, other))
 return x
 end
 
-function numerator(self::myint)
+function numerator(self)
 return type_(self)(parse(Int, self))
 end
 
-function denominator(self::myint)
+function denominator(self)
 return type_(self)(1)
 end
 

@@ -82,11 +82,11 @@ end
 mutable struct BadCmp <: AbstractBadCmp
 
 end
-function __hash__(self::BadCmp)::Int64
+function __hash__(self)::Int64
 return 1
 end
 
-function __eq__(self::BadCmp, other)
+function __eq__(self, other)
 throw(RuntimeError)
 end
 
@@ -94,7 +94,7 @@ mutable struct ReprWrapper <: AbstractReprWrapper
 #= Used to test self-referential repr() calls =#
 value
 end
-function __repr__(self::ReprWrapper)
+function __repr__(self)
 return repr(self.value)
 end
 
@@ -102,7 +102,7 @@ mutable struct HashCountingInt <: AbstractHashCountingInt
 #= int-like object that counts the number of times __hash__ is called =#
 hash_count::Int64
 end
-function __hash__(self::HashCountingInt)
+function __hash__(self)
 self.hash_count += 1
 return __hash__(int)
 end
@@ -117,7 +117,7 @@ d
 thetype
 basetype
 end
-function setUp(self::TestJointOps)
+function setUp(self)
 self.word = "simsalabim"
 word = "simsalabim"
 self.otherword = "madagascar"
@@ -126,12 +126,12 @@ self.s = thetype(self, word)
 self.d = fromkeys(dict, word)
 end
 
-function test_new_or_init(self::TestJointOps)
+function test_new_or_init(self)
 assertRaises(self, TypeError, self.thetype, [], 2)
-assertRaises(self, TypeError, set().__init__, 1)
+assertRaises(self, TypeError, set().__init__, a = 1)
 end
 
-function test_uniquification(self::TestJointOps)
+function test_uniquification(self)
 actual = sorted(self.s)
 expected = sorted(self.d)
 assertEqual(self, actual, expected)
@@ -139,11 +139,11 @@ assertRaises(self, PassThru, self.thetype, check_pass_thru())
 assertRaises(self, TypeError, self.thetype, [[]])
 end
 
-function test_len(self::TestJointOps)
+function test_len(self)
 assertEqual(self, length(self.s), length(self.d))
 end
 
-function test_contains(self::TestJointOps)
+function test_contains(self)
 for c in self.letters
 assertEqual(self, c ∈ self.s, c ∈ self.d)
 end
@@ -152,7 +152,7 @@ s = thetype(self, [frozenset(self.letters)])
 assertIn(self, thetype(self, self.letters), s)
 end
 
-function test_union(self::TestJointOps)
+function test_union(self)
 u = union(self.s, self.otherword)
 for c in self.letters
 assertEqual(self, c ∈ u, c ∈ self.d || c ∈ self.otherword)
@@ -172,7 +172,7 @@ x = thetype(self)
 assertEqual(self, union(x, set([1]), x, set([2])), thetype(self, [1, 2]))
 end
 
-function test_or(self::TestJointOps)
+function test_or(self)
 i = union(self.s, self.otherword)
 assertEqual(self, self.s | set(self.otherword), i)
 assertEqual(self, self.s | frozenset(self.otherword), i)
@@ -185,7 +185,7 @@ end
 end
 end
 
-function test_intersection(self::TestJointOps)
+function test_intersection(self)
 i = intersection(self.s, self.otherword)
 for c in self.letters
 assertEqual(self, c ∈ i, c ∈ self.d && c ∈ self.otherword)
@@ -209,7 +209,7 @@ assertNotEqual(self, id(s), id(z))
 end
 end
 
-function test_isdisjoint(self::TestJointOps)
+function test_isdisjoint(self)
 function f(s1, s2)
 #= Pure python equivalent of isdisjoint() =#
 return !intersection(set(s1), s2)
@@ -229,7 +229,7 @@ end
 end
 end
 
-function test_and(self::TestJointOps)
+function test_and(self)
 i = intersection(self.s, self.otherword)
 assertEqual(self, self.s & set(self.otherword), i)
 assertEqual(self, self.s & frozenset(self.otherword), i)
@@ -242,7 +242,7 @@ end
 end
 end
 
-function test_difference(self::TestJointOps)
+function test_difference(self)
 i = difference(self.s, self.otherword)
 for c in self.letters
 assertEqual(self, c ∈ i, c ∈ self.d && c ∉ self.otherword)
@@ -261,7 +261,7 @@ assertEqual(self, difference(thetype(self, "abcba"), C("a"), C("b")), set("c"))
 end
 end
 
-function test_sub(self::TestJointOps)
+function test_sub(self)
 i = difference(self.s, self.otherword)
 assertEqual(self, self.s - set(self.otherword), i)
 assertEqual(self, self.s - frozenset(self.otherword), i)
@@ -274,7 +274,7 @@ end
 end
 end
 
-function test_symmetric_difference(self::TestJointOps)
+function test_symmetric_difference(self)
 i = symmetric_difference(self.s, self.otherword)
 for c in self.letters
 assertEqual(self, c ∈ i, c ∈ self.d  ⊻  c ∈ self.otherword)
@@ -291,7 +291,7 @@ assertEqual(self, symmetric_difference(thetype(self, "abcba"), C("ef")), set("ab
 end
 end
 
-function test_xor(self::TestJointOps)
+function test_xor(self)
 i = symmetric_difference(self.s, self.otherword)
 assertEqual(self, self.s  ⊻  set(self.otherword), i)
 assertEqual(self, self.s  ⊻  frozenset(self.otherword), i)
@@ -304,7 +304,7 @@ end
 end
 end
 
-function test_equality(self::TestJointOps)
+function test_equality(self)
 assertEqual(self, self.s, set(self.word))
 assertEqual(self, self.s, frozenset(self.word))
 assertEqual(self, self.s == self.word, false)
@@ -313,13 +313,13 @@ assertNotEqual(self, self.s, frozenset(self.otherword))
 assertEqual(self, self.s != self.word, true)
 end
 
-function test_setOfFrozensets(self::TestJointOps)
+function test_setOfFrozensets(self)
 t = map(frozenset, ["abcdef", "bcd", "bdcb", "fed", "fedccba"])
 s = thetype(self, t)
 assertEqual(self, length(s), 3)
 end
 
-function test_sub_and_super(self::TestJointOps)
+function test_sub_and_super(self)
 p, q, r = map(self.thetype, ["ab", "abcde", "def"])
 assertTrue(self, p < q)
 assertTrue(self, p <= q)
@@ -336,7 +336,7 @@ assertFalse(self, issubset(set("a"), "cbs"))
 assertFalse(self, issuperset(set("cbs"), "a"))
 end
 
-function test_pickling(self::TestJointOps)
+function test_pickling(self)
 for i in 0:pickle.HIGHEST_PROTOCOL
 p = dumps(self.s, i)
 dup = loads(p)
@@ -350,7 +350,7 @@ end
 end
 end
 
-function test_iterator_pickling(self::TestJointOps)
+function test_iterator_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 itorg = (x for x in self.s)
 data = thetype(self, self.s)
@@ -372,15 +372,15 @@ assertEqual(self, thetype(self, it), data - thetype(self, (drop,)))
 end
 end
 
-function test_deepcopy(self::Tracer)
+function test_deepcopy(self)
 mutable struct Tracer <: AbstractTracer
 value
 end
-function __hash__(self::Tracer)
+function __hash__(self)
 return self.value
 end
 
-function __deepcopy__(self::Tracer, memo = nothing)::Tracer
+function __deepcopy__(self, memo = nothing)::Tracer
 return Tracer(self.value + 1)
 end
 
@@ -395,7 +395,7 @@ assertNotEqual(self, id(t), id(newt))
 assertEqual(self, t.value + 1, newt.value)
 end
 
-function test_gc(self::A)
+function test_gc(self)
 mutable struct A <: AbstractA
 
 end
@@ -408,11 +408,11 @@ elem.set = set([elem])
 end
 end
 
-function test_subclass_with_custom_hash(self::H)
+function test_subclass_with_custom_hash(self)
 mutable struct H <: AbstractH
 thetype
 end
-function __hash__(self::H)::Int64
+function __hash__(self)::Int64
 return Int(id(self) & 2147483647)
 end
 
@@ -425,7 +425,7 @@ add(f, s)
 discard(f, s)
 end
 
-function test_badcmp(self::TestJointOps)
+function test_badcmp(self)
 s = thetype(self, [BadCmp()])
 assertRaises(self, RuntimeError, self.thetype, [BadCmp(), BadCmp()])
 assertRaises(self, RuntimeError, s.__contains__, BadCmp())
@@ -436,7 +436,7 @@ assertRaises(self, RuntimeError, s.remove, BadCmp())
 end
 end
 
-function test_cyclical_repr(self::TestJointOps)
+function test_cyclical_repr(self)
 w = ReprWrapper()
 s = thetype(self, [w])
 w.value = s
@@ -448,7 +448,7 @@ assertEqual(self, repr(s), "%s({%s(...)})" % (name, name))
 end
 end
 
-function test_do_not_rehash_dict_keys(self::TestJointOps)
+function test_do_not_rehash_dict_keys(self)
 n = 10
 d = fromkeys(dict, map(HashCountingInt, 0:n - 1))
 assertEqual(self, sum((elem.hash_count for elem in d)), n)
@@ -469,7 +469,7 @@ assertEqual(self, sum((elem.hash_count for elem in d)), n)
 assertEqual(self, d3, fromkeys(dict, d, 123))
 end
 
-function test_container_iterator(self::C)
+function test_container_iterator(self)
 mutable struct C <: AbstractC
 
 end
@@ -484,7 +484,7 @@ collect()
 assertTrue(self, ref() === nothing, "Cycle was not collected")
 end
 
-function test_free_after_iterating(self::TestJointOps)
+function test_free_after_iterating(self)
 check_free_after_iterating(self, iter, self.thetype)
 end
 
@@ -502,7 +502,7 @@ thetype
                     TestSet(ge_called::Bool, gt_called::Bool, le_called::Bool, lt_called::Bool, otherword, s, word, basetype = set, thetype = set) =
                         new(ge_called, gt_called, le_called, lt_called, otherword, s, word, basetype, thetype)
 end
-function test_init(self::TestSet)
+function test_init(self)
 s = thetype(self)
 __init__(s, self.word)
 @test (s == set(self.word))
@@ -512,26 +512,26 @@ __init__(s, self.otherword)
 @test_throws TypeError s.__init__(1)
 end
 
-function test_constructor_identity(self::TestSet)
+function test_constructor_identity(self)
 s = thetype(self, 0:2)
 t = thetype(self, s)
 assertNotEqual(self, id(s), id(t))
 end
 
-function test_set_literal(self::TestSet)
+function test_set_literal(self)
 s = set([1, 2, 3])
 t = Set([1, 2, 3])
 @test (s == t)
 end
 
-function test_set_literal_insertion_order(self::TestSet)
+function test_set_literal_insertion_order(self)
 s = Set([1, 1.0, true])
 @test (length(s) == 1)
 stored_value = pop(s)
 @test (type_(stored_value) == int)
 end
 
-function test_set_literal_evaluation_order(self::TestSet)
+function test_set_literal_evaluation_order(self)
 events = []
 function record(obj)
 push!(events, obj)
@@ -541,24 +541,24 @@ s = Set([record(1), record(2), record(3)])
 @test (events == [1, 2, 3])
 end
 
-function test_hash(self::TestSet)
+function test_hash(self)
 @test_throws TypeError hash(self.s)
 end
 
-function test_clear(self::TestSet)
+function test_clear(self)
 clear(self.s)
 @test (self.s == set())
 @test (length(self.s) == 0)
 end
 
-function test_copy(self::TestSet)
+function test_copy(self)
 dup = copy(self.s)
 @test (self.s == dup)
 assertNotEqual(self, id(self.s), id(dup))
 @test (type_(dup) == self.basetype)
 end
 
-function test_add(self::TestSet)
+function test_add(self)
 add(self.s, "Q")
 assertIn(self, "Q", self.s)
 dup = copy(self.s)
@@ -567,7 +567,7 @@ add(self.s, "Q")
 @test_throws TypeError self.s.add([])
 end
 
-function test_remove(self::TestSet)
+function test_remove(self)
 remove(self.s, "a")
 assertNotIn(self, "a", self.s)
 @test_throws KeyError self.s.remove("Q")
@@ -579,7 +579,7 @@ assertNotIn(self, thetype(self, self.word), s)
 @test_throws KeyError self.s.remove(thetype(self, self.word))
 end
 
-function test_remove_keyerror_unpacking(self::TestSet)
+function test_remove_keyerror_unpacking(self)
 for v1 in ["Q", (1,)]
 try
 remove(self.s, v1)
@@ -594,7 +594,7 @@ end
 end
 end
 
-function test_remove_keyerror_set(self::TestSet)
+function test_remove_keyerror_set(self)
 key = thetype(self, [3, 4])
 try
 remove(self.s, key)
@@ -607,7 +607,7 @@ end
 end
 end
 
-function test_discard(self::TestSet)
+function test_discard(self)
 discard(self.s, "a")
 assertNotIn(self, "a", self.s)
 discard(self.s, "Q")
@@ -619,7 +619,7 @@ assertNotIn(self, thetype(self, self.word), s)
 discard(s, thetype(self, self.word))
 end
 
-function test_pop(self::TestSet)
+function test_pop(self)
 for i in 0:length(self.s) - 1
 elem = pop(self.s)
 assertNotIn(self, elem, self.s)
@@ -627,7 +627,7 @@ end
 @test_throws KeyError self.s.pop()
 end
 
-function test_update(self::TestSet)
+function test_update(self)
 retval = update(self.s, self.otherword)
 @test (retval == nothing)
 for c in self.word + self.otherword
@@ -652,14 +652,14 @@ end
 end
 end
 
-function test_ior(self::TestSet)
+function test_ior(self)
 self.s |= set(self.otherword)
 for c in self.word + self.otherword
 assertIn(self, c, self.s)
 end
 end
 
-function test_intersection_update(self::TestSet)
+function test_intersection_update(self)
 retval = intersection_update(self.s, self.otherword)
 @test (retval == nothing)
 for c in self.word + self.otherword
@@ -685,7 +685,7 @@ end
 end
 end
 
-function test_iand(self::TestSet)
+function test_iand(self)
 self.s = self.s & set(self.otherword)
 for c in self.word + self.otherword
 if c ∈ self.otherword && c ∈ self.word
@@ -696,7 +696,7 @@ end
 end
 end
 
-function test_difference_update(self::TestSet)
+function test_difference_update(self)
 retval = difference_update(self.s, self.otherword)
 @test (retval == nothing)
 for c in self.word + self.otherword
@@ -727,7 +727,7 @@ end
 end
 end
 
-function test_isub(self::TestSet)
+function test_isub(self)
 self.s -= set(self.otherword)
 for c in self.word + self.otherword
 if c ∈ self.word && c ∉ self.otherword
@@ -738,7 +738,7 @@ end
 end
 end
 
-function test_symmetric_difference_update(self::TestSet)
+function test_symmetric_difference_update(self)
 retval = symmetric_difference_update(self.s, self.otherword)
 @test (retval == nothing)
 for c in self.word + self.otherword
@@ -759,7 +759,7 @@ end
 end
 end
 
-function test_ixor(self::TestSet)
+function test_ixor(self)
 self.s = self.s  ⊻  set(self.otherword)
 for c in self.word + self.otherword
 if c ∈ self.word  ⊻  c ∈ self.otherword
@@ -770,7 +770,7 @@ end
 end
 end
 
-function test_inplace_on_self(self::TestSet)
+function test_inplace_on_self(self)
 t = copy(self.s)
 t = __or__(t, t)
 @test (t == self.s)
@@ -783,7 +783,7 @@ t = __xor__(t, t)
 @test (t == thetype(self))
 end
 
-function test_weakref(self::TestSet)
+function test_weakref(self)
 s = thetype(self, "gallahad")
 p = proxy(s)
 @test (string(p) == string(s))
@@ -792,29 +792,29 @@ gc_collect()
 @test_throws ReferenceError str(p)
 end
 
-function test_rich_compare(self::TestRichSetCompare)
+function test_rich_compare(self)
 mutable struct TestRichSetCompare <: AbstractTestRichSetCompare
 gt_called::Bool
 lt_called::Bool
 ge_called::Bool
 le_called::Bool
 end
-function __gt__(self::TestRichSetCompare, some_set)::Bool
+function __gt__(self, some_set)::Bool
 self.gt_called = true
 return false
 end
 
-function __lt__(self::TestRichSetCompare, some_set)::Bool
+function __lt__(self, some_set)::Bool
 self.lt_called = true
 return false
 end
 
-function __ge__(self::TestRichSetCompare, some_set)::Bool
+function __ge__(self, some_set)::Bool
 self.ge_called = true
 return false
 end
 
-function __le__(self::TestRichSetCompare, some_set)::Bool
+function __le__(self, some_set)::Bool
 self.le_called = true
 return false
 end
@@ -834,7 +834,7 @@ myset >= myobj
 assertTrue(self, myobj.le_called)
 end
 
-function test_c_api(self::TestSet)
+function test_c_api(self)
 @test (test_c_api(set()) == true_)
 end
 
@@ -863,7 +863,7 @@ end
 mutable struct TestSetSubclassWithKeywordArgs <: AbstractTestSetSubclassWithKeywordArgs
 
 end
-function test_keywords_in_subclass(self::TestSetSubclassWithKeywordArgs)
+function test_keywords_in_subclass(self)
 #= SF bug #1486663 -- this used to erroneously raise a TypeError =#
 SetSubclassWithKeywordArgs(1)
 end
@@ -878,19 +878,19 @@ thetype
                     TestFrozenSet(otherword, s, word, basetype = frozenset, thetype = frozenset) =
                         new(otherword, s, word, basetype, thetype)
 end
-function test_init(self::TestFrozenSet)
+function test_init(self)
 s = thetype(self, self.word)
 __init__(s, self.otherword)
 @test (s == set(self.word))
 end
 
-function test_constructor_identity(self::TestFrozenSet)
+function test_constructor_identity(self)
 s = thetype(self, 0:2)
 t = thetype(self, s)
 @test (id(s) == id(t))
 end
 
-function test_hash(self::TestFrozenSet)
+function test_hash(self)
 @test (hash(thetype(self, "abcdeb")) == hash(thetype(self, "ebecda")))
 n = 100
 seq = [randrange(n) for i in 0:n - 1]
@@ -902,12 +902,12 @@ end
 @test (length(results) == 1)
 end
 
-function test_copy(self::TestFrozenSet)
+function test_copy(self)
 dup = copy(self.s)
 @test (id(self.s) == id(dup))
 end
 
-function test_frozen_as_dictkey(self::TestFrozenSet)
+function test_frozen_as_dictkey(self)
 seq = append!(append!(collect(0:9), collect("abcdefg")), ["apple"])
 key1 = thetype(self, seq)
 key2 = thetype(self, reversed(seq))
@@ -918,12 +918,12 @@ d[key1] = 42
 @test (d[key2] == 42)
 end
 
-function test_hash_caching(self::TestFrozenSet)
+function test_hash_caching(self)
 f = thetype(self, "abcdcda")
 @test (hash(f) == hash(f))
 end
 
-function test_hash_effectiveness(self::TestFrozenSet)
+function test_hash_effectiveness(self)
 Channel() do ch_test_hash_effectiveness 
 n = 13
 hashvalues = set()
@@ -974,24 +974,24 @@ thetype::AbstractFrozenSetSubclass
                     TestFrozenSetSubclass(s, basetype = frozenset, thetype::AbstractFrozenSetSubclass = FrozenSetSubclass) =
                         new(s, basetype, thetype)
 end
-function test_constructor_identity(self::TestFrozenSetSubclass)
+function test_constructor_identity(self)
 s = thetype(self, 0:2)
 t = thetype(self, s)
 assertNotEqual(self, id(s), id(t))
 end
 
-function test_copy(self::TestFrozenSetSubclass)
+function test_copy(self)
 dup = copy(self.s)
 assertNotEqual(self, id(self.s), id(dup))
 end
 
-function test_nested_empty_constructor(self::TestFrozenSetSubclass)
+function test_nested_empty_constructor(self)
 s = thetype(self)
 t = thetype(self, s)
 assertEqual(self, s, t)
 end
 
-function test_singleton_empty_frozenset(self::TestFrozenSetSubclass)
+function test_singleton_empty_frozenset(self)
 Frozenset = self.thetype
 f = frozenset()
 F = Frozenset()
@@ -1007,13 +1007,13 @@ length
 dup
 values
 end
-function test_repr(self::TestBasicOps)
+function test_repr(self)
 if self.repr !== nothing
 assertEqual(self, repr(self.set), self.repr)
 end
 end
 
-function check_repr_against_values(self::TestBasicOps)
+function check_repr_against_values(self)
 text = repr(self.set)
 assertTrue(self, startswith(text, "{"))
 assertTrue(self, endswith(text, "}"))
@@ -1024,93 +1024,93 @@ sort(sorted_repr_values)
 assertEqual(self, result, sorted_repr_values)
 end
 
-function test_length(self::TestBasicOps)
+function test_length(self)
 assertEqual(self, length(self.set), self.length)
 end
 
-function test_self_equality(self::TestBasicOps)
+function test_self_equality(self)
 assertEqual(self, self.set, self.set)
 end
 
-function test_equivalent_equality(self::TestBasicOps)
+function test_equivalent_equality(self)
 assertEqual(self, self.set, self.dup)
 end
 
-function test_copy(self::TestBasicOps)
+function test_copy(self)
 assertEqual(self, copy(self.set), self.dup)
 end
 
-function test_self_union(self::TestBasicOps)
+function test_self_union(self)
 result = self.set | self.set
 assertEqual(self, result, self.dup)
 end
 
-function test_empty_union(self::TestBasicOps)
+function test_empty_union(self)
 result = self.set | empty_set
 assertEqual(self, result, self.dup)
 end
 
-function test_union_empty(self::TestBasicOps)
+function test_union_empty(self)
 result = empty_set | self.set
 assertEqual(self, result, self.dup)
 end
 
-function test_self_intersection(self::TestBasicOps)
+function test_self_intersection(self)
 result = self.set & self.set
 assertEqual(self, result, self.dup)
 end
 
-function test_empty_intersection(self::TestBasicOps)
+function test_empty_intersection(self)
 result = self.set & empty_set
 assertEqual(self, result, empty_set)
 end
 
-function test_intersection_empty(self::TestBasicOps)
+function test_intersection_empty(self)
 result = empty_set & self.set
 assertEqual(self, result, empty_set)
 end
 
-function test_self_isdisjoint(self::TestBasicOps)
+function test_self_isdisjoint(self)
 result = isdisjoint(self.set, self.set)
 assertEqual(self, result, !(self.set))
 end
 
-function test_empty_isdisjoint(self::TestBasicOps)
+function test_empty_isdisjoint(self)
 result = isdisjoint(self.set, empty_set)
 assertEqual(self, result, true)
 end
 
-function test_isdisjoint_empty(self::TestBasicOps)
+function test_isdisjoint_empty(self)
 result = isdisjoint(empty_set, self.set)
 assertEqual(self, result, true)
 end
 
-function test_self_symmetric_difference(self::TestBasicOps)
+function test_self_symmetric_difference(self)
 result = self.set  ⊻  self.set
 assertEqual(self, result, empty_set)
 end
 
-function test_empty_symmetric_difference(self::TestBasicOps)
+function test_empty_symmetric_difference(self)
 result = self.set  ⊻  empty_set
 assertEqual(self, result, self.set)
 end
 
-function test_self_difference(self::TestBasicOps)
+function test_self_difference(self)
 result = self.set - self.set
 assertEqual(self, result, empty_set)
 end
 
-function test_empty_difference(self::TestBasicOps)
+function test_empty_difference(self)
 result = self.set - empty_set
 assertEqual(self, result, self.dup)
 end
 
-function test_empty_difference_rev(self::TestBasicOps)
+function test_empty_difference_rev(self)
 result = empty_set - self.set
 assertEqual(self, result, empty_set)
 end
 
-function test_iteration(self::TestBasicOps)
+function test_iteration(self)
 for v in self.set
 assertIn(self, v, self.values)
 end
@@ -1118,7 +1118,7 @@ setiter = (x for x in self.set)
 assertEqual(self, __length_hint__(setiter), length(self.set))
 end
 
-function test_pickling(self::TestBasicOps)
+function test_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 p = dumps(self.set, proto)
 copy = loads(p)
@@ -1126,7 +1126,7 @@ assertEqual(self, self.set, copy, "%s != %s" % (self.set, copy))
 end
 end
 
-function test_issue_37219(self::TestBasicOps)
+function test_issue_37219(self)
 assertRaises(self, TypeError) do 
 difference(set(), 123)
 end
@@ -1143,7 +1143,7 @@ dup
 length::Int64
 repr::String
 end
-function setUp(self::TestBasicOpsEmpty)
+function setUp(self)
 self.case = "empty set"
 self.values = []
 self.set = set(self.values)
@@ -1160,7 +1160,7 @@ dup
 length::Int64
 repr::String
 end
-function setUp(self::TestBasicOpsSingleton)
+function setUp(self)
 self.case = "unit set (number)"
 self.values = [3]
 self.set = set(self.values)
@@ -1169,23 +1169,23 @@ self.length = 1
 self.repr = "{3}"
 end
 
-function test_in(self::TestBasicOpsSingleton)
+function test_in(self)
 assertIn(self, 3, self.set)
 end
 
-function test_not_in(self::TestBasicOpsSingleton)
+function test_not_in(self)
 assertNotIn(self, 2, self.set)
 end
 
 mutable struct TestBasicOpsTuple <: AbstractTestBasicOpsTuple
 case::String
-values::Vector{Tuple{Union{Int64, String}}}
+values::Vector
 set
 dup
 length::Int64
 repr::String
 end
-function setUp(self::TestBasicOpsTuple)
+function setUp(self)
 self.case = "unit set (tuple)"
 self.values = [(0, "zero")]
 self.set = set(self.values)
@@ -1194,23 +1194,23 @@ self.length = 1
 self.repr = "{(0, \'zero\')}"
 end
 
-function test_in(self::TestBasicOpsTuple)
+function test_in(self)
 assertIn(self, (0, "zero"), self.set)
 end
 
-function test_not_in(self::TestBasicOpsTuple)
+function test_not_in(self)
 assertNotIn(self, 9, self.set)
 end
 
 mutable struct TestBasicOpsTriple <: AbstractTestBasicOpsTriple
 case::String
-values::Vector{Union{Int64, String}}
+values
 set
 dup
 length::Int64
 repr
 end
-function setUp(self::TestBasicOpsTriple)
+function setUp(self)
 self.case = "triple set"
 self.values = [0, "zero", operator.add]
 self.set = set(self.values)
@@ -1226,7 +1226,7 @@ set
 dup
 length::Int64
 end
-function setUp(self::TestBasicOpsString)
+function setUp(self)
 self.case = "string set"
 self.values = ["a", "b", "c"]
 self.set = set(self.values)
@@ -1234,7 +1234,7 @@ self.dup = set(self.values)
 self.length = 3
 end
 
-function test_repr(self::TestBasicOpsString)
+function test_repr(self)
 check_repr_against_values(self)
 end
 
@@ -1245,7 +1245,7 @@ set
 dup
 length::Int64
 end
-function setUp(self::TestBasicOpsBytes)
+function setUp(self)
 self.case = "bytes set"
 self.values = [b"a", b"b", b"c"]
 self.set = set(self.values)
@@ -1253,19 +1253,19 @@ self.dup = set(self.values)
 self.length = 3
 end
 
-function test_repr(self::TestBasicOpsBytes)
+function test_repr(self)
 check_repr_against_values(self)
 end
 
 mutable struct TestBasicOpsMixedStringBytes <: AbstractTestBasicOpsMixedStringBytes
 _warning_filters
 case::String
-values::Vector{Union{Array{UInt8}, String}}
+values
 set
 dup
 length::Int64
 end
-function setUp(self::TestBasicOpsMixedStringBytes)
+function setUp(self)
 self._warning_filters = check_warnings()
 __enter__(self._warning_filters)
 simplefilter("ignore", BytesWarning)
@@ -1276,11 +1276,11 @@ self.dup = set(self.values)
 self.length = 4
 end
 
-function tearDown(self::TestBasicOpsMixedStringBytes)
+function tearDown(self)
 __exit__(self._warning_filters, nothing, nothing, nothing)
 end
 
-function test_repr(self::TestBasicOpsMixedStringBytes)
+function test_repr(self)
 check_repr_against_values(self)
 end
 
@@ -1301,11 +1301,11 @@ mutable struct TestExceptionPropagation <: AbstractTestExceptionPropagation
 #= SF 628246:  Set constructor should not trap iterator TypeErrors =#
 
 end
-function test_instanceWithException(self::TestExceptionPropagation)
+function test_instanceWithException(self)
 @test_throws TypeError set(baditer())
 end
 
-function test_instancesWithoutException(self::TestExceptionPropagation)
+function test_instancesWithoutException(self)
 set([1, 2, 3])
 set((1, 2, 3))
 set(Dict("one" => 1, "two" => 2, "three" => 3))
@@ -1314,7 +1314,7 @@ set("abc")
 set(gooditer())
 end
 
-function test_changingSizeWhileIterating(self::TestExceptionPropagation)
+function test_changingSizeWhileIterating(self)
 s = set([1, 2, 3])
 try
 for i in s
@@ -1330,7 +1330,7 @@ end
 mutable struct TestSetOfSets <: AbstractTestSetOfSets
 
 end
-function test_constructor(self::TestSetOfSets)
+function test_constructor(self)
 inner = frozenset([1])
 outer = set([inner])
 element = pop(outer)
@@ -1344,90 +1344,90 @@ end
 mutable struct TestBinaryOps <: AbstractTestBinaryOps
 set
 end
-function setUp(self::TestBinaryOps)
+function setUp(self)
 self.set = set((2, 4, 6))
 end
 
-function test_eq(self::TestBinaryOps)
+function test_eq(self)
 @test (self.set == set(Dict(2 => 1, 4 => 3, 6 => 5)))
 end
 
-function test_union_subset(self::TestBinaryOps)
+function test_union_subset(self)
 result = self.set | set([2])
 @test (result == set((2, 4, 6)))
 end
 
-function test_union_superset(self::TestBinaryOps)
+function test_union_superset(self)
 result = self.set | set([2, 4, 6, 8])
 @test (result == set([2, 4, 6, 8]))
 end
 
-function test_union_overlap(self::TestBinaryOps)
+function test_union_overlap(self)
 result = self.set | set([3, 4, 5])
 @test (result == set([2, 3, 4, 5, 6]))
 end
 
-function test_union_non_overlap(self::TestBinaryOps)
+function test_union_non_overlap(self)
 result = self.set | set([8])
 @test (result == set([2, 4, 6, 8]))
 end
 
-function test_intersection_subset(self::TestBinaryOps)
+function test_intersection_subset(self)
 result = self.set & set((2, 4))
 @test (result == set((2, 4)))
 end
 
-function test_intersection_superset(self::TestBinaryOps)
+function test_intersection_superset(self)
 result = self.set & set([2, 4, 6, 8])
 @test (result == set([2, 4, 6]))
 end
 
-function test_intersection_overlap(self::TestBinaryOps)
+function test_intersection_overlap(self)
 result = self.set & set([3, 4, 5])
 @test (result == set([4]))
 end
 
-function test_intersection_non_overlap(self::TestBinaryOps)
+function test_intersection_non_overlap(self)
 result = self.set & set([8])
 @test (result == empty_set)
 end
 
-function test_isdisjoint_subset(self::TestBinaryOps)
+function test_isdisjoint_subset(self)
 result = isdisjoint(self.set, set((2, 4)))
 @test (result == false_)
 end
 
-function test_isdisjoint_superset(self::TestBinaryOps)
+function test_isdisjoint_superset(self)
 result = isdisjoint(self.set, set([2, 4, 6, 8]))
 @test (result == false_)
 end
 
-function test_isdisjoint_overlap(self::TestBinaryOps)
+function test_isdisjoint_overlap(self)
 result = isdisjoint(self.set, set([3, 4, 5]))
 @test (result == false_)
 end
 
-function test_isdisjoint_non_overlap(self::TestBinaryOps)
+function test_isdisjoint_non_overlap(self)
 result = isdisjoint(self.set, set([8]))
 @test (result == true_)
 end
 
-function test_sym_difference_subset(self::TestBinaryOps)
+function test_sym_difference_subset(self)
 result = self.set  ⊻  set((2, 4))
 @test (result == set([6]))
 end
 
-function test_sym_difference_superset(self::TestBinaryOps)
+function test_sym_difference_superset(self)
 result = self.set  ⊻  set((2, 4, 6, 8))
 @test (result == set([8]))
 end
 
-function test_sym_difference_overlap(self::TestBinaryOps)
+function test_sym_difference_overlap(self)
 result = self.set  ⊻  set((3, 4, 5))
 @test (result == set([2, 3, 5, 6]))
 end
 
-function test_sym_difference_non_overlap(self::TestBinaryOps)
+function test_sym_difference_non_overlap(self)
 result = self.set  ⊻  set([8])
 @test (result == set([2, 4, 6, 8]))
 end
@@ -1435,106 +1435,106 @@ end
 mutable struct TestUpdateOps <: AbstractTestUpdateOps
 set
 end
-function setUp(self::TestUpdateOps)
+function setUp(self)
 self.set = set((2, 4, 6))
 end
 
-function test_union_subset(self::TestUpdateOps)
+function test_union_subset(self)
 self.set |= set([2])
 @test (self.set == set((2, 4, 6)))
 end
 
-function test_union_superset(self::TestUpdateOps)
+function test_union_superset(self)
 self.set |= set([2, 4, 6, 8])
 @test (self.set == set([2, 4, 6, 8]))
 end
 
-function test_union_overlap(self::TestUpdateOps)
+function test_union_overlap(self)
 self.set |= set([3, 4, 5])
 @test (self.set == set([2, 3, 4, 5, 6]))
 end
 
-function test_union_non_overlap(self::TestUpdateOps)
+function test_union_non_overlap(self)
 self.set |= set([8])
 @test (self.set == set([2, 4, 6, 8]))
 end
 
-function test_union_method_call(self::TestUpdateOps)
+function test_union_method_call(self)
 update(self.set, set([3, 4, 5]))
 @test (self.set == set([2, 3, 4, 5, 6]))
 end
 
-function test_intersection_subset(self::TestUpdateOps)
+function test_intersection_subset(self)
 self.set = self.set & set((2, 4))
 @test (self.set == set((2, 4)))
 end
 
-function test_intersection_superset(self::TestUpdateOps)
+function test_intersection_superset(self)
 self.set = self.set & set([2, 4, 6, 8])
 @test (self.set == set([2, 4, 6]))
 end
 
-function test_intersection_overlap(self::TestUpdateOps)
+function test_intersection_overlap(self)
 self.set = self.set & set([3, 4, 5])
 @test (self.set == set([4]))
 end
 
-function test_intersection_non_overlap(self::TestUpdateOps)
+function test_intersection_non_overlap(self)
 self.set = self.set & set([8])
 @test (self.set == empty_set)
 end
 
-function test_intersection_method_call(self::TestUpdateOps)
+function test_intersection_method_call(self)
 intersection_update(self.set, set([3, 4, 5]))
 @test (self.set == set([4]))
 end
 
-function test_sym_difference_subset(self::TestUpdateOps)
+function test_sym_difference_subset(self)
 self.set = self.set  ⊻  set((2, 4))
 @test (self.set == set([6]))
 end
 
-function test_sym_difference_superset(self::TestUpdateOps)
+function test_sym_difference_superset(self)
 self.set = self.set  ⊻  set((2, 4, 6, 8))
 @test (self.set == set([8]))
 end
 
-function test_sym_difference_overlap(self::TestUpdateOps)
+function test_sym_difference_overlap(self)
 self.set = self.set  ⊻  set((3, 4, 5))
 @test (self.set == set([2, 3, 5, 6]))
 end
 
-function test_sym_difference_non_overlap(self::TestUpdateOps)
+function test_sym_difference_non_overlap(self)
 self.set = self.set  ⊻  set([8])
 @test (self.set == set([2, 4, 6, 8]))
 end
 
-function test_sym_difference_method_call(self::TestUpdateOps)
+function test_sym_difference_method_call(self)
 symmetric_difference_update(self.set, set([3, 4, 5]))
 @test (self.set == set([2, 3, 5, 6]))
 end
 
-function test_difference_subset(self::TestUpdateOps)
+function test_difference_subset(self)
 self.set -= set((2, 4))
 @test (self.set == set([6]))
 end
 
-function test_difference_superset(self::TestUpdateOps)
+function test_difference_superset(self)
 self.set -= set((2, 4, 6, 8))
 @test (self.set == set([]))
 end
 
-function test_difference_overlap(self::TestUpdateOps)
+function test_difference_overlap(self)
 self.set -= set((3, 4, 5))
 @test (self.set == set([2, 6]))
 end
 
-function test_difference_non_overlap(self::TestUpdateOps)
+function test_difference_non_overlap(self)
 self.set -= set([8])
 @test (self.set == set([2, 4, 6]))
 end
 
-function test_difference_method_call(self::TestUpdateOps)
+function test_difference_method_call(self)
 difference_update(self.set, set([3, 4, 5]))
 @test (self.set == set([2, 6]))
 end
@@ -1543,22 +1543,22 @@ mutable struct TestMutate <: AbstractTestMutate
 values::Vector{String}
 set
 end
-function setUp(self::TestMutate)
+function setUp(self)
 self.values = ["a", "b", "c"]
 self.set = set(self.values)
 end
 
-function test_add_present(self::TestMutate)
+function test_add_present(self)
 add(self.set, "c")
 @test (self.set == set("abc"))
 end
 
-function test_add_absent(self::TestMutate)
+function test_add_absent(self)
 add(self.set, "d")
 @test (self.set == set("abcd"))
 end
 
-function test_add_until_full(self::TestMutate)
+function test_add_until_full(self)
 tmp = set()
 expected_len = 0
 for v in self.values
@@ -1569,12 +1569,12 @@ end
 @test (tmp == self.set)
 end
 
-function test_remove_present(self::TestMutate)
+function test_remove_present(self)
 remove(self.set, "b")
 @test (self.set == set("ac"))
 end
 
-function test_remove_absent(self::TestMutate)
+function test_remove_absent(self)
 try
 remove(self.set, "d")
 fail(self, "Removing missing element should have raised LookupError")
@@ -1585,7 +1585,7 @@ end
 end
 end
 
-function test_remove_until_empty(self::TestMutate)
+function test_remove_until_empty(self)
 expected_len = length(self.set)
 for v in self.values
 remove(self.set, v)
@@ -1594,22 +1594,22 @@ expected_len -= 1
 end
 end
 
-function test_discard_present(self::TestMutate)
+function test_discard_present(self)
 discard(self.set, "c")
 @test (self.set == set("ab"))
 end
 
-function test_discard_absent(self::TestMutate)
+function test_discard_absent(self)
 discard(self.set, "d")
 @test (self.set == set("abc"))
 end
 
-function test_clear(self::TestMutate)
+function test_clear(self)
 clear(self.set)
 @test (length(self.set) == 0)
 end
 
-function test_pop(self::TestMutate)
+function test_pop(self)
 popped = Dict()
 while self.set
 popped[pop(self.set)] = nothing
@@ -1620,17 +1620,17 @@ assertIn(self, v, popped)
 end
 end
 
-function test_update_empty_tuple(self::TestMutate)
+function test_update_empty_tuple(self)
 update(self.set, ())
 @test (self.set == set(self.values))
 end
 
-function test_update_unit_tuple_overlap(self::TestMutate)
+function test_update_unit_tuple_overlap(self)
 update(self.set, ("a",))
 @test (self.set == set(self.values))
 end
 
-function test_update_unit_tuple_non_overlap(self::TestMutate)
+function test_update_unit_tuple_non_overlap(self)
 update(self.set, ("a", "z"))
 @test (self.set == set(append!(self.values, ["z"])))
 end
@@ -1642,7 +1642,7 @@ reverse::Dict{String, String}
                     TestSubsets(case2method::Dict{String, String} = Dict("<=" => "issubset", ">=" => "issuperset"), reverse::Dict{String, String} = Dict("==" => "==", "!=" => "!=", "<" => ">", ">" => "<", "<=" => ">=", ">=" => "<=")) =
                         new(case2method, reverse)
 end
-function test_issubset(self::TestSubsets)
+function test_issubset(self)
 x = self.left
 y = self.right
 for case in ("!=", "==", "<", "<=", ">", ">=")
@@ -1720,14 +1720,14 @@ other
 set
 otherIsIterable
 end
-function test_eq_ne(self::TestOnlySetsInBinaryOps)
+function test_eq_ne(self)
 assertEqual(self, self.other == self.set, false)
 assertEqual(self, self.set == self.other, false)
 assertEqual(self, self.other != self.set, true)
 assertEqual(self, self.set != self.other, true)
 end
 
-function test_ge_gt_le_lt(self::TestOnlySetsInBinaryOps)
+function test_ge_gt_le_lt(self)
 assertRaises(self, TypeError, () -> self.set < self.other)
 assertRaises(self, TypeError, () -> self.set <= self.other)
 assertRaises(self, TypeError, () -> self.set > self.other)
@@ -1738,7 +1738,7 @@ assertRaises(self, TypeError, () -> self.other > self.set)
 assertRaises(self, TypeError, () -> self.other >= self.set)
 end
 
-function test_update_operator(self::TestOnlySetsInBinaryOps)
+function test_update_operator(self)
 try
 self.set |= self.other
 catch exn
@@ -1748,7 +1748,7 @@ end
 end
 end
 
-function test_update(self::TestOnlySetsInBinaryOps)
+function test_update(self)
 if self.otherIsIterable
 update(self.set, self.other)
 else
@@ -1756,7 +1756,7 @@ assertRaises(self, TypeError, self.set.update, self.other)
 end
 end
 
-function test_union(self::TestOnlySetsInBinaryOps)
+function test_union(self)
 assertRaises(self, TypeError, () -> self.set | self.other)
 assertRaises(self, TypeError, () -> self.other | self.set)
 if self.otherIsIterable
@@ -1766,7 +1766,7 @@ assertRaises(self, TypeError, self.set.union, self.other)
 end
 end
 
-function test_intersection_update_operator(self::TestOnlySetsInBinaryOps)
+function test_intersection_update_operator(self)
 try
 self.set = self.set & self.other
 catch exn
@@ -1776,7 +1776,7 @@ end
 end
 end
 
-function test_intersection_update(self::TestOnlySetsInBinaryOps)
+function test_intersection_update(self)
 if self.otherIsIterable
 intersection_update(self.set, self.other)
 else
@@ -1784,7 +1784,7 @@ assertRaises(self, TypeError, self.set.intersection_update, self.other)
 end
 end
 
-function test_intersection(self::TestOnlySetsInBinaryOps)
+function test_intersection(self)
 assertRaises(self, TypeError, () -> self.set & self.other)
 assertRaises(self, TypeError, () -> self.other & self.set)
 if self.otherIsIterable
@@ -1794,7 +1794,7 @@ assertRaises(self, TypeError, self.set.intersection, self.other)
 end
 end
 
-function test_sym_difference_update_operator(self::TestOnlySetsInBinaryOps)
+function test_sym_difference_update_operator(self)
 try
 self.set = self.set  ⊻  self.other
 catch exn
@@ -1804,7 +1804,7 @@ end
 end
 end
 
-function test_sym_difference_update(self::TestOnlySetsInBinaryOps)
+function test_sym_difference_update(self)
 if self.otherIsIterable
 symmetric_difference_update(self.set, self.other)
 else
@@ -1812,7 +1812,7 @@ assertRaises(self, TypeError, self.set.symmetric_difference_update, self.other)
 end
 end
 
-function test_sym_difference(self::TestOnlySetsInBinaryOps)
+function test_sym_difference(self)
 assertRaises(self, TypeError, () -> self.set  ⊻  self.other)
 assertRaises(self, TypeError, () -> self.other  ⊻  self.set)
 if self.otherIsIterable
@@ -1822,7 +1822,7 @@ assertRaises(self, TypeError, self.set.symmetric_difference, self.other)
 end
 end
 
-function test_difference_update_operator(self::TestOnlySetsInBinaryOps)
+function test_difference_update_operator(self)
 try
 self.set -= self.other
 catch exn
@@ -1832,7 +1832,7 @@ end
 end
 end
 
-function test_difference_update(self::TestOnlySetsInBinaryOps)
+function test_difference_update(self)
 if self.otherIsIterable
 difference_update(self.set, self.other)
 else
@@ -1840,7 +1840,7 @@ assertRaises(self, TypeError, self.set.difference_update, self.other)
 end
 end
 
-function test_difference(self::TestOnlySetsInBinaryOps)
+function test_difference(self)
 assertRaises(self, TypeError, () -> self.set - self.other)
 assertRaises(self, TypeError, () -> self.other - self.set)
 if self.otherIsIterable
@@ -1855,7 +1855,7 @@ set
 other::Int64
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsNumeric)
+function setUp(self)
 self.set = set((1, 2, 3))
 self.other = 19
 self.otherIsIterable = false
@@ -1866,7 +1866,7 @@ set
 other::Dict{Int64, Int64}
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsDict)
+function setUp(self)
 self.set = set((1, 2, 3))
 self.other = Dict(1 => 2, 3 => 4)
 self.otherIsIterable = true
@@ -1877,7 +1877,7 @@ set
 other
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsOperator)
+function setUp(self)
 self.set = set((1, 2, 3))
 self.other = operator.add
 self.otherIsIterable = false
@@ -1888,7 +1888,7 @@ set
 other::Tuple{Int64}
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsTuple)
+function setUp(self)
 self.set = set((1, 2, 3))
 self.other = (2, 4, 6)
 self.otherIsIterable = true
@@ -1899,7 +1899,7 @@ set
 other::String
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsString)
+function setUp(self)
 self.set = set((1, 2, 3))
 self.other = "abc"
 self.otherIsIterable = true
@@ -1910,7 +1910,7 @@ set
 other
 otherIsIterable::Bool
 end
-function setUp(self::TestOnlySetsGenerator)
+function setUp(self)
 Channel() do ch_setUp 
 function gen()
 Channel() do ch_gen 
@@ -1929,20 +1929,20 @@ end
 mutable struct TestCopying <: AbstractTestCopying
 
 end
-function test_copy(self::TestCopying)
+function test_copy(self)
 dup = copy(self.set)
-dup_list = sorted(dup, repr)
-set_list = sorted(self.set, repr)
+dup_list = sorted(dup, key = repr)
+set_list = sorted(self.set, key = repr)
 assertEqual(self, length(dup_list), length(set_list))
 for i in 0:length(dup_list) - 1
 assertTrue(self, dup_list[i + 1] === set_list[i + 1])
 end
 end
 
-function test_deep_copy(self::TestCopying)
+function test_deep_copy(self)
 dup = deepcopy(self.set)
-dup_list = sorted(dup, repr)
-set_list = sorted(self.set, repr)
+dup_list = sorted(dup, key = repr)
+set_list = sorted(self.set, key = repr)
 assertEqual(self, length(dup_list), length(set_list))
 for i in 0:length(dup_list) - 1
 assertEqual(self, dup_list[i + 1], set_list[i + 1])
@@ -1952,35 +1952,35 @@ end
 mutable struct TestCopyingEmpty <: AbstractTestCopyingEmpty
 set
 end
-function setUp(self::TestCopyingEmpty)
+function setUp(self)
 self.set = set()
 end
 
 mutable struct TestCopyingSingleton <: AbstractTestCopyingSingleton
 set
 end
-function setUp(self::TestCopyingSingleton)
+function setUp(self)
 self.set = set(["hello"])
 end
 
 mutable struct TestCopyingTriple <: AbstractTestCopyingTriple
 set
 end
-function setUp(self::TestCopyingTriple)
+function setUp(self)
 self.set = set(["zero", 0, nothing])
 end
 
 mutable struct TestCopyingTuple <: AbstractTestCopyingTuple
 set
 end
-function setUp(self::TestCopyingTuple)
+function setUp(self)
 self.set = set([(1, 2)])
 end
 
 mutable struct TestCopyingNested <: AbstractTestCopyingNested
 set
 end
-function setUp(self::TestCopyingNested)
+function setUp(self)
 self.set = set([((1, 2), (3, 4))])
 end
 
@@ -1988,12 +1988,12 @@ mutable struct TestIdentities <: AbstractTestIdentities
 a
 b
 end
-function setUp(self::TestIdentities)
+function setUp(self)
 self.a = set("abracadabra")
 self.b = set("alacazam")
 end
 
-function test_binopsVsSubsets(self::TestIdentities)
+function test_binopsVsSubsets(self)
 a, b = (self.a, self.b)
 @test (a - b) < a
 @test (b - a) < b
@@ -2004,7 +2004,7 @@ a, b = (self.a, self.b)
 @test (a  ⊻  b) < (a | b)
 end
 
-function test_commutativity(self::TestIdentities)
+function test_commutativity(self)
 a, b = (self.a, self.b)
 @test (a & b == b & a)
 @test (a | b == b | a)
@@ -2014,7 +2014,7 @@ assertNotEqual(self, a - b, b - a)
 end
 end
 
-function test_summations(self::TestIdentities)
+function test_summations(self)
 a, b = (self.a, self.b)
 @test (((a - b) | (a & b)) | (b - a) == a | b)
 @test ((a & b) | (a  ⊻  b) == a | b)
@@ -2025,7 +2025,7 @@ a, b = (self.a, self.b)
 @test ((a - b) | (b - a) == a  ⊻  b)
 end
 
-function test_exclusion(self::TestIdentities)
+function test_exclusion(self)
 a, b, zero = (self.a, self.b, set())
 @test ((a - b) & b == zero)
 @test ((b - a) & a == zero)
@@ -2045,7 +2045,7 @@ mutable struct G <: AbstractG
 #= Sequence using __getitem__ =#
 seqn
 end
-function __getitem__(self::G, i)
+function __getitem__(self, i)
 return self.seqn[i + 1]
 end
 
@@ -2054,11 +2054,11 @@ mutable struct I <: AbstractI
 seqn
 i::Int64
 end
-function __iter__(self::I)
+function __iter__(self)
 return self
 end
 
-function __next__(self::I)
+function __next__(self)
 if self.i >= length(self.seqn)
 throw(StopIteration)
 end
@@ -2072,7 +2072,7 @@ mutable struct Ig <: AbstractIg
 seqn
 i::Int64
 end
-function __iter__(self::Ig)
+function __iter__(self)
 Channel() do ch___iter__ 
 for val in self.seqn
 put!(ch___iter__, val)
@@ -2085,7 +2085,7 @@ mutable struct X <: AbstractX
 seqn
 i::Int64
 end
-function __next__(self::X)
+function __next__(self)
 if self.i >= length(self.seqn)
 throw(StopIteration)
 end
@@ -2099,7 +2099,7 @@ mutable struct N <: AbstractN
 seqn
 i::Int64
 end
-function __iter__(self::N)
+function __iter__(self)
 return self
 end
 
@@ -2108,11 +2108,11 @@ mutable struct E <: AbstractE
 seqn
 i::Int64
 end
-function __iter__(self::E)
+function __iter__(self)
 return self
 end
 
-function __next__(self::E)
+function __next__(self)
 3 ÷ 0
 end
 
@@ -2125,11 +2125,11 @@ mutable struct S <: AbstractS
                 new(seqn)
             end
 end
-function __iter__(self::S)
+function __iter__(self)
 return self
 end
 
-function __next__(self::S)
+function __next__(self)
 throw(StopIteration)
 end
 
@@ -2142,11 +2142,11 @@ end
 mutable struct TestVariousIteratorArgs <: AbstractTestVariousIteratorArgs
 
 end
-function test_constructor(self::TestVariousIteratorArgs)
+function test_constructor(self)
 for cons in (set, frozenset)
 for s in ("123", "", 0:999, ("do", 1.2), 2000:5:2199)
 for g in (G, I, Ig, S, L, R)
-@test (sorted(cons(g(s)), repr) == sorted(g(s), repr))
+@test (sorted(cons(g(s)), key = repr) == sorted(g(s), key = repr))
 end
 @test_throws TypeError cons(X(s))
 @test_throws TypeError cons(N(s))
@@ -2155,7 +2155,7 @@ end
 end
 end
 
-function test_inline_methods(self::TestVariousIteratorArgs)
+function test_inline_methods(self)
 s = set("november")
 for data in ("123", "", 0:999, ("do", 1.2), 2000:5:2199, "december")
 for meth in (s.union, s.intersection, s.difference, s.symmetric_difference, s.isdisjoint)
@@ -2165,7 +2165,7 @@ actual = meth(g(data))
 if isa(expected, bool)
 @test (actual == expected)
 else
-@test (sorted(actual, repr) == sorted(expected, repr))
+@test (sorted(actual, key = repr) == sorted(expected, key = repr))
 end
 end
 @test_throws TypeError meth(X(s))
@@ -2175,7 +2175,7 @@ end
 end
 end
 
-function test_inplace_methods(self::TestVariousIteratorArgs)
+function test_inplace_methods(self)
 for data in ("123", "", 0:999, ("do", 1.2), 2000:5:2199, "december")
 for methname in ("update", "intersection_update", "difference_update", "symmetric_difference_update")
 for g in (G, I, Ig, S, L, R)
@@ -2183,7 +2183,7 @@ s = set("january")
 t = copy(s)
 getfield(s, :methname)(collect(g(data)))
 getfield(t, :methname)(g(data))
-@test (sorted(s, repr) == sorted(t, repr))
+@test (sorted(s, key = repr) == sorted(t, key = repr))
 end
 @test_throws TypeError getfield(set("january"), :methname)(X(data))
 @test_throws TypeError getfield(set("january"), :methname)(N(data))
@@ -2195,7 +2195,7 @@ end
 mutable struct bad_eq <: Abstractbad_eq
 
 end
-function __eq__(self::bad_eq, other)::Bool
+function __eq__(self, other)::Bool
 if be_bad
 clear(set2)
 throw(ZeroDivisionError)
@@ -2203,28 +2203,28 @@ end
 return self === other
 end
 
-function __hash__(self::bad_eq)::Int64
+function __hash__(self)::Int64
 return 0
 end
 
 mutable struct bad_dict_clear <: Abstractbad_dict_clear
 
 end
-function __eq__(self::bad_dict_clear, other)::Bool
+function __eq__(self, other)::Bool
 if be_bad
 clear(dict2)
 end
 return self === other
 end
 
-function __hash__(self::bad_dict_clear)::Int64
+function __hash__(self)::Int64
 return 0
 end
 
 mutable struct TestWeirdBugs <: AbstractTestWeirdBugs
 
 end
-function test_8420_set_merge(self::TestWeirdBugs)
+function test_8420_set_merge(self)
 global be_bad, set2, dict2
 be_bad = false
 set1 = Set([bad_eq()])
@@ -2238,7 +2238,7 @@ be_bad = true
 symmetric_difference_update(set1, dict2)
 end
 
-function test_iter_and_mutate(self::TestWeirdBugs)
+function test_iter_and_mutate(self)
 s = set(0:99)
 clear(s)
 update(s, 0:99)
@@ -2249,15 +2249,15 @@ update(s, 0:99)
 collect(si)
 end
 
-function test_merge_and_mutate(self::X)
+function test_merge_and_mutate(self)
 mutable struct X <: AbstractX
 
 end
-function __hash__(self::X)
+function __hash__(self)
 return hash(0)
 end
 
-function __eq__(self::X, o)::Bool
+function __eq__(self, o)::Bool
 clear(other)
 return false
 end
@@ -2276,11 +2276,11 @@ constructor2
                     TestOperationsMutating(constructor1 = nothing, constructor2 = nothing) =
                         new(constructor1, constructor2)
 end
-function make_sets_of_bad_objects(self::Bad)::Tuple
+function make_sets_of_bad_objects(self)::Tuple
 mutable struct Bad <: AbstractBad
 
 end
-function __eq__(self::Bad, other)::Bool
+function __eq__(self, other)::Bool
 if !(enabled)
 return false
 end
@@ -2293,7 +2293,7 @@ end
 return Bool(randrange(2))
 end
 
-function __hash__(self::Bad)
+function __hash__(self)
 return randrange(2)
 end
 
@@ -2304,7 +2304,7 @@ enabled = true
 return (set1, set2)
 end
 
-function check_set_op_does_not_crash(self::TestOperationsMutating, function_)
+function check_set_op_does_not_crash(self, function_)
 for _ in 0:99
 set1, set2 = make_sets_of_bad_objects(self)
 try
@@ -2322,47 +2322,47 @@ end
 mutable struct TestBinaryOpsMutating <: AbstractTestBinaryOpsMutating
 
 end
-function test_eq_with_mutation(self::TestBinaryOpsMutating)
+function test_eq_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a == b)
 end
 
-function test_ne_with_mutation(self::TestBinaryOpsMutating)
+function test_ne_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a != b)
 end
 
-function test_lt_with_mutation(self::TestBinaryOpsMutating)
+function test_lt_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a < b)
 end
 
-function test_le_with_mutation(self::TestBinaryOpsMutating)
+function test_le_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a <= b)
 end
 
-function test_gt_with_mutation(self::TestBinaryOpsMutating)
+function test_gt_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a > b)
 end
 
-function test_ge_with_mutation(self::TestBinaryOpsMutating)
+function test_ge_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a >= b)
 end
 
-function test_and_with_mutation(self::TestBinaryOpsMutating)
+function test_and_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a & b)
 end
 
-function test_or_with_mutation(self::TestBinaryOpsMutating)
+function test_or_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a | b)
 end
 
-function test_sub_with_mutation(self::TestBinaryOpsMutating)
+function test_sub_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a - b)
 end
 
-function test_xor_with_mutation(self::TestBinaryOpsMutating)
+function test_xor_with_mutation(self)
 check_set_op_does_not_crash(self, (a, b) -> a  ⊻  b)
 end
 
-function test_iadd_with_mutation(self::TestBinaryOpsMutating)
+function test_iadd_with_mutation(self)
 function f(a, b)
 a = a & b
 end
@@ -2370,7 +2370,7 @@ end
 check_set_op_does_not_crash(self, f)
 end
 
-function test_ior_with_mutation(self::TestBinaryOpsMutating)
+function test_ior_with_mutation(self)
 function f(a, b)
 a |= b
 end
@@ -2378,7 +2378,7 @@ end
 check_set_op_does_not_crash(self, f)
 end
 
-function test_isub_with_mutation(self::TestBinaryOpsMutating)
+function test_isub_with_mutation(self)
 function f(a, b)
 a -= b
 end
@@ -2386,7 +2386,7 @@ end
 check_set_op_does_not_crash(self, f)
 end
 
-function test_ixor_with_mutation(self::TestBinaryOpsMutating)
+function test_ixor_with_mutation(self)
 function f(a, b)
 a = a  ⊻  b
 end
@@ -2394,7 +2394,7 @@ end
 check_set_op_does_not_crash(self, f)
 end
 
-function test_iteration_with_mutation(self::TestBinaryOpsMutating)
+function test_iteration_with_mutation(self)
 function f1(a, b)
 for x in a
 #= pass =#
@@ -2459,47 +2459,47 @@ end
 mutable struct TestMethodsMutating <: AbstractTestMethodsMutating
 
 end
-function test_issubset_with_mutation(self::TestMethodsMutating)
+function test_issubset_with_mutation(self)
 check_set_op_does_not_crash(self, set.issubset)
 end
 
-function test_issuperset_with_mutation(self::TestMethodsMutating)
+function test_issuperset_with_mutation(self)
 check_set_op_does_not_crash(self, set.issuperset)
 end
 
-function test_intersection_with_mutation(self::TestMethodsMutating)
+function test_intersection_with_mutation(self)
 check_set_op_does_not_crash(self, set.intersection)
 end
 
-function test_union_with_mutation(self::TestMethodsMutating)
+function test_union_with_mutation(self)
 check_set_op_does_not_crash(self, set.union)
 end
 
-function test_difference_with_mutation(self::TestMethodsMutating)
+function test_difference_with_mutation(self)
 check_set_op_does_not_crash(self, set.difference)
 end
 
-function test_symmetric_difference_with_mutation(self::TestMethodsMutating)
+function test_symmetric_difference_with_mutation(self)
 check_set_op_does_not_crash(self, set.symmetric_difference)
 end
 
-function test_isdisjoint_with_mutation(self::TestMethodsMutating)
+function test_isdisjoint_with_mutation(self)
 check_set_op_does_not_crash(self, set.isdisjoint)
 end
 
-function test_difference_update_with_mutation(self::TestMethodsMutating)
+function test_difference_update_with_mutation(self)
 check_set_op_does_not_crash(self, set.difference_update)
 end
 
-function test_intersection_update_with_mutation(self::TestMethodsMutating)
+function test_intersection_update_with_mutation(self)
 check_set_op_does_not_crash(self, set.intersection_update)
 end
 
-function test_symmetric_difference_update_with_mutation(self::TestMethodsMutating)
+function test_symmetric_difference_update_with_mutation(self)
 check_set_op_does_not_crash(self, set.symmetric_difference_update)
 end
 
-function test_update_with_mutation(self::TestMethodsMutating)
+function test_update_with_mutation(self)
 check_set_op_does_not_crash(self, set.update)
 end
 
@@ -2629,7 +2629,7 @@ end
 mutable struct TestGraphs <: AbstractTestGraphs
 
 end
-function test_cube(self::TestGraphs)
+function test_cube(self)
 g = cube(3)
 vertices1 = set(g)
 @test (length(vertices1) == 8)
@@ -2645,7 +2645,7 @@ for face in cubefaces
 end
 end
 
-function test_cuboctahedron(self::TestGraphs)
+function test_cuboctahedron(self)
 g = cube(3)
 cuboctahedron = linegraph(g)
 @test (length(cuboctahedron) == 12)

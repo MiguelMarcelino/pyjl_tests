@@ -26,7 +26,7 @@ function isolated_context(func)
 #= Needed to make reftracking test mode work. =#
 function wrapper()
 ctx = Context()
-return run(ctx, func, args..., kwargs)
+return run(ctx, func, args..., None = kwargs)
 end
 
 return wrapper
@@ -35,7 +35,7 @@ end
 mutable struct ContextTest <: AbstractContextTest
 
 end
-function test_context_var_new_1(self::ContextTest)
+function test_context_var_new_1(self)
 assertRaisesRegex(self, TypeError, "takes exactly 1") do 
 ContextVar()
 end
@@ -50,13 +50,13 @@ end
 assertNotEqual(self, hash(c), hash("aaa"))
 end
 
-function test_context_var_repr_1(self::ContextTest)
+function test_context_var_repr_1(self)
 c = ContextVar("a")
 assertIn(self, "a", repr(c))
-c = ContextVar("a", 123)
+c = ContextVar("a", default = 123)
 assertIn(self, "123", repr(c))
 lst = []
-c = ContextVar("a", lst)
+c = ContextVar("a", default = lst)
 push!(lst, c)
 assertIn(self, "...", repr(c))
 assertIn(self, "...", repr(lst))
@@ -67,7 +67,7 @@ reset(c, t)
 assertIn(self, " used ", repr(t))
 end
 
-function test_context_subclassing_1(self::MyToken)
+function test_context_subclassing_1(self)
 assertRaisesRegex(self, TypeError, "not an acceptable base type") do 
 mutable struct MyContextVar <: AbstractMyContextVar
 
@@ -88,20 +88,20 @@ end
 end
 end
 
-function test_context_new_1(self::ContextTest)
+function test_context_new_1(self)
 assertRaisesRegex(self, TypeError, "any arguments") do 
 Context(1)
 end
 assertRaisesRegex(self, TypeError, "any arguments") do 
-Context(1, 1)
+Context(1, a = 1)
 end
 assertRaisesRegex(self, TypeError, "any arguments") do 
-Context(1)
+Context(a = 1)
 end
-Context(Dict())
+Context(None = Dict())
 end
 
-function test_context_typerrors_1(self::ContextTest)
+function test_context_typerrors_1(self)
 ctx = Context()
 assertRaisesRegex(self, TypeError, "ContextVar key was expected") do 
 ctx[2]
@@ -114,19 +114,19 @@ get(ctx, 1)
 end
 end
 
-function test_context_get_context_1(self::ContextTest)
+function test_context_get_context_1(self)
 ctx = copy_context()
 @test isa(self, ctx)
 end
 
-function test_context_run_1(self::ContextTest)
+function test_context_run_1(self)
 ctx = Context()
 assertRaisesRegex(self, TypeError, "missing 1 required") do 
 run(ctx)
 end
 end
 
-function test_context_run_2(self::ContextTest)
+function test_context_run_2(self)
 ctx = Context()
 function func()
 kwargs["spam"] = "foo"
@@ -137,15 +137,15 @@ end
 for f in (func, partial(func))
 @test (run(ctx, f) == (("bar",), Dict("spam" => "foo")))
 @test (run(ctx, f, 1) == ((1, "bar"), Dict("spam" => "foo")))
-@test (run(ctx, f, 2) == (("bar",), Dict("a" => 2, "spam" => "foo")))
-@test (run(ctx, f, 11, 2) == ((11, "bar"), Dict("a" => 2, "spam" => "foo")))
+@test (run(ctx, f, a = 2) == (("bar",), Dict("a" => 2, "spam" => "foo")))
+@test (run(ctx, f, 11, a = 2) == ((11, "bar"), Dict("a" => 2, "spam" => "foo")))
 a = Dict()
-@test (run(ctx, f, 11, a) == ((11, "bar"), Dict("spam" => "foo")))
+@test (run(ctx, f, 11, None = a) == ((11, "bar"), Dict("spam" => "foo")))
 @test (a == Dict())
 end
 end
 
-function test_context_run_3(self::ContextTest)
+function test_context_run_3(self)
 ctx = Context()
 function func()
 1 / 0
@@ -158,11 +158,11 @@ assertRaises(self, ZeroDivisionError) do
 run(ctx, func, 1, 2)
 end
 assertRaises(self, ZeroDivisionError) do 
-run(ctx, func, 1, 2, 123)
+run(ctx, func, 1, 2, a = 123)
 end
 end
 
-function test_context_run_4(self::ContextTest)
+function test_context_run_4(self)
 ctx1 = Context()
 ctx2 = Context()
 var = ContextVar("var")
@@ -187,7 +187,7 @@ returned_ctx = run(ctx1, func1)
 assertIn(self, var, returned_ctx)
 end
 
-function test_context_run_5(self::ContextTest)
+function test_context_run_5(self)
 ctx = Context()
 var = ContextVar("var")
 function func()
@@ -202,9 +202,9 @@ end
 assertIsNone(self, get(var, nothing))
 end
 
-function test_context_run_6(self::ContextTest)
+function test_context_run_6(self)
 ctx = Context()
-c = ContextVar("a", 0)
+c = ContextVar("a", default = 0)
 function fun()
 @test (get(c) == 0)
 assertIsNone(self, get(ctx, c))
@@ -216,7 +216,7 @@ end
 run(ctx, fun)
 end
 
-function test_context_run_7(self::ContextTest)
+function test_context_run_7(self)
 ctx = Context()
 function fun()
 assertRaisesRegex(self, RuntimeError, "is already entered") do 
@@ -227,7 +227,7 @@ end
 run(ctx, fun)
 end
 
-function test_context_getset_1(self::ContextTest)
+function test_context_getset_1(self)
 c = ContextVar("c")
 assertRaises(self, LookupError) do 
 get(c)
@@ -276,7 +276,7 @@ end
 @test (collect(ctx2) == [])
 end
 
-function test_context_getset_2(self::ContextTest)
+function test_context_getset_2(self)
 v1 = ContextVar("v1")
 v2 = ContextVar("v2")
 t1 = set(v1, 42)
@@ -285,8 +285,8 @@ reset(v2, t1)
 end
 end
 
-function test_context_getset_3(self::ContextTest)
-c = ContextVar("c", 42)
+function test_context_getset_3(self)
+c = ContextVar("c", default = 42)
 ctx = Context()
 function fun()
 @test (get(c) == 42)
@@ -310,8 +310,8 @@ end
 run(ctx, fun)
 end
 
-function test_context_getset_4(self::ContextTest)
-c = ContextVar("c", 42)
+function test_context_getset_4(self)
+c = ContextVar("c", default = 42)
 ctx = Context()
 tok = run(ctx, c.set, 1)
 assertRaisesRegex(self, ValueError, "different Context") do 
@@ -319,8 +319,8 @@ reset(c, tok)
 end
 end
 
-function test_context_getset_5(self::ContextTest)
-c = ContextVar("c", 42)
+function test_context_getset_5(self)
+c = ContextVar("c", default = 42)
 set(c, [])
 function fun()
 set(c, [])
@@ -332,9 +332,9 @@ run(copy_context(), fun)
 @test (get(c) == [])
 end
 
-function test_context_copy_1(self::ContextTest)
+function test_context_copy_1(self)
 ctx1 = Context()
-c = ContextVar("c", 42)
+c = ContextVar("c", default = 42)
 function ctx1_fun()
 set(c, 10)
 ctx2 = copy(ctx1)
@@ -356,7 +356,7 @@ end
 run(ctx1, ctx1_fun)
 end
 
-function test_context_threads_1(self::ContextTest)
+function test_context_threads_1(self)
 cvar = ContextVar("cvar")
 function sub(num)
 for i in 0:9
@@ -367,7 +367,7 @@ end
 return num
 end
 
-tp = ThreadPoolExecutor(10)
+tp = ThreadPoolExecutor(max_workers = 10)
 try
 results = collect(map(tp, sub, 0:9))
 finally
@@ -387,18 +387,18 @@ _crasher
                 new(hash, name, _crasher )
             end
 end
-function __repr__(self::HashKey)
+function __repr__(self)
 return "<Key name:$(self.name) hash:$(self.hash)>"
 end
 
-function __hash__(self::HashKey)
+function __hash__(self)
 if self._crasher !== nothing && self._crasher.error_on_hash
 throw(HashingError)
 end
 return self.hash
 end
 
-function __eq__(self::HashKey, other)::Bool
+function __eq__(self, other)::Bool
 if !isa(other, HashKey)
 return NotImplemented
 end
@@ -417,14 +417,14 @@ end
 mutable struct KeyStr <: AbstractKeyStr
 
 end
-function __hash__(self::KeyStr)
+function __hash__(self)
 if HashKey._crasher !== nothing && HashKey._crasher.error_on_hash
 throw(HashingError)
 end
 return __hash__(super())
 end
 
-function __eq__(self::KeyStr, other)
+function __eq__(self, other)
 if HashKey._crasher !== nothing && HashKey._crasher.error_on_eq
 throw(EqError)
 end
@@ -435,14 +435,14 @@ mutable struct HaskKeyCrasher <: AbstractHaskKeyCrasher
 error_on_hash
 error_on_eq
 end
-function __enter__(self::HaskKeyCrasher)
+function __enter__(self)
 if HashKey._crasher !== nothing
 throw(RuntimeError("cannot nest crashers"))
 end
 HashKey._crasher = self
 end
 
-function __exit__(self::HaskKeyCrasher)
+function __exit__(self)
 HashKey._crasher = nothing
 end
 
@@ -457,7 +457,7 @@ end
 mutable struct HamtTest <: AbstractHamtTest
 
 end
-function test_hashkey_helper_1(self::HamtTest)
+function test_hashkey_helper_1(self)
 k1 = HashKey(10, "aaa")
 k2 = HashKey(10, "bbb")
 assertNotEqual(self, k1, k2)
@@ -469,12 +469,12 @@ d[__add__(k2, 1)] = "b"
 @test (d[__add__(k2, 1)] == "b")
 end
 
-function test_hamt_basics_1(self::HamtTest)
+function test_hamt_basics_1(self)
 h = hamt()
 h = nothing
 end
 
-function test_hamt_basics_2(self::HamtTest)
+function test_hamt_basics_2(self)
 h = hamt()
 @test (length(h) == 0)
 h2 = set(h, "a", "b")
@@ -500,7 +500,7 @@ h2 = nothing
 h3 = nothing
 end
 
-function test_hamt_basics_3(self::HamtTest)
+function test_hamt_basics_3(self)
 h = hamt()
 o = object()
 h1 = set(h, "1", o)
@@ -508,7 +508,7 @@ h2 = set(h1, "1", o)
 assertIs(self, h1, h2)
 end
 
-function test_hamt_basics_4(self::HamtTest)
+function test_hamt_basics_4(self)
 h = hamt()
 h1 = set(h, "key", [])
 h2 = set(h1, "key", [])
@@ -518,7 +518,7 @@ assertIsNot(self, h1, h2)
 assertIsNot(self, get(h1, "key"), get(h2, "key"))
 end
 
-function test_hamt_collision_1(self::HamtTest)
+function test_hamt_collision_1(self)
 k1 = HashKey(10, "aaa")
 k2 = HashKey(10, "bbb")
 k3 = HashKey(10, "ccc")
@@ -549,7 +549,7 @@ h5 = set(h4, k3, "aa")
 @test (length(h5) == 3)
 end
 
-function test_hamt_stress(self::HamtTest)
+function test_hamt_stress(self)
 COLLECTION_SIZE = 7000
 TEST_ITERS_EVERY = 647
 CRASH_HASH_EVERY = 97
@@ -640,7 +640,7 @@ end
 end
 end
 
-function test_hamt_delete_1(self::HamtTest)
+function test_hamt_delete_1(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(102, "C")
@@ -671,7 +671,7 @@ h = delete(h, A)
 @test (get(h, E) == "e")
 end
 
-function test_hamt_delete_2(self::HamtTest)
+function test_hamt_delete_2(self)
 A = HashKey(100, "A")
 B = HashKey(201001, "B")
 C = HashKey(101001, "C")
@@ -706,7 +706,7 @@ h = delete(h, E)
 @test (length(h) == 0)
 end
 
-function test_hamt_delete_3(self::HamtTest)
+function test_hamt_delete_3(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(100100, "C")
@@ -727,7 +727,7 @@ h = delete(h, E)
 @test (get(h, B) == "b")
 end
 
-function test_hamt_delete_4(self::HamtTest)
+function test_hamt_delete_4(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(100100, "C")
@@ -752,7 +752,7 @@ h = delete(h, B)
 @test (length(h) == 0)
 end
 
-function test_hamt_delete_5(self::HamtTest)
+function test_hamt_delete_5(self)
 h = hamt()
 keys = []
 for i in 0:16
@@ -779,7 +779,7 @@ end
 @test (length(h) == 0)
 end
 
-function test_hamt_items_1(self::HamtTest)
+function test_hamt_items_1(self)
 A = HashKey(100, "A")
 B = HashKey(201001, "B")
 C = HashKey(101001, "C")
@@ -797,7 +797,7 @@ it = items(h)
 @test (set(collect(it)) == Set([(A, "a"), (B, "b"), (C, "c"), (D, "d"), (E, "e"), (F, "f")]))
 end
 
-function test_hamt_items_2(self::HamtTest)
+function test_hamt_items_2(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(100100, "C")
@@ -815,7 +815,7 @@ it = items(h)
 @test (set(collect(it)) == Set([(A, "a"), (B, "b"), (C, "c"), (D, "d"), (E, "e"), (F, "f")]))
 end
 
-function test_hamt_keys_1(self::HamtTest)
+function test_hamt_keys_1(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(100100, "C")
@@ -833,13 +833,13 @@ h = set(h, F, "f")
 @test (set(collect(h)) == Set([A, B, C, D, E, F]))
 end
 
-function test_hamt_items_3(self::HamtTest)
+function test_hamt_items_3(self)
 h = hamt()
 @test (length(items(h)) == 0)
 @test (collect(items(h)) == [])
 end
 
-function test_hamt_eq_1(self::HamtTest)
+function test_hamt_eq_1(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 C = HashKey(100100, "C")
@@ -877,7 +877,7 @@ h2 = set(h2, E, "d")
 @test h1 !== h2
 end
 
-function test_hamt_eq_2(self::HamtTest)
+function test_hamt_eq_2(self)
 A = HashKey(100, "A")
 Er = HashKey(100, "Er", A)
 h1 = hamt()
@@ -892,7 +892,7 @@ h1 !== h2
 end
 end
 
-function test_hamt_gc_1(self::HamtTest)
+function test_hamt_gc_1(self)
 A = HashKey(100, "A")
 h = hamt()
 h = set(h, 0, 0)
@@ -912,7 +912,7 @@ collect()
 assertIsNone(self, ref())
 end
 
-function test_hamt_gc_2(self::HamtTest)
+function test_hamt_gc_2(self)
 A = HashKey(100, "A")
 B = HashKey(101, "B")
 h = hamt()
@@ -929,7 +929,7 @@ collect()
 assertIsNone(self, ref())
 end
 
-function test_hamt_in_1(self::HamtTest)
+function test_hamt_in_1(self)
 A = HashKey(100, "A")
 AA = HashKey(100, "A")
 B = HashKey(101, "B")
@@ -949,7 +949,7 @@ end
 end
 end
 
-function test_hamt_getitem_1(self::HamtTest)
+function test_hamt_getitem_1(self)
 A = HashKey(100, "A")
 AA = HashKey(100, "A")
 B = HashKey(101, "B")

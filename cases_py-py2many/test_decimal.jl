@@ -38,8 +38,8 @@ import threading
 if sys.platform == "darwin"
 darwin_malloc_err_warning("test_decimal")
 end
-C = import_fresh_module("decimal", ["_decimal"])
-P = import_fresh_module("decimal", ["_decimal"])
+C = import_fresh_module("decimal", fresh = ["_decimal"])
+P = import_fresh_module("decimal", blocked = ["_decimal"])
 abstract type AbstractIBMTestCases end
 abstract type AbstractCIBMTestCases <: AbstractIBMTestCases end
 abstract type AbstractPyIBMTestCases <: AbstractIBMTestCases end
@@ -100,9 +100,9 @@ abstract type AbstractI <: int end
 abstract type AbstractZ <: float end
 abstract type AbstractSignatureTest end
 import decimal as orig_sys_decimal
-cfractions = import_fresh_module("fractions", ["fractions"])
+cfractions = import_fresh_module("fractions", fresh = ["fractions"])
 sys.modules["decimal"] = P
-pfractions = import_fresh_module("fractions", ["fractions"])
+pfractions = import_fresh_module("fractions", fresh = ["fractions"])
 sys.modules["decimal"] = C
 fractions = Dict(C => cfractions, P => pfractions)
 sys.modules["decimal"] = orig_sys_decimal
@@ -127,7 +127,7 @@ function init(m)
 if !(m)
 return
 end
-DefaultTestContext = Context(m, 9, ROUND_HALF_EVEN, fromkeys(dict, Signals[m], 0))
+DefaultTestContext = Context(m, prec = 9, rounding = ROUND_HALF_EVEN, traps = fromkeys(dict, Signals[m], 0))
 setcontext(m, DefaultTestContext)
 end
 
@@ -157,7 +157,7 @@ ErrorNames::Dict{String, Any}
 LogicalFunctions::Tuple{String}
 decimal
 end
-function setUp(self::IBMTestCases)
+function setUp(self)
 self.context = Context(self.decimal)
 self.readcontext = Context(self.decimal)
 self.ignore_list = ["#"]
@@ -179,7 +179,7 @@ self.ErrorNames = Dict("clamped" => self.decimal.Clamped, "conversion_syntax" =>
 self.LogicalFunctions = ("is_canonical", "is_finite", "is_infinite", "is_nan", "is_normal", "is_qnan", "is_signed", "is_snan", "is_subnormal", "is_zero", "same_quantum")
 end
 
-function read_unlimited(self::IBMTestCases, v, context)
+function read_unlimited(self, v, context)
 #= Work around the limitations of the 32-bit _decimal version. The
            guaranteed maximum values for prec, Emax etc. are 425000000,
            but higher values usually work, except for rare corner cases.
@@ -195,7 +195,7 @@ return Decimal(self.decimal, v, context)
 end
 end
 
-function eval_file(self::IBMTestCases, file)
+function eval_file(self, file)
 global skip_expected
 if skip_expected
 throw(unittest.SkipTest)
@@ -216,7 +216,7 @@ end
 end
 end
 
-function eval_line(self::IBMTestCases, s)
+function eval_line(self, s)
 if find(s, " -> ") >= 0 && s[begin:2] != "--" && !startswith(s, "  --")
 s = strip((split(s, "->")[1] + "->") + split(split(s, "->")[2], "--")[1])
 else
@@ -236,7 +236,7 @@ return eval_equation(self, s)
 end
 end
 
-function eval_directive(self::IBMTestCases, s)
+function eval_directive(self, s)
 funct, value = (lower(strip(x)) for x in split(s, ":"))
 if funct === "rounding"
 value = self.RoundingDict[value + 1]
@@ -253,7 +253,7 @@ funct = get(self.ChangeDict, funct, () -> nothing)
 funct(value)
 end
 
-function eval_equation(self::IBMTestCases, s)
+function eval_equation(self, s)
 if !(TEST_ALL) && random() < 0.9
 return
 end
@@ -393,17 +393,17 @@ println("ERROR:$(s)")
 error()
 end
 myexceptions = getexceptions(self)
-sort(myexceptions, repr)
-sort(theirexceptions, repr)
+sort(myexceptions, key = repr)
+sort(theirexceptions, key = repr)
 @test (result == ans)
 @test (myexceptions == theirexceptions)
 end
 
-function getexceptions(self::IBMTestCases)
+function getexceptions(self)
 return [e for e in Signals[self.decimal] if self.context.flags[e + 1] ]
 end
 
-function change_precision(self::IBMTestCases, prec)
+function change_precision(self, prec)
 if self.decimal == C && self.decimal.MAX_PREC == 425000000
 _unsafe_setprec(self.context, prec)
 else
@@ -411,11 +411,11 @@ self.context.prec = prec
 end
 end
 
-function change_rounding_method(self::IBMTestCases, rounding)
+function change_rounding_method(self, rounding)
 self.context.rounding = rounding
 end
 
-function change_min_exponent(self::IBMTestCases, exp)
+function change_min_exponent(self, exp)
 if self.decimal == C && self.decimal.MAX_PREC == 425000000
 _unsafe_setemin(self.context, exp)
 else
@@ -423,7 +423,7 @@ self.context.Emin = exp
 end
 end
 
-function change_max_exponent(self::IBMTestCases, exp)
+function change_max_exponent(self, exp)
 if self.decimal == C && self.decimal.MAX_PREC == 425000000
 _unsafe_setemax(self.context, exp)
 else
@@ -431,7 +431,7 @@ self.context.Emax = exp
 end
 end
 
-function change_clamp(self::IBMTestCases, clamp)
+function change_clamp(self, clamp)
 self.context.clamp = clamp
 end
 
@@ -453,17 +453,17 @@ mutable struct ExplicitConstructionTest <: AbstractExplicitConstructionTest
 #= Unit tests for Explicit Construction cases of Decimal. =#
 
 end
-function test_explicit_empty(self::ExplicitConstructionTest)
+function test_explicit_empty(self)
 Decimal = self.decimal.Decimal
 @test (Decimal() == Decimal("0"))
 end
 
-function test_explicit_from_None(self::ExplicitConstructionTest)
+function test_explicit_from_None(self)
 Decimal = self.decimal.Decimal
 @test_throws TypeError Decimal(nothing)
 end
 
-function test_explicit_from_int(self::ExplicitConstructionTest)
+function test_explicit_from_int(self)
 Decimal = self.decimal.Decimal
 d = Decimal(45)
 @test (string(d) == "45")
@@ -484,7 +484,7 @@ end
 end
 end
 
-function test_explicit_from_string(self::ExplicitConstructionTest)
+function test_explicit_from_string(self)
 Decimal = self.decimal.Decimal
 InvalidOperation = self.decimal.InvalidOperation
 localcontext = self.decimal.localcontext
@@ -516,7 +516,7 @@ c.traps[InvalidOperation + 1] = true
 end
 end
 
-function test_from_legacy_strings(self::ExplicitConstructionTest)
+function test_from_legacy_strings(self)
 Decimal = self.decimal.Decimal
 context = Context(self.decimal)
 s = unicode_legacy_string("9.999999")
@@ -524,7 +524,7 @@ s = unicode_legacy_string("9.999999")
 @test (string(create_decimal(context, s)) == "9.999999")
 end
 
-function test_explicit_from_tuples(self::ExplicitConstructionTest)
+function test_explicit_from_tuples(self)
 Decimal = self.decimal.Decimal
 d = Decimal((0, (0,), 0))
 @test (string(d) == "0")
@@ -550,7 +550,7 @@ d = Decimal((0, (), "F"))
 @test_throws ValueError Decimal((1, (4, 3, 4, "a", 1), 2))
 end
 
-function test_explicit_from_list(self::ExplicitConstructionTest)
+function test_explicit_from_list(self)
 Decimal = self.decimal.Decimal
 d = Decimal([0, [0], 0])
 @test (string(d) == "0")
@@ -562,7 +562,7 @@ d = Decimal((1, [4, 3, 4, 9, 1, 3, 5, 3, 4], -25))
 @test (string(d) == "-4.34913534E-17")
 end
 
-function test_explicit_from_bool(self::ExplicitConstructionTest)
+function test_explicit_from_bool(self)
 Decimal = self.decimal.Decimal
 assertIs(self, Bool(Decimal(0)), false)
 assertIs(self, Bool(Decimal(1)), true)
@@ -570,7 +570,7 @@ assertIs(self, Bool(Decimal(1)), true)
 @test (Decimal(true) == Decimal(1))
 end
 
-function test_explicit_from_Decimal(self::ExplicitConstructionTest)
+function test_explicit_from_Decimal(self)
 Decimal = self.decimal.Decimal
 d = Decimal(45)
 e = Decimal(d)
@@ -586,7 +586,7 @@ e = Decimal(d)
 @test (string(e) == "0")
 end
 
-function test_explicit_from_float(self::ExplicitConstructionTest)
+function test_explicit_from_float(self)
 Decimal = self.decimal.Decimal
 r = Decimal(0.1)
 @test (type_(r) == Decimal)
@@ -604,7 +604,7 @@ x = expovariate(0.01)*(random()*2.0 - 1.0)
 end
 end
 
-function test_explicit_context_create_decimal(self::ExplicitConstructionTest)
+function test_explicit_context_create_decimal(self)
 Decimal = self.decimal.Decimal
 InvalidOperation = self.decimal.InvalidOperation
 Rounded = self.decimal.Rounded
@@ -663,7 +663,7 @@ nc.flags[InvalidOperation + 1] = false
 @test nc.flags[InvalidOperation + 1]
 end
 
-function test_explicit_context_create_from_float(self::ExplicitConstructionTest)
+function test_explicit_context_create_from_float(self)
 Decimal = self.decimal.Decimal
 nc = Context(self.decimal)
 r = create_decimal(nc, 0.1)
@@ -683,7 +683,7 @@ x = expovariate(0.01)*(random()*2.0 - 1.0)
 end
 end
 
-function test_unicode_digits(self::ExplicitConstructionTest)
+function test_unicode_digits(self)
 Decimal = self.decimal.Decimal
 test_values = OrderedDict("１" => "1", "٠.٠٣٧٢e-٣" => "0.0000372", "-nan౨౪౦౦" => "-NaN2400")
 for (input, expected) in collect(test_values)
@@ -709,66 +709,66 @@ mutable struct ImplicitConstructionTest <: AbstractImplicitConstructionTest
 #= Unit tests for Implicit Construction cases of Decimal. =#
 
 end
-function test_implicit_from_None(self::ImplicitConstructionTest)
+function test_implicit_from_None(self)
 Decimal = self.decimal.Decimal
 @test_throws TypeError eval("Decimal(5) + None", locals())
 end
 
-function test_implicit_from_int(self::ImplicitConstructionTest)
+function test_implicit_from_int(self)
 Decimal = self.decimal.Decimal
 @test (string(Decimal(5) + 45) == "50")
 @test (Decimal(5) + 123456789000 == Decimal(123456789000))
 end
 
-function test_implicit_from_string(self::ImplicitConstructionTest)
+function test_implicit_from_string(self)
 Decimal = self.decimal.Decimal
 @test_throws TypeError eval("Decimal(5) + \"3\"", locals())
 end
 
-function test_implicit_from_float(self::ImplicitConstructionTest)
+function test_implicit_from_float(self)
 Decimal = self.decimal.Decimal
 @test_throws TypeError eval("Decimal(5) + 2.2", locals())
 end
 
-function test_implicit_from_Decimal(self::ImplicitConstructionTest)
+function test_implicit_from_Decimal(self)
 Decimal = self.decimal.Decimal
 @test (Decimal(5) + Decimal(45) == Decimal(50))
 end
 
-function test_rop(self::E)
+function test_rop(self)
 Decimal = self.decimal.Decimal
 mutable struct E <: AbstractE
 
 end
-function __divmod__(self::E, other)::String
+function __divmod__(self, other)::String
 return "divmod " * string(other)
 end
 
-function __rdivmod__(self::E, other)::String
+function __rdivmod__(self, other)::String
 return string(other) * " rdivmod"
 end
 
-function __lt__(self::E, other)::String
+function __lt__(self, other)::String
 return "lt " * string(other)
 end
 
-function __gt__(self::E, other)::String
+function __gt__(self, other)::String
 return "gt " * string(other)
 end
 
-function __le__(self::E, other)::String
+function __le__(self, other)::String
 return "le " * string(other)
 end
 
-function __ge__(self::E, other)::String
+function __ge__(self, other)::String
 return "ge " * string(other)
 end
 
-function __eq__(self::E, other)::String
+function __eq__(self, other)::String
 return "eq " * string(other)
 end
 
-function __ne__(self::E, other)::String
+function __ne__(self, other)::String
 return "ne " * string(other)
 end
 
@@ -808,7 +808,7 @@ mutable struct FormatTest <: AbstractFormatTest
 a_type
 decimal
 end
-function test_formatting(self::FormatTest)
+function test_formatting(self)
 Decimal = self.decimal.Decimal
 test_values = [("e", "0E-15", "0e-15"), ("e", "2.3E-15", "2.3e-15"), ("e", "2.30E+2", "2.30e+2"), ("e", "2.30000E-15", "2.30000e-15"), ("e", "1.23456789123456789e40", "1.23456789123456789e+40"), ("e", "1.5", "1.5e+0"), ("e", "0.15", "1.5e-1"), ("e", "0.015", "1.5e-2"), ("e", "0.0000000000015", "1.5e-12"), ("e", "15.0", "1.50e+1"), ("e", "-15", "-1.5e+1"), ("e", "0", "0e+0"), ("e", "0E1", "0e+1"), ("e", "0.0", "0e-1"), ("e", "0.00", "0e-2"), (".6e", "0E-15", "0.000000e-9"), (".6e", "0", "0.000000e+6"), (".6e", "9.999999", "9.999999e+0"), (".6e", "9.9999999", "1.000000e+1"), (".6e", "-1.23e5", "-1.230000e+5"), (".6e", "1.23456789e-3", "1.234568e-3"), ("f", "0", "0"), ("f", "0.0", "0.0"), ("f", "0E-2", "0.00"), ("f", "0.00E-8", "0.0000000000"), ("f", "0E1", "0"), ("f", "3.2E1", "32"), ("f", "3.2E2", "320"), ("f", "3.20E2", "320"), ("f", "3.200E2", "320.0"), ("f", "3.2E-6", "0.0000032"), (".6f", "0E-15", "0.000000"), (".6f", "0E1", "0.000000"), (".6f", "0", "0.000000"), (".0f", "0", "0"), (".0f", "0e-2", "0"), (".0f", "3.14159265", "3"), (".1f", "3.14159265", "3.1"), (".4f", "3.14159265", "3.1416"), (".6f", "3.14159265", "3.141593"), (".7f", "3.14159265", "3.1415926"), (".8f", "3.14159265", "3.14159265"), (".9f", "3.14159265", "3.141592650"), ("g", "0", "0"), ("g", "0.0", "0.0"), ("g", "0E1", "0e+1"), ("G", "0E1", "0E+1"), ("g", "0E-5", "0.00000"), ("g", "0E-6", "0.000000"), ("g", "0E-7", "0e-7"), ("g", "-0E2", "-0e+2"), (".0g", "3.14159265", "3"), (".0n", "3.14159265", "3"), (".1g", "3.14159265", "3"), (".2g", "3.14159265", "3.1"), (".5g", "3.14159265", "3.1416"), (".7g", "3.14159265", "3.141593"), (".8g", "3.14159265", "3.1415926"), (".9g", "3.14159265", "3.14159265"), (".10g", "3.14159265", "3.14159265"), ("%", "0E1", "0%"), ("%", "0E0", "0%"), ("%", "0E-1", "0%"), ("%", "0E-2", "0%"), ("%", "0E-3", "0.0%"), ("%", "0E-4", "0.00%"), (".3%", "0", "0.000%"), (".3%", "0E10", "0.000%"), (".3%", "0E-10", "0.000%"), (".3%", "2.34", "234.000%"), (".3%", "1.234567", "123.457%"), (".0%", "1.23", "123%"), ("e", "NaN", "NaN"), ("f", "-NaN123", "-NaN123"), ("+g", "NaN456", "+NaN456"), (".3e", "Inf", "Infinity"), (".16f", "-Inf", "-Infinity"), (".0g", "-sNaN", "-sNaN"), ("", "1.00", "1.00"), ("6", "123", "   123"), ("<6", "123", "123   "), (">6", "123", "   123"), ("^6", "123", " 123  "), ("=+6", "123", "+  123"), ("#<10", "NaN", "NaN#######"), ("#<10", "-4.3", "-4.3######"), ("#<+10", "0.0130", "+0.0130###"), ("#< 10", "0.0130", " 0.0130###"), ("@>10", "-Inf", "@-Infinity"), ("#>5", "-Inf", "-Infinity"), ("?^5", "123", "?123?"), ("%^6", "123", "%123%%"), (" ^6", "-45.6", "-45.6 "), ("/=10", "-45.6", "-/////45.6"), ("/=+10", "45.6", "+/////45.6"), ("/= 10", "45.6", " /////45.6"), ("\0=10", "-inf", "-\0Infinity"), ("\0^16", "-inf", "\0\0\0-Infinity\0\0\0\0"), ("\0>10", "1.2345", "\0\0\0\01.2345"), ("\0<10", "1.2345", "1.2345\0\0\0\0"), (",", "1234567", "1,234,567"), (",", "123456", "123,456"), (",", "12345", "12,345"), (",", "1234", "1,234"), (",", "123", "123"), (",", "12", "12"), (",", "1", "1"), (",", "0", "0"), (",", "-1234567", "-1,234,567"), (",", "-123456", "-123,456"), ("7,", "123456", "123,456"), ("8,", "123456", " 123,456"), ("08,", "123456", "0,123,456"), ("+08,", "123456", "+123,456"), (" 08,", "123456", " 123,456"), ("08,", "-123456", "-123,456"), ("+09,", "123456", "+0,123,456"), ("07,", "1234.56", "1,234.56"), ("08,", "1234.56", "1,234.56"), ("09,", "1234.56", "01,234.56"), ("010,", "1234.56", "001,234.56"), ("011,", "1234.56", "0,001,234.56"), ("012,", "1234.56", "0,001,234.56"), ("08,.1f", "1234.5", "01,234.5"), (",", "1.23456789", "1.23456789"), (",%", "123.456789", "12,345.6789%"), (",e", "123456", "1.23456e+5"), (",E", "123456", "1.23456E+5"), ("a=-7.0", "0.12345", "aaaa0.1"), ("<^+15.20%", "inf", "<<+Infinity%<<<"), ("\a>,%", "sNaN1234567", "sNaN1234567%"), ("=10.10%", "NaN123", "   NaN123%")]
 for (fmt, d, result) in test_values
@@ -817,7 +817,7 @@ end
 @test_throws TypeError Decimal(1).__format__(b"-020")
 end
 
-function test_n_format(self::FormatTest)
+function test_n_format(self)
 Decimal = self.decimal.Decimal
 try
 catch exn
@@ -833,7 +833,7 @@ function get_fmt(x, override = nothing, fmt = "n")
 if self.decimal == C
 return __format__(Decimal(x), fmt, override)
 else
-return __format__(Decimal(x), fmt, override)
+return __format__(Decimal(x), fmt, _localeconv = override)
 end
 end
 
@@ -875,7 +875,7 @@ dotsep_wide = Dict("decimal_point" => decode(b"\xc2\xbf", "utf-8"), "grouping" =
 @test (get_fmt(Decimal("-1.5"), dotsep_wide, "020n") == "-0´000´000´000´001¿5")
 end
 
-function test_wide_char_separator_decimal_point(self::FormatTest)
+function test_wide_char_separator_decimal_point(self)
 Decimal = self.decimal.Decimal
 decimal_point = localeconv()["decimal_point"]
 thousands_sep = localeconv()["thousands_sep"]
@@ -888,7 +888,7 @@ end
 @test (Decimal("100000000.123") == "100٬000٬000٫123")
 end
 
-function test_decimal_from_float_argument_type(self::A)
+function test_decimal_from_float_argument_type(self)
 mutable struct A <: AbstractA
 a_type
 decimal
@@ -918,7 +918,7 @@ mutable struct ArithmeticOperatorsTest <: AbstractArithmeticOperatorsTest
 #= Unit tests for all arithmetic operators, binary and unary. =#
 
 end
-function test_addition(self::ArithmeticOperatorsTest)
+function test_addition(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("-11.1")
 d2 = Decimal("22.2")
@@ -936,7 +936,7 @@ d1 += 5
 @test (d1 == Decimal("16.1"))
 end
 
-function test_subtraction(self::ArithmeticOperatorsTest)
+function test_subtraction(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("-11.1")
 d2 = Decimal("22.2")
@@ -954,7 +954,7 @@ d1 -= 5
 @test (d1 == Decimal("-38.3"))
 end
 
-function test_multiplication(self::ArithmeticOperatorsTest)
+function test_multiplication(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("-5")
 d2 = Decimal("3")
@@ -972,7 +972,7 @@ d1 *= 5
 @test (d1 == Decimal("-75"))
 end
 
-function test_division(self::ArithmeticOperatorsTest)
+function test_division(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("-5")
 d2 = Decimal("2")
@@ -990,7 +990,7 @@ d1 /= 4
 @test (d1 == Decimal("-0.625"))
 end
 
-function test_floor_division(self::ArithmeticOperatorsTest)
+function test_floor_division(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("5")
 d2 = Decimal("2")
@@ -1008,7 +1008,7 @@ d1 ÷= 2
 @test (d1 == Decimal("1"))
 end
 
-function test_powering(self::ArithmeticOperatorsTest)
+function test_powering(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("5")
 d2 = Decimal("2")
@@ -1026,7 +1026,7 @@ d1 ^= 4
 @test (d1 == Decimal("390625"))
 end
 
-function test_module(self::ArithmeticOperatorsTest)
+function test_module(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("5")
 d2 = Decimal("2")
@@ -1044,7 +1044,7 @@ d1 %= 4
 @test (d1 == Decimal("1"))
 end
 
-function test_floor_div_module(self::ArithmeticOperatorsTest)
+function test_floor_div_module(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("5")
 d2 = Decimal("2")
@@ -1065,14 +1065,14 @@ p, q = div(7)
 @test (type_(q) == type_(d1))
 end
 
-function test_unary_operators(self::ArithmeticOperatorsTest)
+function test_unary_operators(self)
 Decimal = self.decimal.Decimal
 @test (+Decimal(45) == Decimal(+45))
 @test (-Decimal(45) == Decimal(-45))
 @test (abs(Decimal(45)) == abs(Decimal(-45)))
 end
 
-function test_nan_comparisons(self::ArithmeticOperatorsTest)
+function test_nan_comparisons(self)
 Decimal = self.decimal.Decimal
 InvalidOperation = self.decimal.InvalidOperation
 localcontext = self.decimal.localcontext
@@ -1114,7 +1114,7 @@ end
 end
 end
 
-function test_copy_sign(self::ArithmeticOperatorsTest)
+function test_copy_sign(self)
 Decimal = self.decimal.Decimal
 d = copy_sign(Decimal(1), Decimal(-2))
 @test (copy_sign(Decimal(1), -2) == d)
@@ -1226,7 +1226,7 @@ finish1
 finish2
 decimal
 end
-function test_threading(self::ThreadingTest)
+function test_threading(self)
 DefaultContext = self.decimal.DefaultContext
 if self.decimal == C && !(self.decimal.HAVE_THREADS)
 skipTest(self, "compiled without threading")
@@ -1240,8 +1240,8 @@ DefaultContext.Emin = -425000000
 self.synchro = Event()
 self.finish1 = Event()
 self.finish2 = Event()
-th1 = Thread(thfunc1, (self,))
-th2 = Thread(thfunc2, (self,))
+th1 = Thread(target = thfunc1, args = (self,))
+th2 = Thread(target = thfunc2, args = (self,))
 start(th1)
 start(th2)
 wait(self.finish1)
@@ -1277,7 +1277,7 @@ y
                     UsabilityTest(y = nothing) =
                         new(y)
 end
-function test_comparison_operators(self::UsabilityTest)
+function test_comparison_operators(self)
 Decimal = self.decimal.Decimal
 da = Decimal("23.42")
 db = Decimal("23.42")
@@ -1304,7 +1304,7 @@ sort(a)
 @test (a == b)
 end
 
-function test_decimal_float_comparison(self::UsabilityTest)
+function test_decimal_float_comparison(self)
 Decimal = self.decimal.Decimal
 da = Decimal("0.25")
 db = Decimal("3.0")
@@ -1323,7 +1323,7 @@ assertNotEqual(self, 0.25, db)
 assertNotEqual(self, 0.1, Decimal("0.1"))
 end
 
-function test_decimal_complex_comparison(self::UsabilityTest)
+function test_decimal_complex_comparison(self)
 Decimal = self.decimal.Decimal
 da = Decimal("0.25")
 db = Decimal("3.0")
@@ -1341,7 +1341,7 @@ assertIs(self, __gt__(db, 3.0 + 0im), NotImplemented)
 assertIs(self, __le__(db, 3.0 + 0im), NotImplemented)
 end
 
-function test_decimal_fraction_comparison(self::UsabilityTest)
+function test_decimal_fraction_comparison(self)
 D = self.decimal.Decimal
 F = fractions[self.decimal].Fraction
 Context = self.decimal.Context
@@ -1350,7 +1350,7 @@ InvalidOperation = self.decimal.InvalidOperation
 emax = C ? (C.MAX_EMAX) : (999999999)
 emin = C ? (C.MIN_EMIN) : (-999999999)
 etiny = C ? (C.MIN_ETINY) : (-1999999997)
-c = Context(emax, emin)
+c = Context(Emax = emax, Emin = emin)
 localcontext(c) do 
 c.prec = emax
 assertLess(self, D(0), F(1, 9999999999999999999999999999999999999))
@@ -1377,7 +1377,7 @@ assertNotEqual(self, F(-9, 123), D("nan"))
 end
 end
 
-function test_copy_and_deepcopy_methods(self::UsabilityTest)
+function test_copy_and_deepcopy_methods(self)
 Decimal = self.decimal.Decimal
 d = Decimal("43.24")
 c = copy(d)
@@ -1386,7 +1386,7 @@ dc = deepcopy(d)
 @test (id(dc) == id(d))
 end
 
-function test_hash_method(self::UsabilityTest)
+function test_hash_method(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 function hashit(d)
@@ -1428,7 +1428,7 @@ x = 1100^1248
 end
 end
 
-function test_hash_method_nan(self::D)
+function test_hash_method_nan(self)
 Decimal = self.decimal.Decimal
 assertRaises(self, TypeError, hash, Decimal("sNaN"))
 value = Decimal("NaN")
@@ -1436,7 +1436,7 @@ assertEqual(self, hash(value), __hash__(object, value))
 mutable struct H <: AbstractH
 
 end
-function __hash__(self::H)::Int64
+function __hash__(self)::Int64
 return 42
 end
 
@@ -1448,7 +1448,7 @@ value = D("NaN")
 assertEqual(self, hash(value), __hash__(object, value))
 end
 
-function test_min_and_max_methods(self::UsabilityTest)
+function test_min_and_max_methods(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("15.32")
 d2 = Decimal("28.5")
@@ -1464,20 +1464,20 @@ assertIs(self, max(l1, d2), d2)
 assertIs(self, max(d2, l1), d2)
 end
 
-function test_as_nonzero(self::UsabilityTest)
+function test_as_nonzero(self)
 Decimal = self.decimal.Decimal
 @test !(Decimal(0))
 @test Decimal("0.372")
 end
 
-function test_tostring_methods(self::UsabilityTest)
+function test_tostring_methods(self)
 Decimal = self.decimal.Decimal
 d = Decimal("15.32")
 @test (string(d) == "15.32")
 @test (repr(d) == "Decimal(\'15.32\')")
 end
 
-function test_tonum_methods(self::UsabilityTest)
+function test_tonum_methods(self)
 Decimal = self.decimal.Decimal
 d1 = Decimal("66")
 d2 = Decimal("15.32")
@@ -1518,7 +1518,7 @@ for (d, n, r) in test_triples
 end
 end
 
-function test_nan_to_float(self::UsabilityTest)
+function test_nan_to_float(self)
 Decimal = self.decimal.Decimal
 for s in ("nan", "nan1234", "-nan", "-nan2468")
 f = float(Decimal(s))
@@ -1528,7 +1528,7 @@ sign = copysign(1.0, f)
 end
 end
 
-function test_snan_to_float(self::UsabilityTest)
+function test_snan_to_float(self)
 Decimal = self.decimal.Decimal
 for s in ("snan", "-snan", "snan1357", "-snan1234")
 d = Decimal(s)
@@ -1536,7 +1536,7 @@ d = Decimal(s)
 end
 end
 
-function test_eval_round_trip(self::UsabilityTest)
+function test_eval_round_trip(self)
 Decimal = self.decimal.Decimal
 d = Decimal((0, (0,), 0))
 @test (d == eval(repr(d)))
@@ -1548,7 +1548,7 @@ d = Decimal((1, (4, 3, 4, 9, 1, 3, 5, 3, 4), -25))
 @test (d == eval(repr(d)))
 end
 
-function test_as_tuple(self::UsabilityTest)
+function test_as_tuple(self)
 Decimal = self.decimal.Decimal
 d = Decimal(0)
 @test (as_tuple(d) == (0, (0,), 0))
@@ -1578,7 +1578,7 @@ d = Decimal((1, (0, 2, 7, 1), "F"))
 @test (as_tuple(d) == (1, (0,), "F"))
 end
 
-function test_as_integer_ratio(self::UsabilityTest)
+function test_as_integer_ratio(self)
 Decimal = self.decimal.Decimal
 @test_throws OverflowError Decimal.as_integer_ratio(Decimal("inf"))
 @test_throws OverflowError Decimal.as_integer_ratio(Decimal("-inf"))
@@ -1601,7 +1601,7 @@ end
 end
 end
 
-function test_subclassing(self::MyDecimal)
+function test_subclassing(self)
 Decimal = self.decimal.Decimal
 mutable struct MyDecimal <: AbstractMyDecimal
 y
@@ -1640,14 +1640,14 @@ assertEqual(self, x, d)
 assertIs(self, x.y, nothing)
 end
 
-function test_implicit_context(self::UsabilityTest)
+function test_implicit_context(self)
 Decimal = self.decimal.Decimal
 getcontext = self.decimal.getcontext
 c = getcontext()
 @test (string(sqrt(Decimal(0))) == string(sqrt(c, Decimal(0))))
 end
 
-function test_none_args(self::UsabilityTest)
+function test_none_args(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 localcontext = self.decimal.localcontext
@@ -1667,182 +1667,182 @@ x = Decimal("111")
 y = Decimal("1e9999")
 z = Decimal("1e-9999")
 clear_flags(c)
-@test (string(exp(x, nothing)) == "1.609487E+48")
+@test (string(exp(x, context = nothing)) == "1.609487E+48")
 @test c.flags[Inexact + 1]
 @test c.flags[Rounded + 1]
 clear_flags(c)
-@test_throws Overflow y.exp(nothing)
+@test_throws Overflow y.exp(context = nothing)
 @test c.flags[Overflow + 1]
-assertIs(self, is_normal(z, nothing), false)
-assertIs(self, is_subnormal(z, nothing), true)
+assertIs(self, is_normal(z, context = nothing), false)
+assertIs(self, is_subnormal(z, context = nothing), true)
 clear_flags(c)
-@test (string(ln(x, nothing)) == "4.709530")
+@test (string(ln(x, context = nothing)) == "4.709530")
 @test c.flags[Inexact + 1]
 @test c.flags[Rounded + 1]
 clear_flags(c)
-@test_throws InvalidOperation Decimal(-1).ln(nothing)
+@test_throws InvalidOperation Decimal(-1).ln(context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-@test (string(log10(x, nothing)) == "2.045323")
+@test (string(log10(x, context = nothing)) == "2.045323")
 @test c.flags[Inexact + 1]
 @test c.flags[Rounded + 1]
 clear_flags(c)
-@test_throws InvalidOperation Decimal(-1).log10(nothing)
+@test_throws InvalidOperation Decimal(-1).log10(context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-@test (string(logb(x, nothing)) == "2")
-@test_throws DivisionByZero Decimal(0).logb(nothing)
+@test (string(logb(x, context = nothing)) == "2")
+@test_throws DivisionByZero Decimal(0).logb(context = nothing)
 @test c.flags[DivisionByZero + 1]
 clear_flags(c)
-@test (string(logical_invert(x, nothing)) == "1111000")
-@test_throws InvalidOperation y.logical_invert(nothing)
+@test (string(logical_invert(x, context = nothing)) == "1111000")
+@test_throws InvalidOperation y.logical_invert(context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-@test (string(next_minus(y, nothing)) == "9.999999E+999")
-@test_throws InvalidOperation Decimal("sNaN").next_minus(nothing)
+@test (string(next_minus(y, context = nothing)) == "9.999999E+999")
+@test_throws InvalidOperation Decimal("sNaN").next_minus(context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-@test (string(next_plus(y, nothing)) == "Infinity")
-@test_throws InvalidOperation Decimal("sNaN").next_plus(nothing)
+@test (string(next_plus(y, context = nothing)) == "Infinity")
+@test_throws InvalidOperation Decimal("sNaN").next_plus(context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-@test (string(normalize(z, nothing)) == "0")
-@test_throws Overflow y.normalize(nothing)
+@test (string(normalize(z, context = nothing)) == "0")
+@test_throws Overflow y.normalize(context = nothing)
 @test c.flags[Overflow + 1]
-@test (string(number_class(z, nothing)) == "+Subnormal")
+@test (string(number_class(z, context = nothing)) == "+Subnormal")
 clear_flags(c)
-@test (string(sqrt(z, nothing)) == "0E-1005")
+@test (string(sqrt(z, context = nothing)) == "0E-1005")
 @test c.flags[Clamped + 1]
 @test c.flags[Inexact + 1]
 @test c.flags[Rounded + 1]
 @test c.flags[Subnormal + 1]
 @test c.flags[Underflow + 1]
 clear_flags(c)
-@test_throws Overflow y.sqrt(nothing)
+@test_throws Overflow y.sqrt(context = nothing)
 @test c.flags[Overflow + 1]
 c.capitals = 0
-@test (string(to_eng_string(z, nothing)) == "1e-9999")
+@test (string(to_eng_string(z, context = nothing)) == "1e-9999")
 c.capitals = 1
 clear_flags(c)
-ans = string(compare(x, Decimal("Nan891287828"), nothing))
+ans = string(compare(x, Decimal("Nan891287828"), context = nothing))
 @test (ans == "NaN1287828")
-@test_throws InvalidOperation x.compare(Decimal("sNaN"), nothing)
+@test_throws InvalidOperation x.compare(Decimal("sNaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(compare_signal(x, 8224, nothing))
+ans = string(compare_signal(x, 8224, context = nothing))
 @test (ans == "-1")
-@test_throws InvalidOperation x.compare_signal(Decimal("NaN"), nothing)
+@test_throws InvalidOperation x.compare_signal(Decimal("NaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(logical_and(x, 101, nothing))
+ans = string(logical_and(x, 101, context = nothing))
 @test (ans == "101")
-@test_throws InvalidOperation x.logical_and(123, nothing)
+@test_throws InvalidOperation x.logical_and(123, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(logical_or(x, 101, nothing))
+ans = string(logical_or(x, 101, context = nothing))
 @test (ans == "111")
-@test_throws InvalidOperation x.logical_or(123, nothing)
+@test_throws InvalidOperation x.logical_or(123, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(logical_xor(x, 101, nothing))
+ans = string(logical_xor(x, 101, context = nothing))
 @test (ans == "10")
-@test_throws InvalidOperation x.logical_xor(123, nothing)
+@test_throws InvalidOperation x.logical_xor(123, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(max(x, 101, nothing))
+ans = string(max(x, 101, context = nothing))
 @test (ans == "111")
-@test_throws InvalidOperation x.max(Decimal("sNaN"), nothing)
+@test_throws InvalidOperation x.max(Decimal("sNaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(max_mag(x, 101, nothing))
+ans = string(max_mag(x, 101, context = nothing))
 @test (ans == "111")
-@test_throws InvalidOperation x.max_mag(Decimal("sNaN"), nothing)
+@test_throws InvalidOperation x.max_mag(Decimal("sNaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(min(x, 101, nothing))
+ans = string(min(x, 101, context = nothing))
 @test (ans == "101")
-@test_throws InvalidOperation x.min(Decimal("sNaN"), nothing)
+@test_throws InvalidOperation x.min(Decimal("sNaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(min_mag(x, 101, nothing))
+ans = string(min_mag(x, 101, context = nothing))
 @test (ans == "101")
-@test_throws InvalidOperation x.min_mag(Decimal("sNaN"), nothing)
+@test_throws InvalidOperation x.min_mag(Decimal("sNaN"), context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(remainder_near(x, 101, nothing))
+ans = string(remainder_near(x, 101, context = nothing))
 @test (ans == "10")
-@test_throws InvalidOperation y.remainder_near(101, nothing)
+@test_throws InvalidOperation y.remainder_near(101, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(rotate(x, 2, nothing))
+ans = string(rotate(x, 2, context = nothing))
 @test (ans == "11100")
-@test_throws InvalidOperation x.rotate(101, nothing)
+@test_throws InvalidOperation x.rotate(101, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(scaleb(x, 7, nothing))
+ans = string(scaleb(x, 7, context = nothing))
 @test (ans == "1.11E+9")
-@test_throws InvalidOperation x.scaleb(10000, nothing)
+@test_throws InvalidOperation x.scaleb(10000, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(shift(x, 2, nothing))
+ans = string(shift(x, 2, context = nothing))
 @test (ans == "11100")
-@test_throws InvalidOperation x.shift(10000, nothing)
+@test_throws InvalidOperation x.shift(10000, context = nothing)
 @test c.flags[InvalidOperation + 1]
 clear_flags(c)
-ans = string(fma(x, 2, 3, nothing))
+ans = string(fma(x, 2, 3, context = nothing))
 @test (ans == "225")
-@test_throws Overflow x.fma(Decimal("1e9999"), 3, nothing)
+@test_throws Overflow x.fma(Decimal("1e9999"), 3, context = nothing)
 @test c.flags[Overflow + 1]
 c.rounding = ROUND_HALF_EVEN
-ans = string(to_integral(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "2")
 c.rounding = ROUND_DOWN
-ans = string(to_integral(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "1")
-ans = string(to_integral(Decimal("1.5"), ROUND_UP, nothing))
+ans = string(to_integral(Decimal("1.5"), rounding = ROUND_UP, context = nothing))
 @test (ans == "2")
 clear_flags(c)
-@test_throws InvalidOperation Decimal("sNaN").to_integral(nothing)
+@test_throws InvalidOperation Decimal("sNaN").to_integral(context = nothing)
 @test c.flags[InvalidOperation + 1]
 c.rounding = ROUND_HALF_EVEN
-ans = string(to_integral_value(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral_value(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "2")
 c.rounding = ROUND_DOWN
-ans = string(to_integral_value(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral_value(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "1")
-ans = string(to_integral_value(Decimal("1.5"), ROUND_UP, nothing))
+ans = string(to_integral_value(Decimal("1.5"), rounding = ROUND_UP, context = nothing))
 @test (ans == "2")
 clear_flags(c)
-@test_throws InvalidOperation Decimal("sNaN").to_integral_value(nothing)
+@test_throws InvalidOperation Decimal("sNaN").to_integral_value(context = nothing)
 @test c.flags[InvalidOperation + 1]
 c.rounding = ROUND_HALF_EVEN
-ans = string(to_integral_exact(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral_exact(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "2")
 c.rounding = ROUND_DOWN
-ans = string(to_integral_exact(Decimal("1.5"), nothing, nothing))
+ans = string(to_integral_exact(Decimal("1.5"), rounding = nothing, context = nothing))
 @test (ans == "1")
-ans = string(to_integral_exact(Decimal("1.5"), ROUND_UP, nothing))
+ans = string(to_integral_exact(Decimal("1.5"), rounding = ROUND_UP, context = nothing))
 @test (ans == "2")
 clear_flags(c)
-@test_throws InvalidOperation Decimal("sNaN").to_integral_exact(nothing)
+@test_throws InvalidOperation Decimal("sNaN").to_integral_exact(context = nothing)
 @test c.flags[InvalidOperation + 1]
 c.rounding = ROUND_UP
-ans = string(quantize(Decimal("1.50001"), Decimal("1e-3"), nothing, nothing))
+ans = string(quantize(Decimal("1.50001"), exp = Decimal("1e-3"), rounding = nothing, context = nothing))
 @test (ans == "1.501")
 c.rounding = ROUND_DOWN
-ans = string(quantize(Decimal("1.50001"), Decimal("1e-3"), nothing, nothing))
+ans = string(quantize(Decimal("1.50001"), exp = Decimal("1e-3"), rounding = nothing, context = nothing))
 @test (ans == "1.500")
-ans = string(quantize(Decimal("1.50001"), Decimal("1e-3"), ROUND_UP, nothing))
+ans = string(quantize(Decimal("1.50001"), exp = Decimal("1e-3"), rounding = ROUND_UP, context = nothing))
 @test (ans == "1.501")
 clear_flags(c)
-@test_throws InvalidOperation y.quantize(Decimal("1e-10"), ROUND_UP, nothing)
+@test_throws InvalidOperation y.quantize(Decimal("1e-10"), rounding = ROUND_UP, context = nothing)
 @test c.flags[InvalidOperation + 1]
 end
 localcontext(Context()) do context 
 context.prec = 7
 context.Emax = 999
 context.Emin = -999
-localcontext(nothing) do c 
+localcontext(ctx = nothing) do c 
 @test (c.prec == 7)
 @test (c.Emax == 999)
 @test (c.Emin == -999)
@@ -1850,7 +1850,7 @@ end
 end
 end
 
-function test_conversions_from_int(self::UsabilityTest)
+function test_conversions_from_int(self)
 Decimal = self.decimal.Decimal
 @test (compare(Decimal(4), 3) == compare(Decimal(4), Decimal(3)))
 @test (compare_signal(Decimal(4), 3) == compare_signal(Decimal(4), Decimal(3)))
@@ -1892,7 +1892,7 @@ end
 mutable struct PythonAPItests <: AbstractPythonAPItests
 x::String
 end
-function test_abc(self::PythonAPItests)
+function test_abc(self)
 Decimal = self.decimal.Decimal
 @test Decimal <: numbers.Number
 @test !(Decimal <: Real)
@@ -1900,7 +1900,7 @@ Decimal = self.decimal.Decimal
 assertNotIsInstance(self, Decimal(0), numbers.Real)
 end
 
-function test_pickle(self::PythonAPItests)
+function test_pickle(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 Decimal = self.decimal.Decimal
 savedecimal = sys.modules["decimal"]
@@ -1943,7 +1943,7 @@ sys.modules["decimal"] = savedecimal
 end
 end
 
-function test_int(self::PythonAPItests)
+function test_int(self)
 Decimal = self.decimal.Decimal
 for x in -250:249
 s = "%0.2f" % (x / 100.0)
@@ -1958,7 +1958,7 @@ end
 @test_throws OverflowError int(Decimal("-inf"))
 end
 
-function test_trunc(self::PythonAPItests)
+function test_trunc(self)
 Decimal = self.decimal.Decimal
 for x in -250:249
 s = "%0.2f" % (x / 100.0)
@@ -1969,7 +1969,7 @@ r = to_integral(d, ROUND_DOWN)
 end
 end
 
-function test_from_float(self::MyDecimal)
+function test_from_float(self)
 Decimal = self.decimal.Decimal
 mutable struct MyDecimal <: AbstractMyDecimal
 x::String
@@ -1995,36 +1995,36 @@ assertEqual(self, x, float(MyDecimal.from_float(x)))
 end
 end
 
-function test_create_decimal_from_float(self::PythonAPItests)
+function test_create_decimal_from_float(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 Inexact = self.decimal.Inexact
-context = Context(5, ROUND_DOWN)
+context = Context(prec = 5, rounding = ROUND_DOWN)
 @test (create_decimal_from_float(context, math.pi) == Decimal("3.1415"))
-context = Context(5, ROUND_UP)
+context = Context(prec = 5, rounding = ROUND_UP)
 @test (create_decimal_from_float(context, math.pi) == Decimal("3.1416"))
-context = Context(5, [Inexact])
+context = Context(prec = 5, traps = [Inexact])
 @test_throws Inexact context.create_decimal_from_float(math.pi)
 @test (repr(create_decimal_from_float(context, -0.0)) == "Decimal(\'-0\')")
 @test (repr(create_decimal_from_float(context, 1.0)) == "Decimal(\'1\')")
 @test (repr(create_decimal_from_float(context, 10)) == "Decimal(\'10\')")
 end
 
-function test_quantize(self::PythonAPItests)
+function test_quantize(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 InvalidOperation = self.decimal.InvalidOperation
-c = Context(99999, -99999)
+c = Context(Emax = 99999, Emin = -99999)
 @test (quantize(Decimal("7.335"), Decimal(".01")) == Decimal("7.34"))
-@test (quantize(Decimal("7.335"), Decimal(".01"), ROUND_DOWN) == Decimal("7.33"))
-@test_throws InvalidOperation Decimal("10e99999").quantize(Decimal("1e100000"), c)
+@test (quantize(Decimal("7.335"), Decimal(".01"), rounding = ROUND_DOWN) == Decimal("7.33"))
+@test_throws InvalidOperation Decimal("10e99999").quantize(Decimal("1e100000"), context = c)
 c = Context()
 d = Decimal("0.871831e800")
-x = quantize(d, c, Decimal("1e797"), ROUND_DOWN)
+x = quantize(d, context = c, exp = Decimal("1e797"), rounding = ROUND_DOWN)
 @test (x == Decimal("8.71E+799"))
 end
 
-function test_complex(self::PythonAPItests)
+function test_complex(self)
 Decimal = self.decimal.Decimal
 x = Decimal("9.8182731e181273")
 @test (x.real == x)
@@ -2038,7 +2038,7 @@ x = Decimal("1")
 @test_throws AttributeError setattr(x, "__complex__", 100)
 end
 
-function test_named_parameters(self::PythonAPItests)
+function test_named_parameters(self)
 D = self.decimal.Decimal
 Context = self.decimal.Context
 localcontext = self.decimal.localcontext
@@ -2055,82 +2055,82 @@ clear_flags(c)
 @test (D(xc, 9) == 9)
 @test (D(xc) == 0)
 clear_flags(xc)
-@test_throws InvalidOperation D("xyz", xc)
+@test_throws InvalidOperation D("xyz", context = xc)
 @test xc.flags[InvalidOperation + 1]
 @test !(c.flags[InvalidOperation + 1])
 clear_flags(xc)
-@test (exp(D(2), xc) == 7)
-@test_throws Overflow D(8).exp(xc)
+@test (exp(D(2), context = xc) == 7)
+@test_throws Overflow D(8).exp(context = xc)
 @test xc.flags[Overflow + 1]
 @test !(c.flags[Overflow + 1])
 clear_flags(xc)
-@test (ln(D(2), xc) == D("0.7"))
-@test_throws InvalidOperation D(-1).ln(xc)
+@test (ln(D(2), context = xc) == D("0.7"))
+@test_throws InvalidOperation D(-1).ln(context = xc)
 @test xc.flags[InvalidOperation + 1]
 @test !(c.flags[InvalidOperation + 1])
-@test (log10(D(0), xc) == D("-inf"))
-@test (next_minus(D(-1), xc) == -2)
-@test (next_plus(D(-1), xc) == D("-0.9"))
-@test (normalize(D("9.73"), xc) == D("1E+1"))
-@test (to_integral(D("9999"), xc) == 9999)
-@test (to_integral_exact(D("-2000"), xc) == -2000)
-@test (to_integral_value(D("123"), xc) == 123)
-@test (sqrt(D("0.0625"), xc) == D("0.2"))
-@test (compare(D("0.0625"), xc, 3) == -1)
+@test (log10(D(0), context = xc) == D("-inf"))
+@test (next_minus(D(-1), context = xc) == -2)
+@test (next_plus(D(-1), context = xc) == D("-0.9"))
+@test (normalize(D("9.73"), context = xc) == D("1E+1"))
+@test (to_integral(D("9999"), context = xc) == 9999)
+@test (to_integral_exact(D("-2000"), context = xc) == -2000)
+@test (to_integral_value(D("123"), context = xc) == 123)
+@test (sqrt(D("0.0625"), context = xc) == D("0.2"))
+@test (compare(D("0.0625"), context = xc, other = 3) == -1)
 clear_flags(xc)
-@test_throws InvalidOperation D("0").compare_signal(D("nan"), xc)
+@test_throws InvalidOperation D("0").compare_signal(D("nan"), context = xc)
 @test xc.flags[InvalidOperation + 1]
 @test !(c.flags[InvalidOperation + 1])
-@test (max(D("0.01"), D("0.0101"), xc) == D("0.0"))
-@test (max(D("0.01"), D("0.0101"), xc) == D("0.0"))
-@test (max_mag(D("0.2"), D("-0.3"), xc) == D("-0.3"))
-@test (min(D("0.02"), D("-0.03"), xc) == D("-0.0"))
-@test (min_mag(D("0.02"), D("-0.03"), xc) == D("0.0"))
-@test (next_toward(D("0.2"), D("-1"), xc) == D("0.1"))
+@test (max(D("0.01"), D("0.0101"), context = xc) == D("0.0"))
+@test (max(D("0.01"), D("0.0101"), context = xc) == D("0.0"))
+@test (max_mag(D("0.2"), D("-0.3"), context = xc) == D("-0.3"))
+@test (min(D("0.02"), D("-0.03"), context = xc) == D("-0.0"))
+@test (min_mag(D("0.02"), D("-0.03"), context = xc) == D("0.0"))
+@test (next_toward(D("0.2"), D("-1"), context = xc) == D("0.1"))
 clear_flags(xc)
-@test_throws InvalidOperation D("0.2").quantize(D("1e10"), xc)
+@test_throws InvalidOperation D("0.2").quantize(D("1e10"), context = xc)
 @test xc.flags[InvalidOperation + 1]
 @test !(c.flags[InvalidOperation + 1])
-@test (remainder_near(D("9.99"), D("1.5"), xc) == D("-0.5"))
-@test (fma(D("9.9"), D("0.9"), xc, 7) == D("7E+1"))
-@test_throws TypeError D(1).is_canonical(xc)
-@test_throws TypeError D(1).is_finite(xc)
-@test_throws TypeError D(1).is_infinite(xc)
-@test_throws TypeError D(1).is_nan(xc)
-@test_throws TypeError D(1).is_qnan(xc)
-@test_throws TypeError D(1).is_snan(xc)
-@test_throws TypeError D(1).is_signed(xc)
-@test_throws TypeError D(1).is_zero(xc)
-@test !(is_normal(D("0.01"), xc))
-@test is_subnormal(D("0.01"), xc)
-@test_throws TypeError D(1).adjusted(xc)
-@test_throws TypeError D(1).conjugate(xc)
-@test_throws TypeError D(1).radix(xc)
-@test (logb(D(-111), xc) == 2)
-@test (logical_invert(D(0), xc) == 1)
-@test (number_class(D("0.01"), xc) == "+Subnormal")
-@test (to_eng_string(D("0.21"), xc) == "0.21")
-@test (logical_and(D("11"), D("10"), xc) == 0)
-@test (logical_or(D("11"), D("10"), xc) == 1)
-@test (logical_xor(D("01"), D("10"), xc) == 1)
-@test (rotate(D("23"), 1, xc) == 3)
-@test (rotate(D("23"), 1, xc) == 3)
+@test (remainder_near(D("9.99"), D("1.5"), context = xc) == D("-0.5"))
+@test (fma(D("9.9"), third = D("0.9"), context = xc, other = 7) == D("7E+1"))
+@test_throws TypeError D(1).is_canonical(context = xc)
+@test_throws TypeError D(1).is_finite(context = xc)
+@test_throws TypeError D(1).is_infinite(context = xc)
+@test_throws TypeError D(1).is_nan(context = xc)
+@test_throws TypeError D(1).is_qnan(context = xc)
+@test_throws TypeError D(1).is_snan(context = xc)
+@test_throws TypeError D(1).is_signed(context = xc)
+@test_throws TypeError D(1).is_zero(context = xc)
+@test !(is_normal(D("0.01"), context = xc))
+@test is_subnormal(D("0.01"), context = xc)
+@test_throws TypeError D(1).adjusted(context = xc)
+@test_throws TypeError D(1).conjugate(context = xc)
+@test_throws TypeError D(1).radix(context = xc)
+@test (logb(D(-111), context = xc) == 2)
+@test (logical_invert(D(0), context = xc) == 1)
+@test (number_class(D("0.01"), context = xc) == "+Subnormal")
+@test (to_eng_string(D("0.21"), context = xc) == "0.21")
+@test (logical_and(D("11"), D("10"), context = xc) == 0)
+@test (logical_or(D("11"), D("10"), context = xc) == 1)
+@test (logical_xor(D("01"), D("10"), context = xc) == 1)
+@test (rotate(D("23"), 1, context = xc) == 3)
+@test (rotate(D("23"), 1, context = xc) == 3)
 clear_flags(xc)
-@test_throws Overflow D("23").scaleb(1, xc)
+@test_throws Overflow D("23").scaleb(1, context = xc)
 @test xc.flags[Overflow + 1]
 @test !(c.flags[Overflow + 1])
-@test (shift(D("23"), -1, xc) == 0)
-@test_throws TypeError D.from_float(1.1, xc)
-@test_throws TypeError D(0).as_tuple(xc)
+@test (shift(D("23"), -1, context = xc) == 0)
+@test_throws TypeError D.from_float(1.1, context = xc)
+@test_throws TypeError D(0).as_tuple(context = xc)
 @test (canonical(D(1)) == 1)
-@test_throws TypeError D("-1").copy_abs(xc)
-@test_throws TypeError D("-1").copy_negate(xc)
-@test_throws TypeError D(1).canonical("x")
-@test_throws TypeError D(1).canonical("x")
+@test_throws TypeError D("-1").copy_abs(context = xc)
+@test_throws TypeError D("-1").copy_negate(context = xc)
+@test_throws TypeError D(1).canonical(context = "x")
+@test_throws TypeError D(1).canonical(xyz = "x")
 end
 end
 
-function test_exception_hierarchy(self::PythonAPItests)
+function test_exception_hierarchy(self)
 decimal = self.decimal
 DecimalException = decimal.DecimalException
 InvalidOperation = decimal.InvalidOperation
@@ -2183,13 +2183,13 @@ end
 mutable struct ContextAPItests <: AbstractContextAPItests
 
 end
-function test_none_args(self::ContextAPItests)
+function test_none_args(self)
 Context = self.decimal.Context
 InvalidOperation = self.decimal.InvalidOperation
 DivisionByZero = self.decimal.DivisionByZero
 Overflow = self.decimal.Overflow
 c1 = Context()
-c2 = Context(nothing, nothing, nothing, nothing, nothing, nothing, nothing, nothing)
+c2 = Context(prec = nothing, rounding = nothing, Emax = nothing, Emin = nothing, capitals = nothing, clamp = nothing, flags = nothing, traps = nothing)
 for c in [c1, c2]
 @test (c.prec == 28)
 @test (c.rounding == ROUND_HALF_EVEN)
@@ -2202,7 +2202,7 @@ assert_signals(self, c, "traps", [InvalidOperation, DivisionByZero, Overflow])
 end
 end
 
-function test_from_legacy_strings(self::ContextAPItests)
+function test_from_legacy_strings(self)
 c = Context(self.decimal)
 for rnd in RoundingModes
 c.rounding = unicode_legacy_string(rnd)
@@ -2214,7 +2214,7 @@ s = unicode_legacy_string("ROUND_\0UP")
 @test_throws TypeError setattr(c, "rounding", s)
 end
 
-function test_pickle(self::ContextAPItests)
+function test_pickle(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 Context = self.decimal.Context
 savedecimal = sys.modules["decimal"]
@@ -2240,7 +2240,7 @@ emax = randrange(1, 100)
 caps = randrange(2)
 clamp = randrange(2)
 sys.modules["decimal"] = dumper
-c = Context(dumper, prec, emin, emax, RoundingModes[ri + 1], caps, clamp, OrderedSignals[dumper][begin:fi], OrderedSignals[dumper][begin:ti])
+c = Context(dumper, prec = prec, Emin = emin, Emax = emax, rounding = RoundingModes[ri + 1], capitals = caps, clamp = clamp, flags = OrderedSignals[dumper][begin:fi], traps = OrderedSignals[dumper][begin:ti])
 s = dumps(c, proto)
 sys.modules["decimal"] = loader
 d = loads(s)
@@ -2261,13 +2261,13 @@ sys.modules["decimal"] = savedecimal
 end
 end
 
-function test_equality_with_other_types(self::ContextAPItests)
+function test_equality_with_other_types(self)
 Decimal = self.decimal.Decimal
 assertIn(self, Decimal(10), ["a", 1.0, Decimal(10), (1, 2), Dict()])
 assertNotIn(self, Decimal(10), ["a", 1.0, (1, 2), Dict()])
 end
 
-function test_copy(self::ContextAPItests)
+function test_copy(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2281,13 +2281,13 @@ k2 = set(keys(d.flags))
 @test (c.flags == d.flags)
 end
 
-function test__clamp(self::ContextAPItests)
+function test__clamp(self)
 Context = self.decimal.Context
 c = Context()
 @test_throws AttributeError getattr(c, "_clamp")
 end
 
-function test_abs(self::ContextAPItests)
+function test_abs(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2296,7 +2296,7 @@ d = abs(c, Decimal(-1))
 @test_throws TypeError c.abs("-1")
 end
 
-function test_add(self::ContextAPItests)
+function test_add(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2308,7 +2308,7 @@ d = add(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.add(1, "1")
 end
 
-function test_compare(self::ContextAPItests)
+function test_compare(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2320,7 +2320,7 @@ d = compare(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.compare(1, "1")
 end
 
-function test_compare_signal(self::ContextAPItests)
+function test_compare_signal(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2332,7 +2332,7 @@ d = compare_signal(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.compare_signal(1, "1")
 end
 
-function test_compare_total(self::ContextAPItests)
+function test_compare_total(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2344,7 +2344,7 @@ d = compare_total(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.compare_total(1, "1")
 end
 
-function test_compare_total_mag(self::ContextAPItests)
+function test_compare_total_mag(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2356,7 +2356,7 @@ d = compare_total_mag(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.compare_total_mag(1, "1")
 end
 
-function test_copy_abs(self::ContextAPItests)
+function test_copy_abs(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2365,7 +2365,7 @@ d = copy_abs(c, Decimal(-1))
 @test_throws TypeError c.copy_abs("-1")
 end
 
-function test_copy_decimal(self::ContextAPItests)
+function test_copy_decimal(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2374,7 +2374,7 @@ d = copy_decimal(c, Decimal(-1))
 @test_throws TypeError c.copy_decimal("-1")
 end
 
-function test_copy_negate(self::ContextAPItests)
+function test_copy_negate(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2383,7 +2383,7 @@ d = copy_negate(c, Decimal(-1))
 @test_throws TypeError c.copy_negate("-1")
 end
 
-function test_copy_sign(self::ContextAPItests)
+function test_copy_sign(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2395,7 +2395,7 @@ d = copy_sign(c, Decimal(1), Decimal(-2))
 @test_throws TypeError c.copy_sign(1, "-2")
 end
 
-function test_divide(self::ContextAPItests)
+function test_divide(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2407,7 +2407,7 @@ d = divide(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.divide(1, "2")
 end
 
-function test_divide_int(self::ContextAPItests)
+function test_divide_int(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2419,7 +2419,7 @@ d = divide_int(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.divide_int(1, "2")
 end
 
-function test_divmod(self::ContextAPItests)
+function test_divmod(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2431,7 +2431,7 @@ d = div(c)
 @test_throws TypeError div(c)(1, "2")
 end
 
-function test_exp(self::ContextAPItests)
+function test_exp(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2440,7 +2440,7 @@ d = exp(c, Decimal(10))
 @test_throws TypeError c.exp("10")
 end
 
-function test_fma(self::ContextAPItests)
+function test_fma(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2459,7 +2459,7 @@ d = fma(c, Decimal(2), Decimal(3), Decimal(4))
 @test_throws TypeError Decimal(1).fma(Decimal("snan"), 1.222)
 end
 
-function test_is_finite(self::ContextAPItests)
+function test_is_finite(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2468,7 +2468,7 @@ d = is_finite(c, Decimal(10))
 @test_throws TypeError c.is_finite("10")
 end
 
-function test_is_infinite(self::ContextAPItests)
+function test_is_infinite(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2477,7 +2477,7 @@ d = is_infinite(c, Decimal(10))
 @test_throws TypeError c.is_infinite("10")
 end
 
-function test_is_nan(self::ContextAPItests)
+function test_is_nan(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2486,7 +2486,7 @@ d = is_nan(c, Decimal(10))
 @test_throws TypeError c.is_nan("10")
 end
 
-function test_is_normal(self::ContextAPItests)
+function test_is_normal(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2495,7 +2495,7 @@ d = is_normal(c, Decimal(10))
 @test_throws TypeError c.is_normal("10")
 end
 
-function test_is_qnan(self::ContextAPItests)
+function test_is_qnan(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2504,7 +2504,7 @@ d = is_qnan(c, Decimal(10))
 @test_throws TypeError c.is_qnan("10")
 end
 
-function test_is_signed(self::ContextAPItests)
+function test_is_signed(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2513,7 +2513,7 @@ d = is_signed(c, Decimal(10))
 @test_throws TypeError c.is_signed("10")
 end
 
-function test_is_snan(self::ContextAPItests)
+function test_is_snan(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2522,7 +2522,7 @@ d = is_snan(c, Decimal(10))
 @test_throws TypeError c.is_snan("10")
 end
 
-function test_is_subnormal(self::ContextAPItests)
+function test_is_subnormal(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2531,7 +2531,7 @@ d = is_subnormal(c, Decimal(10))
 @test_throws TypeError c.is_subnormal("10")
 end
 
-function test_is_zero(self::ContextAPItests)
+function test_is_zero(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2540,7 +2540,7 @@ d = is_zero(c, Decimal(10))
 @test_throws TypeError c.is_zero("10")
 end
 
-function test_ln(self::ContextAPItests)
+function test_ln(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2549,7 +2549,7 @@ d = ln(c, Decimal(10))
 @test_throws TypeError c.ln("10")
 end
 
-function test_log10(self::ContextAPItests)
+function test_log10(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2558,7 +2558,7 @@ d = log10(c, Decimal(10))
 @test_throws TypeError c.log10("10")
 end
 
-function test_logb(self::ContextAPItests)
+function test_logb(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2567,7 +2567,7 @@ d = logb(c, Decimal(10))
 @test_throws TypeError c.logb("10")
 end
 
-function test_logical_and(self::ContextAPItests)
+function test_logical_and(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2579,7 +2579,7 @@ d = logical_and(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.logical_and(1, "1")
 end
 
-function test_logical_invert(self::ContextAPItests)
+function test_logical_invert(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2588,7 +2588,7 @@ d = logical_invert(c, Decimal(1000))
 @test_throws TypeError c.logical_invert("1000")
 end
 
-function test_logical_or(self::ContextAPItests)
+function test_logical_or(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2600,7 +2600,7 @@ d = logical_or(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.logical_or(1, "1")
 end
 
-function test_logical_xor(self::ContextAPItests)
+function test_logical_xor(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2612,7 +2612,7 @@ d = logical_xor(c, Decimal(1), Decimal(1))
 @test_throws TypeError c.logical_xor(1, "1")
 end
 
-function test_max(self::ContextAPItests)
+function test_max(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2624,7 +2624,7 @@ d = max(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.max(1, "2")
 end
 
-function test_max_mag(self::ContextAPItests)
+function test_max_mag(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2636,7 +2636,7 @@ d = max_mag(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.max_mag(1, "2")
 end
 
-function test_min(self::ContextAPItests)
+function test_min(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2648,7 +2648,7 @@ d = min(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.min(1, "2")
 end
 
-function test_min_mag(self::ContextAPItests)
+function test_min_mag(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2660,7 +2660,7 @@ d = min_mag(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.min_mag(1, "2")
 end
 
-function test_minus(self::ContextAPItests)
+function test_minus(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2669,7 +2669,7 @@ d = minus(c, Decimal(10))
 @test_throws TypeError c.minus("10")
 end
 
-function test_multiply(self::ContextAPItests)
+function test_multiply(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2681,7 +2681,7 @@ d = multiply(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.multiply(1, "2")
 end
 
-function test_next_minus(self::ContextAPItests)
+function test_next_minus(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2690,7 +2690,7 @@ d = next_minus(c, Decimal(10))
 @test_throws TypeError c.next_minus("10")
 end
 
-function test_next_plus(self::ContextAPItests)
+function test_next_plus(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2699,7 +2699,7 @@ d = next_plus(c, Decimal(10))
 @test_throws TypeError c.next_plus("10")
 end
 
-function test_next_toward(self::ContextAPItests)
+function test_next_toward(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2711,7 +2711,7 @@ d = next_toward(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.next_toward(1, "2")
 end
 
-function test_normalize(self::ContextAPItests)
+function test_normalize(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2720,7 +2720,7 @@ d = normalize(c, Decimal(10))
 @test_throws TypeError c.normalize("10")
 end
 
-function test_number_class(self::ContextAPItests)
+function test_number_class(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2729,7 +2729,7 @@ c = Context()
 @test (number_class(c, -45) == number_class(c, Decimal(-45)))
 end
 
-function test_plus(self::ContextAPItests)
+function test_plus(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2738,7 +2738,7 @@ d = plus(c, Decimal(10))
 @test_throws TypeError c.plus("10")
 end
 
-function test_power(self::ContextAPItests)
+function test_power(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2749,10 +2749,10 @@ d = power(c, Decimal(1), Decimal(4))
 @test (power(c, Decimal(1), Decimal(4)) == d)
 @test_throws TypeError c.power("1", 4)
 @test_throws TypeError c.power(1, "4")
-@test (power(c, 5, 8, 2) == 1)
+@test (power(c, modulo = 5, b = 8, a = 2) == 1)
 end
 
-function test_quantize(self::ContextAPItests)
+function test_quantize(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2764,7 +2764,7 @@ d = quantize(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.quantize(1, "2")
 end
 
-function test_remainder(self::ContextAPItests)
+function test_remainder(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2776,7 +2776,7 @@ d = remainder(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.remainder(1, "2")
 end
 
-function test_remainder_near(self::ContextAPItests)
+function test_remainder_near(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2788,7 +2788,7 @@ d = remainder_near(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.remainder_near(1, "2")
 end
 
-function test_rotate(self::ContextAPItests)
+function test_rotate(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2800,7 +2800,7 @@ d = rotate(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.rotate(1, "2")
 end
 
-function test_sqrt(self::ContextAPItests)
+function test_sqrt(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2809,7 +2809,7 @@ d = sqrt(c, Decimal(10))
 @test_throws TypeError c.sqrt("10")
 end
 
-function test_same_quantum(self::ContextAPItests)
+function test_same_quantum(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2821,7 +2821,7 @@ d = same_quantum(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.same_quantum(1, "2")
 end
 
-function test_scaleb(self::ContextAPItests)
+function test_scaleb(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2833,7 +2833,7 @@ d = scaleb(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.scaleb(1, "2")
 end
 
-function test_shift(self::ContextAPItests)
+function test_shift(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2845,7 +2845,7 @@ d = shift(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.shift(1, "2")
 end
 
-function test_subtract(self::ContextAPItests)
+function test_subtract(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2857,7 +2857,7 @@ d = subtract(c, Decimal(1), Decimal(2))
 @test_throws TypeError c.subtract(1, "2")
 end
 
-function test_to_eng_string(self::ContextAPItests)
+function test_to_eng_string(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2866,7 +2866,7 @@ d = to_eng_string(c, Decimal(10))
 @test_throws TypeError c.to_eng_string("10")
 end
 
-function test_to_sci_string(self::ContextAPItests)
+function test_to_sci_string(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2875,7 +2875,7 @@ d = to_sci_string(c, Decimal(10))
 @test_throws TypeError c.to_sci_string("10")
 end
 
-function test_to_integral_exact(self::ContextAPItests)
+function test_to_integral_exact(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2884,7 +2884,7 @@ d = to_integral_exact(c, Decimal(10))
 @test_throws TypeError c.to_integral_exact("10")
 end
 
-function test_to_integral_value(self::ContextAPItests)
+function test_to_integral_value(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 c = Context()
@@ -2911,7 +2911,7 @@ end
 mutable struct ContextWithStatement <: AbstractContextWithStatement
 
 end
-function test_localcontext(self::ContextWithStatement)
+function test_localcontext(self)
 getcontext = self.decimal.getcontext
 localcontext = self.decimal.localcontext
 orig_ctx = getcontext()
@@ -2924,13 +2924,13 @@ assertIsNot(self, orig_ctx, set_ctx, "did not copy the context")
 assertIs(self, set_ctx, enter_ctx, "__enter__ returned wrong context")
 end
 
-function test_localcontextarg(self::ContextWithStatement)
+function test_localcontextarg(self)
 Context = self.decimal.Context
 getcontext = self.decimal.getcontext
 localcontext = self.decimal.localcontext
 localcontext = self.decimal.localcontext
 orig_ctx = getcontext()
-new_ctx = Context(42)
+new_ctx = Context(prec = 42)
 localcontext(new_ctx) do enter_ctx 
 set_ctx = getcontext()
 end
@@ -2941,7 +2941,7 @@ assertIsNot(self, new_ctx, set_ctx, "did not copy the context")
 assertIs(self, set_ctx, enter_ctx, "__enter__ returned wrong context")
 end
 
-function test_nested_with_statements(self::ContextWithStatement)
+function test_nested_with_statements(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 getcontext = self.decimal.getcontext
@@ -2950,7 +2950,7 @@ Clamped = self.decimal.Clamped
 Overflow = self.decimal.Overflow
 orig_ctx = getcontext()
 clear_flags(orig_ctx)
-new_ctx = Context(384)
+new_ctx = Context(Emax = 384)
 localcontext() do c1 
 @test (c1.flags == orig_ctx.flags)
 @test (c1.traps == orig_ctx.traps)
@@ -2979,7 +2979,7 @@ assertNotEqual(self, orig_ctx.Emin, -383)
 @test !(new_ctx.flags[Overflow + 1])
 end
 
-function test_with_statements_gc1(self::ContextWithStatement)
+function test_with_statements_gc1(self)
 localcontext = self.decimal.localcontext
 localcontext() do c1 
 #Delete Unsupported
@@ -2999,7 +2999,7 @@ end
 end
 end
 
-function test_with_statements_gc2(self::ContextWithStatement)
+function test_with_statements_gc2(self)
 localcontext = self.decimal.localcontext
 localcontext() do c1 
 localcontext(c1) do c2 
@@ -3019,7 +3019,7 @@ end
 end
 end
 
-function test_with_statements_gc3(self::ContextWithStatement)
+function test_with_statements_gc3(self)
 Context = self.decimal.Context
 localcontext = self.decimal.localcontext
 getcontext = self.decimal.getcontext
@@ -3027,7 +3027,7 @@ setcontext = self.decimal.setcontext
 localcontext() do c1 
 #Delete Unsupported
 del(c1)
-n1 = Context(1)
+n1 = Context(prec = 1)
 setcontext(n1)
 localcontext(n1) do c2 
 #Delete Unsupported
@@ -3035,12 +3035,12 @@ del(n1)
 @test (c2.prec == 1)
 #Delete Unsupported
 del(c2)
-n2 = Context(2)
+n2 = Context(prec = 2)
 setcontext(n2)
 #Delete Unsupported
 del(n2)
 @test (getcontext().prec == 2)
-n3 = Context(3)
+n3 = Context(prec = 3)
 setcontext(n3)
 @test (getcontext().prec == 3)
 localcontext(n3) do c3 
@@ -3049,7 +3049,7 @@ del(n3)
 @test (c3.prec == 3)
 #Delete Unsupported
 del(c3)
-n4 = Context(4)
+n4 = Context(prec = 4)
 setcontext(n4)
 #Delete Unsupported
 del(n4)
@@ -3081,7 +3081,7 @@ end
 mutable struct ContextFlags <: AbstractContextFlags
 decimal
 end
-function test_flags_irrelevant(self::ContextFlags)
+function test_flags_irrelevant(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 Inexact = self.decimal.Inexact
@@ -3100,7 +3100,7 @@ _raise_error(context, flag)
 end
 end
 
-context = Context(9, -425000000, 425000000, ROUND_HALF_EVEN, [], [])
+context = Context(prec = 9, Emin = -425000000, Emax = 425000000, rounding = ROUND_HALF_EVEN, traps = [], flags = [])
 operations = [(context._apply, [Decimal("100E-425000010")]), (context.sqrt, [Decimal(2)]), (context.add, [Decimal("1.23456789"), Decimal("9.87654321")]), (context.multiply, [Decimal("1.23456789"), Decimal("9.87654321")]), (context.subtract, [Decimal("1.23456789"), Decimal("9.87654321")])]
 flagsets = [[Inexact], [Rounded], [Underflow], [Clamped], [Subnormal], [Inexact, Rounded, Underflow, Clamped, Subnormal]]
 for (fn, args) in operations
@@ -3119,16 +3119,16 @@ if flag ∉ expected_flags
 push!(expected_flags, flag)
 end
 end
-sort(expected_flags, id)
+sort(expected_flags, key = id)
 new_flags = [k for (k, v) in items(context.flags) if v ]
-sort(new_flags, id)
+sort(new_flags, key = id)
 @test (ans == new_ans)
 @test (new_flags == expected_flags)
 end
 end
 end
 
-function test_flag_comparisons(self::ContextFlags)
+function test_flag_comparisons(self)
 Context = self.decimal.Context
 Inexact = self.decimal.Inexact
 Rounded = self.decimal.Rounded
@@ -3157,7 +3157,7 @@ assertNotEqual(self, d, c.flags)
 assertNotEqual(self, c.flags, d)
 end
 
-function test_float_operation(self::ContextFlags)
+function test_float_operation(self)
 Decimal = self.decimal.Decimal
 FloatOperation = self.decimal.FloatOperation
 localcontext = self.decimal.localcontext
@@ -3195,7 +3195,7 @@ x = create_decimal_from_float(c, 7.5)
 end
 end
 
-function test_float_comparison(self::ContextFlags)
+function test_float_comparison(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 FloatOperation = self.decimal.FloatOperation
@@ -3275,7 +3275,7 @@ test_containers(c)
 end
 end
 
-function test_float_operation_default(self::ContextFlags)
+function test_float_operation_default(self)
 Decimal = self.decimal.Decimal
 Context = self.decimal.Context
 Inexact = self.decimal.Inexact
@@ -3308,7 +3308,7 @@ mutable struct SpecialContexts <: AbstractSpecialContexts
 #= Test the context templates. =#
 
 end
-function test_context_templates(self::SpecialContexts)
+function test_context_templates(self)
 BasicContext = self.decimal.BasicContext
 ExtendedContext = self.decimal.ExtendedContext
 getcontext = self.decimal.getcontext
@@ -3348,7 +3348,7 @@ end
 end
 end
 
-function test_default_context(self::SpecialContexts)
+function test_default_context(self)
 DefaultContext = self.decimal.DefaultContext
 BasicContext = self.decimal.BasicContext
 ExtendedContext = self.decimal.ExtendedContext
@@ -3405,7 +3405,7 @@ end
 mutable struct ContextInputValidation <: AbstractContextInputValidation
 
 end
-function test_invalid_context(self::ContextInputValidation)
+function test_invalid_context(self)
 Context = self.decimal.Context
 DefaultContext = self.decimal.DefaultContext
 c = copy(DefaultContext)
@@ -3437,14 +3437,14 @@ for attr in ["prec", "Emax", "Emin", "rounding", "capitals", "clamp", "flags", "
 end
 @test_throws TypeError getattr(c, 9)
 @test_throws TypeError setattr(c, 9)
-@test_throws TypeError Context(999999)
-@test_throws TypeError Context("xyz")
-@test_throws ValueError Context(2)
-@test_throws ValueError Context(-1)
-@test_throws KeyError Context(["P"])
-@test_throws KeyError Context(["Q"])
-@test_throws TypeError Context((0, 1))
-@test_throws TypeError Context((1, 0))
+@test_throws TypeError Context(rounding = 999999)
+@test_throws TypeError Context(rounding = "xyz")
+@test_throws ValueError Context(clamp = 2)
+@test_throws ValueError Context(capitals = -1)
+@test_throws KeyError Context(flags = ["P"])
+@test_throws KeyError Context(traps = ["Q"])
+@test_throws TypeError Context(flags = (0, 1))
+@test_throws TypeError Context(traps = (1, 0))
 end
 
 mutable struct CContextInputValidation <: AbstractCContextInputValidation
@@ -3472,7 +3472,7 @@ flags
 traps
 decimal
 end
-function test_context_subclassing(self::MyContext)
+function test_context_subclassing(self)
 decimal = self.decimal
 Decimal = decimal.Decimal
 Context = decimal.Context
@@ -3535,15 +3535,15 @@ d = MyContext()
 for attr in ("prec", "rounding", "Emin", "Emax", "capitals", "clamp", "flags", "traps")
 assertEqual(self, getfield(c, :attr), getfield(d, :attr))
 end
-assertRaises(self, ValueError, MyContext, Dict("prec" => -1))
+assertRaises(self, ValueError, MyContext, None = Dict("prec" => -1))
 c = MyContext(1)
 assertEqual(self, c.prec, 1)
 assertRaises(self, InvalidOperation, c.quantize, Decimal("9e2"), 0)
-assertRaises(self, TypeError, MyContext, Dict("rounding" => "XYZ"))
+assertRaises(self, TypeError, MyContext, None = Dict("rounding" => "XYZ"))
 c = MyContext(ROUND_DOWN, 1)
 assertEqual(self, c.rounding, ROUND_DOWN)
 assertEqual(self, plus(c, Decimal("9.9")), 9)
-assertRaises(self, ValueError, MyContext, Dict("Emin" => 5))
+assertRaises(self, ValueError, MyContext, None = Dict("Emin" => 5))
 c = MyContext(-1, 1)
 assertEqual(self, c.Emin, -1)
 x = add(c, Decimal("1e-99"), Decimal("2.234e-2000"))
@@ -3551,7 +3551,7 @@ assertEqual(self, x, Decimal("0.0"))
 for signal in (Inexact, Underflow, Subnormal, Rounded, Clamped)
 assertTrue(self, c.flags[signal + 1])
 end
-assertRaises(self, ValueError, MyContext, Dict("Emax" => -1))
+assertRaises(self, ValueError, MyContext, None = Dict("Emax" => -1))
 c = MyContext(1, 1)
 assertEqual(self, c.Emax, 1)
 assertRaises(self, Overflow, c.add, Decimal("1e99"), Decimal("2.234e2000"))
@@ -3560,17 +3560,17 @@ for signal in (Inexact, Overflow, Rounded)
 assertTrue(self, c.flags[signal + 1])
 end
 end
-assertRaises(self, ValueError, MyContext, Dict("capitals" => -1))
+assertRaises(self, ValueError, MyContext, None = Dict("capitals" => -1))
 c = MyContext(0)
 assertEqual(self, c.capitals, 0)
 x = create_decimal(c, "1E222")
 assertEqual(self, to_sci_string(c, x), "1e+222")
-assertRaises(self, ValueError, MyContext, Dict("clamp" => 2))
+assertRaises(self, ValueError, MyContext, None = Dict("clamp" => 2))
 c = MyContext(1, 99)
 assertEqual(self, c.clamp, 1)
 x = plus(c, Decimal("1e99"))
 assertEqual(self, string(x), "1.000000000000000000000000000E+99")
-assertRaises(self, TypeError, MyContext, Dict("flags" => "XYZ"))
+assertRaises(self, TypeError, MyContext, None = Dict("flags" => "XYZ"))
 c = MyContext([Rounded, DivisionByZero])
 for signal in (Rounded, DivisionByZero)
 assertTrue(self, c.flags[signal + 1])
@@ -3579,7 +3579,7 @@ clear_flags(c)
 for signal in OrderedSignals[decimal]
 assertFalse(self, c.flags[signal + 1])
 end
-assertRaises(self, TypeError, MyContext, Dict("traps" => "XYZ"))
+assertRaises(self, TypeError, MyContext, None = Dict("traps" => "XYZ"))
 c = MyContext([Rounded, DivisionByZero])
 for signal in (Rounded, DivisionByZero)
 assertTrue(self, c.traps[signal + 1])
@@ -3607,7 +3607,7 @@ end
 mutable struct CheckAttributes <: AbstractCheckAttributes
 
 end
-function test_module_attributes(self::CheckAttributes)
+function test_module_attributes(self)
 @test (C.MAX_PREC == P.MAX_PREC)
 @test (C.MAX_EMAX == P.MAX_EMAX)
 @test (C.MIN_EMIN == P.MIN_EMIN)
@@ -3618,13 +3618,13 @@ function test_module_attributes(self::CheckAttributes)
 @test (dir(C) == dir(P))
 end
 
-function test_context_attributes(self::CheckAttributes)
+function test_context_attributes(self)
 x = [s for s in dir(Context(C)) if "__" ∈ s || !startswith(s, "_") ]
 y = [s for s in dir(Context(P)) if "__" ∈ s || !startswith(s, "_") ]
 @test (set(x) - set(y) == set())
 end
 
-function test_decimal_attributes(self::CheckAttributes)
+function test_decimal_attributes(self)
 x = [s for s in dir(Decimal(C, 9)) if "__" ∈ s || !startswith(s, "_") ]
 y = [s for s in dir(Decimal(C, 9)) if "__" ∈ s || !startswith(s, "_") ]
 @test (set(x) - set(y) == set())
@@ -3633,14 +3633,14 @@ end
 mutable struct Coverage <: AbstractCoverage
 decimal
 end
-function test_adjusted(self::Coverage)
+function test_adjusted(self)
 Decimal = self.decimal.Decimal
 @test (adjusted(Decimal("1234e9999")) == 10002)
 @test (adjusted(Decimal("nan")) == 0)
 @test (adjusted(Decimal("inf")) == 0)
 end
 
-function test_canonical(self::Coverage)
+function test_canonical(self)
 Decimal = self.decimal.Decimal
 getcontext = self.decimal.getcontext
 x = canonical(Decimal(9))
@@ -3650,7 +3650,7 @@ x = canonical(c, Decimal(9))
 @test (x == 9)
 end
 
-function test_context_repr(self::Coverage)
+function test_context_repr(self)
 c = copy(self.decimal.DefaultContext)
 c.prec = 425000000
 c.Emax = 425000000
@@ -3667,7 +3667,7 @@ t = "Context(prec=425000000, rounding=ROUND_HALF_DOWN, Emin=-425000000, Emax=425
 @test (s == t)
 end
 
-function test_implicit_context(self::Coverage)
+function test_implicit_context(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 localcontext() do c 
@@ -3719,7 +3719,7 @@ z = copy_sign(y, Decimal(1))
 end
 end
 
-function test_divmod(self::Coverage)
+function test_divmod(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 InvalidOperation = self.decimal.InvalidOperation
@@ -3754,7 +3754,7 @@ q, r = div(Decimal(11))
 end
 end
 
-function test_power(self::Coverage)
+function test_power(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 Overflow = self.decimal.Overflow
@@ -3774,7 +3774,7 @@ c.traps[Overflow + 1] = false
 end
 end
 
-function test_quantize(self::Coverage)
+function test_quantize(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 InvalidOperation = self.decimal.InvalidOperation
@@ -3788,7 +3788,7 @@ x = quantize(Decimal(99), Decimal("1e1"))
 end
 end
 
-function test_radix(self::Coverage)
+function test_radix(self)
 Decimal = self.decimal.Decimal
 getcontext = self.decimal.getcontext
 c = getcontext()
@@ -3796,14 +3796,14 @@ c = getcontext()
 @test (radix(c) == 10)
 end
 
-function test_rop(self::Coverage)
+function test_rop(self)
 Decimal = self.decimal.Decimal
 for attr in ("__radd__", "__rsub__", "__rmul__", "__rtruediv__", "__rdivmod__", "__rmod__", "__rfloordiv__", "__rpow__")
 assertIs(self, getfield(Decimal("1"), :attr)("xyz"), NotImplemented)
 end
 end
 
-function test_round(self::Coverage)
+function test_round(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 localcontext() do c 
@@ -3818,12 +3818,12 @@ c.prec = 28
 end
 end
 
-function test_create_decimal(self::Coverage)
+function test_create_decimal(self)
 c = Context(self.decimal)
 @test_throws ValueError c.create_decimal(["%"])
 end
 
-function test_int(self::Coverage)
+function test_int(self)
 Decimal = self.decimal.Decimal
 localcontext = self.decimal.localcontext
 localcontext() do c 
@@ -3834,7 +3834,7 @@ x = Decimal(1221^1271) / 10^3923
 end
 end
 
-function test_copy(self::Coverage)
+function test_copy(self)
 Context = self.decimal.Context
 c = Context()
 c.prec = 10000
@@ -3865,7 +3865,7 @@ mutable struct PyFunctionality <: AbstractPyFunctionality
 #= Extra functionality in decimal.py =#
 
 end
-function test_py_alternate_formatting(self::PyFunctionality)
+function test_py_alternate_formatting(self)
 Decimal = P.Decimal
 localcontext = P.localcontext
 test_values = [(".0e", "1.0", "1e+0"), ("#.0e", "1.0", "1.e+0"), (".0f", "1.0", "1"), ("#.0f", "1.0", "1."), ("g", "1.1", "1.1"), ("#g", "1.1", "1.1"), (".0g", "1", "1"), ("#.0g", "1", "1."), (".0%", "1.0", "100%"), ("#.0%", "1.0", "100.%")]
@@ -3878,7 +3878,7 @@ mutable struct PyWhitebox <: AbstractPyWhitebox
 #= White box testing for decimal.py =#
 
 end
-function test_py_exact_power(self::PyWhitebox)
+function test_py_exact_power(self)
 Decimal = P.Decimal
 localcontext = P.localcontext
 localcontext() do c 
@@ -3899,7 +3899,7 @@ x = Decimal(2^578)^Decimal("-0.5")
 end
 end
 
-function test_py_immutability_operations(self::PyWhitebox)
+function test_py_immutability_operations(self)
 Decimal = P.Decimal
 DefaultContext = P.DefaultContext
 setcontext = P.setcontext
@@ -3976,7 +3976,7 @@ checkSameDec("to_eng_string")
 checkSameDec("to_integral")
 end
 
-function test_py_decimal_id(self::PyWhitebox)
+function test_py_decimal_id(self)
 Decimal = P.Decimal
 d = Decimal(45)
 e = Decimal(d)
@@ -3984,7 +3984,7 @@ e = Decimal(d)
 assertNotEqual(self, id(d), id(e))
 end
 
-function test_py_rescale(self::PyWhitebox)
+function test_py_rescale(self)
 Decimal = P.Decimal
 localcontext = P.localcontext
 localcontext() do c 
@@ -3993,7 +3993,7 @@ x = _rescale(Decimal("NaN"), 3, ROUND_UP)
 end
 end
 
-function test_py__round(self::PyWhitebox)
+function test_py__round(self)
 Decimal = P.Decimal
 @test_throws ValueError Decimal("3.1234")._round(0, ROUND_UP)
 end
@@ -4002,12 +4002,12 @@ mutable struct CFunctionality <: AbstractCFunctionality
 #= Extra functionality in _decimal =#
 
 end
-function test_c_ieee_context(self::CFunctionality)
+function test_c_ieee_context(self)
 IEEEContext = C.IEEEContext
 DECIMAL32 = C.DECIMAL32
 DECIMAL64 = C.DECIMAL64
 DECIMAL128 = C.DECIMAL128
-function assert_rest(self::CFunctionality, context)
+function assert_rest(self, context)
 @test (context.clamp == 1)
 assert_signals(self, context, "traps", [])
 assert_signals(self, context, "flags", [])
@@ -4033,14 +4033,14 @@ assert_rest(self, c)
 @test_throws ValueError IEEEContext(1024)
 end
 
-function test_c_context(self::CFunctionality)
+function test_c_context(self)
 Context = C.Context
-c = Context(C.DecClamped, C.DecRounded)
+c = Context(flags = C.DecClamped, traps = C.DecRounded)
 @test (c._flags == C.DecClamped)
 @test (c._traps == C.DecRounded)
 end
 
-function test_constants(self::CFunctionality)
+function test_constants(self)
 cond = (C.DecClamped, C.DecConversionSyntax, C.DecDivisionByZero, C.DecDivisionImpossible, C.DecDivisionUndefined, C.DecFpuError, C.DecInexact, C.DecInvalidContext, C.DecInvalidOperation, C.DecMallocError, C.DecFloatOperation, C.DecOverflow, C.DecRounded, C.DecSubnormal, C.DecUnderflow)
 @test (C.DECIMAL32 == 32)
 @test (C.DECIMAL64 == 64)
@@ -4058,7 +4058,7 @@ mutable struct CWhitebox <: AbstractCWhitebox
 #= Whitebox testing for _decimal =#
 
 end
-function test_bignum(self::CWhitebox)
+function test_bignum(self)
 Decimal = C.Decimal
 localcontext = C.localcontext
 b1 = 10^35
@@ -4075,11 +4075,11 @@ end
 end
 end
 
-function test_invalid_construction(self::CWhitebox)
+function test_invalid_construction(self)
 @test_throws TypeError C.Decimal(9, "xyz")
 end
 
-function test_c_input_restriction(self::CWhitebox)
+function test_c_input_restriction(self)
 Decimal = C.Decimal
 InvalidOperation = C.InvalidOperation
 Context = C.Context
@@ -4089,7 +4089,7 @@ localcontext(Context()) do
 end
 end
 
-function test_c_context_repr(self::CWhitebox)
+function test_c_context_repr(self)
 DefaultContext = C.DefaultContext
 FloatOperation = C.FloatOperation
 c = copy(DefaultContext)
@@ -4110,7 +4110,7 @@ t = "Context(prec=425000000, rounding=ROUND_HALF_DOWN, Emin=-425000000, Emax=425
 @test (s == t)
 end
 
-function test_c_context_errors(self::CWhitebox)
+function test_c_context_errors(self)
 Context = C.Context
 InvalidOperation = C.InvalidOperation
 Overflow = C.Overflow
@@ -4140,14 +4140,14 @@ for attr in ["prec", "Emax"]
 @test_throws ValueError setattr(c, attr, gt_max_emax)
 end
 @test_throws ValueError setattr(c, "Emin", -(gt_max_emax))
-@test_throws ValueError Context(gt_max_emax)
-@test_throws ValueError Context(gt_max_emax)
-@test_throws ValueError Context(-(gt_max_emax))
-@test_throws OverflowError Context(int_max + 1)
-@test_throws OverflowError Context(int_max + 1)
-@test_throws OverflowError Context(-(int_max) - 2)
-@test_throws OverflowError Context(int_max + 1)
-@test_throws OverflowError Context(int_max + 1)
+@test_throws ValueError Context(prec = gt_max_emax)
+@test_throws ValueError Context(Emax = gt_max_emax)
+@test_throws ValueError Context(Emin = -(gt_max_emax))
+@test_throws OverflowError Context(prec = int_max + 1)
+@test_throws OverflowError Context(Emax = int_max + 1)
+@test_throws OverflowError Context(Emin = -(int_max) - 2)
+@test_throws OverflowError Context(clamp = int_max + 1)
+@test_throws OverflowError Context(capitals = int_max + 1)
 for attr in ("prec", "Emin", "Emax", "capitals", "clamp")
 @test_throws OverflowError setattr(c, attr, int_max + 1)
 @test_throws OverflowError setattr(c, attr, -(int_max) - 2)
@@ -4185,7 +4185,7 @@ saved_context = getcontext()
 setcontext(saved_context)
 end
 
-function test_rounding_strings_interned(self::CWhitebox)
+function test_rounding_strings_interned(self)
 assertIs(self, C.ROUND_UP, P.ROUND_UP)
 assertIs(self, C.ROUND_DOWN, P.ROUND_DOWN)
 assertIs(self, C.ROUND_CEILING, P.ROUND_CEILING)
@@ -4196,7 +4196,7 @@ assertIs(self, C.ROUND_HALF_EVEN, P.ROUND_HALF_EVEN)
 assertIs(self, C.ROUND_05UP, P.ROUND_05UP)
 end
 
-function test_c_context_errors_extra(self::CWhitebox)
+function test_c_context_errors_extra(self)
 Context = C.Context
 InvalidOperation = C.InvalidOperation
 Overflow = C.Overflow
@@ -4233,7 +4233,7 @@ for attr in ["_flags", "_traps"]
 end
 end
 
-function test_c_valid_context(self::CWhitebox)
+function test_c_valid_context(self)
 DefaultContext = C.DefaultContext
 Clamped = C.Clamped
 Underflow = C.Underflow
@@ -4265,7 +4265,7 @@ _unsafe_setemin(c, -999999999)
 end
 end
 
-function test_c_valid_context_extra(self::CWhitebox)
+function test_c_valid_context_extra(self)
 DefaultContext = C.DefaultContext
 c = copy(DefaultContext)
 @test (c._allcr == 1)
@@ -4273,7 +4273,7 @@ c._allcr = 0
 @test (c._allcr == 0)
 end
 
-function test_c_round(self::CWhitebox)
+function test_c_round(self)
 Decimal = C.Decimal
 InvalidOperation = C.InvalidOperation
 localcontext = C.localcontext
@@ -4291,7 +4291,7 @@ c.traps[InvalidOperation + 1] = true
 end
 end
 
-function test_c_format(self::CWhitebox)
+function test_c_format(self)
 Decimal = C.Decimal
 HAVE_CONFIG_64 = C.MAX_PREC > 425000000
 @test_throws TypeError Decimal(1).__format__("=10.10", [], 9)
@@ -4302,7 +4302,7 @@ maxsize = HAVE_CONFIG_64 ? (2^63 - 1) : (2^31 - 1)
 @test_throws ValueError Decimal("1.23456789").__format__("=%d.1" % maxsize)
 end
 
-function test_c_integral(self::CWhitebox)
+function test_c_integral(self)
 Decimal = C.Decimal
 Inexact = C.Inexact
 localcontext = C.localcontext
@@ -4329,7 +4329,7 @@ c.traps[Inexact + 1] = true
 end
 end
 
-function test_c_funcs(self::CWhitebox)
+function test_c_funcs(self)
 Decimal = C.Decimal
 InvalidOperation = C.InvalidOperation
 DivisionByZero = C.DivisionByZero
@@ -4367,46 +4367,46 @@ c.prec = 2
 end
 end
 
-function test_va_args_exceptions(self::CWhitebox)
+function test_va_args_exceptions(self)
 Decimal = C.Decimal
 Context = C.Context
 x = Decimal("10001111111")
 for attr in ["exp", "is_normal", "is_subnormal", "ln", "log10", "logb", "logical_invert", "next_minus", "next_plus", "normalize", "number_class", "sqrt", "to_eng_string"]
 func = getfield(x, :attr)
-@test_throws TypeError func("x")
-@test_throws TypeError func("x", nothing)
+@test_throws TypeError func(context = "x")
+@test_throws TypeError func("x", context = nothing)
 end
 for attr in ["compare", "compare_signal", "logical_and", "logical_or", "max", "max_mag", "min", "min_mag", "remainder_near", "rotate", "scaleb", "shift"]
 func = getfield(x, :attr)
-@test_throws TypeError func("x")
-@test_throws TypeError func("x", nothing)
+@test_throws TypeError func(context = "x")
+@test_throws TypeError func("x", context = nothing)
 end
-@test_throws TypeError x.to_integral(nothing, [])
-@test_throws TypeError x.to_integral(Dict(), [])
+@test_throws TypeError x.to_integral(rounding = nothing, context = [])
+@test_throws TypeError x.to_integral(rounding = Dict(), context = [])
 @test_throws TypeError x.to_integral([], [])
-@test_throws TypeError x.to_integral_value(nothing, [])
-@test_throws TypeError x.to_integral_value(Dict(), [])
+@test_throws TypeError x.to_integral_value(rounding = nothing, context = [])
+@test_throws TypeError x.to_integral_value(rounding = Dict(), context = [])
 @test_throws TypeError x.to_integral_value([], [])
-@test_throws TypeError x.to_integral_exact(nothing, [])
-@test_throws TypeError x.to_integral_exact(Dict(), [])
+@test_throws TypeError x.to_integral_exact(rounding = nothing, context = [])
+@test_throws TypeError x.to_integral_exact(rounding = Dict(), context = [])
 @test_throws TypeError x.to_integral_exact([], [])
-@test_throws TypeError x.fma(1, 2, "x")
-@test_throws TypeError x.fma(1, 2, "x", nothing)
-@test_throws TypeError x.quantize(1, [], nothing)
-@test_throws TypeError x.quantize(1, [], nothing)
+@test_throws TypeError x.fma(1, 2, context = "x")
+@test_throws TypeError x.fma(1, 2, "x", context = nothing)
+@test_throws TypeError x.quantize(1, [], context = nothing)
+@test_throws TypeError x.quantize(1, [], rounding = nothing)
 @test_throws TypeError x.quantize(1, [], [])
 c = Context()
-@test_throws TypeError c.power(1, 2, "x")
-@test_throws TypeError c.power(1, "x", nothing)
-@test_throws TypeError c.power("x", 2, nothing)
+@test_throws TypeError c.power(1, 2, mod = "x")
+@test_throws TypeError c.power(1, "x", mod = nothing)
+@test_throws TypeError c.power("x", 2, mod = nothing)
 end
 
-function test_c_context_templates(self::CWhitebox)
+function test_c_context_templates(self)
 @test (C.BasicContext._traps == (((C.DecIEEEInvalidOperation | C.DecDivisionByZero) | C.DecOverflow) | C.DecUnderflow) | C.DecClamped)
 @test (C.DefaultContext._traps == (C.DecIEEEInvalidOperation | C.DecDivisionByZero) | C.DecOverflow)
 end
 
-function test_c_signal_dict(self::CWhitebox)
+function test_c_signal_dict(self)
 Context = C.Context
 DefaultContext = C.DefaultContext
 InvalidOperation = C.InvalidOperation
@@ -4482,7 +4482,7 @@ emax = randrange(0, 10000)
 clamp = randrange(0, 2)
 caps = randrange(0, 2)
 cr = randrange(0, 2)
-c = Context(prec, round, emin, emax, caps, clamp, collect(flags), collect(traps))
+c = Context(prec = prec, rounding = round, Emin = emin, Emax = emax, capitals = caps, clamp = clamp, flags = collect(flags), traps = collect(traps))
 @test (c.prec == prec)
 @test (c.rounding == round)
 @test (c.Emin == emin)
@@ -4514,7 +4514,7 @@ assertIsExclusivelySet(InvalidOperation, c.traps)
 end
 end
 
-function test_invalid_override(self::CWhitebox)
+function test_invalid_override(self)
 Decimal = C.Decimal
 try
 catch exn
@@ -4540,7 +4540,7 @@ end
 @test_throws ValueError get_fmt(12345, invalid_sep, "g")
 end
 
-function test_exact_conversion(self::CWhitebox)
+function test_exact_conversion(self)
 Decimal = C.Decimal
 localcontext = C.localcontext
 InvalidOperation = C.InvalidOperation
@@ -4557,7 +4557,7 @@ x = "1e%d" % (-(sys.maxsize) - 1)
 end
 end
 
-function test_from_tuple(self::CWhitebox)
+function test_from_tuple(self)
 Decimal = C.Decimal
 localcontext = C.localcontext
 InvalidOperation = C.InvalidOperation
@@ -4594,7 +4594,7 @@ x = (1, (0, 1), "N")
 end
 end
 
-function test_sizeof(self::CWhitebox)
+function test_sizeof(self)
 Decimal = C.Decimal
 HAVE_CONFIG_64 = C.MAX_PREC > 425000000
 assertGreater(self, __sizeof__(Decimal(0)), 0)
@@ -4609,41 +4609,41 @@ y = __sizeof__(Decimal(10^9*25))
 end
 end
 
-function test_internal_use_of_overridden_methods(self::Z)
+function test_internal_use_of_overridden_methods(self)
 Decimal = C.Decimal
 mutable struct X <: AbstractX
 
 end
-function as_integer_ratio(self::X)::Int64
+function as_integer_ratio(self)::Int64
 return 1
 end
 
-function __abs__(self::X)
+function __abs__(self)
 return self
 end
 
 mutable struct Y <: AbstractY
 
 end
-function __abs__(self::Y)::Vector
+function __abs__(self)::Vector
 return repeat([1],200)
 end
 
 mutable struct I <: AbstractI
 
 end
-function bit_length(self::I)::Vector
+function bit_length(self)::Vector
 return repeat([1],200)
 end
 
 mutable struct Z <: AbstractZ
 
 end
-function as_integer_ratio(self::Z)
+function as_integer_ratio(self)
 return (I(1), I(1))
 end
 
-function __abs__(self::Z)
+function __abs__(self)
 return self
 end
 
@@ -4652,12 +4652,12 @@ assertEqual(self, from_float(Decimal, cls(101.1)), from_float(Decimal, 101.1))
 end
 end
 
-function test_maxcontext_exact_arith(self::CWhitebox)
+function test_maxcontext_exact_arith(self)
 MaxContextSkip = ["logical_invert", "next_minus", "next_plus", "logical_and", "logical_or", "logical_xor", "next_toward", "rotate", "shift"]
 Decimal = C.Decimal
 Context = C.Context
 localcontext = C.localcontext
-maxcontext = Context(C.MAX_PREC, C.MIN_EMIN, C.MAX_EMAX)
+maxcontext = Context(prec = C.MAX_PREC, Emin = C.MIN_EMIN, Emax = C.MAX_EMAX)
 localcontext(maxcontext) do 
 @test (exp(Decimal(0)) == 1)
 @test (ln(Decimal(1)) == 0)
@@ -4678,7 +4678,7 @@ mutable struct SignatureTest <: AbstractSignatureTest
 #= Function signatures =#
 
 end
-function test_inspect_module(self::SignatureTest)
+function test_inspect_module(self)
 for attr in dir(P)
 if startswith(attr, "_")
 continue;
@@ -4700,7 +4700,7 @@ end
 end
 end
 
-function test_inspect_types(self::SignatureTest)
+function test_inspect_types(self)
 POS = inspect._ParameterKind.POSITIONAL_ONLY
 POS_KWD = inspect._ParameterKind.POSITIONAL_OR_KEYWORD
 pdict = Dict(C => Dict("other" => Decimal(C, 1), "third" => Decimal(C, 1), "x" => Decimal(C, 1), "y" => Decimal(C, 1), "z" => Decimal(C, 1), "a" => Decimal(C, 1), "b" => Decimal(C, 1), "c" => Decimal(C, 1), "exp" => Decimal(C, 1), "modulo" => Decimal(C, 1), "num" => "1", "f" => 1.0, "rounding" => C.ROUND_HALF_UP, "context" => getcontext(C)), P => Dict("other" => Decimal(P, 1), "third" => Decimal(P, 1), "a" => Decimal(P, 1), "b" => Decimal(P, 1), "c" => Decimal(P, 1), "exp" => Decimal(P, 1), "modulo" => Decimal(P, 1), "num" => "1", "f" => 1.0, "rounding" => P.ROUND_HALF_UP, "context" => getcontext(P)))
@@ -4763,7 +4763,7 @@ else
 end
 args, kwds = mkargs(C, c_sig)
 try
-getfield(c_type(9), :attr)(args..., kwds)
+getfield(c_type(9), :attr)(args..., None = kwds)
 catch exn
 if exn isa Exception
 throw(TestFailed("invalid signature for %s: %s %s" % (c_func, args, kwds)))
@@ -4771,7 +4771,7 @@ end
 end
 args, kwds = mkargs(P, p_sig)
 try
-getfield(p_type(9), :attr)(args..., kwds)
+getfield(p_type(9), :attr)(args..., None = kwds)
 catch exn
 if exn isa Exception
 throw(TestFailed("invalid signature for %s: %s %s" % (p_func, args, kwds)))
@@ -4828,7 +4828,7 @@ if todo_tests === nothing
 savedecimal = sys.modules["decimal"]
 if C
 sys.modules["decimal"] = C
-run_doctest(C, verbose, IGNORE_EXCEPTION_DETAIL)
+run_doctest(C, verbose, optionflags = IGNORE_EXCEPTION_DETAIL)
 end
 sys.modules["decimal"] = P
 run_doctest(P, verbose)
@@ -4850,8 +4850,8 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
 p = OptionParser("test_decimal.py [--debug] [{--skip | test1 [test2 [...]]}]")
-add_option(p, "--debug", "-d", "store_true", "shows the test number and context before each test")
-add_option(p, "--skip", "-s", "store_true", "skip over 90% of the arithmetic tests")
+add_option(p, "--debug", "-d", action = "store_true", help = "shows the test number and context before each test")
+add_option(p, "--skip", "-s", action = "store_true", help = "skip over 90% of the arithmetic tests")
 opt, args = parse_args(p)
 if opt.skip
 test_main()

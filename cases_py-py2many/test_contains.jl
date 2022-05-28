@@ -14,14 +14,14 @@ end
 mutable struct myset <: Abstractmyset
 el
 end
-function __contains__(self::myset, el)::Bool
+function __contains__(self, el)::Bool
 return self.el == el
 end
 
 mutable struct seq <: Abstractseq
 el
 end
-function __getitem__(self::seq, n)
+function __getitem__(self, n)
 return [self.el][n + 1]
 end
 
@@ -32,7 +32,7 @@ aList::Vector
                     TestContains(__contains__ = nothing, aList::Vector = collect(0:14)) =
                         new(__contains__, aList)
 end
-function test_common_tests(self::TestContains)
+function test_common_tests(self)
 a = base_set(1)
 b = myset(1)
 c = seq(1)
@@ -49,7 +49,7 @@ assertIn(self, "", "abc")
 @test_throws TypeError () -> nothing ∈ "abc"()
 end
 
-function test_builtin_sequence_types(self::Deviant1)
+function test_builtin_sequence_types(self)
 a = 0:9
 for i in a
 assertIn(self, i, a)
@@ -73,7 +73,7 @@ aList::Vector
                     Deviant1(aList::Vector = collect(0:14)) =
                         new(aList)
 end
-function __eq__(self::Deviant1, other)::Int64
+function __eq__(self, other)::Int64
 if other == 12
 remove(self.aList, 12)
 remove(self.aList, 13)
@@ -85,7 +85,7 @@ end
 assertNotIn(self, Deviant1(), Deviant1.aList)
 end
 
-function test_nonreflexive(self::TestContains)
+function test_nonreflexive(self)
 values = (float("nan"), 1, nothing, "abc", NEVER_EQ)
 constructors = (list, tuple, dict.fromkeys, set, frozenset, deque)
 for constructor in constructors
@@ -98,12 +98,12 @@ end
 end
 end
 
-function test_block_fallback(self::BlockContains)
+function test_block_fallback(self)
 Channel() do ch_test_block_fallback 
 mutable struct ByContains <: AbstractByContains
 
 end
-function __contains__(self::ByContains, other)::Bool
+function __contains__(self, other)::Bool
 return false
 end
 
@@ -124,7 +124,7 @@ __contains__
                     BlockContains(__contains__ = nothing) =
                         new(__contains__)
 end
-function __iter__(self::BlockContains)
+function __iter__(self)
 Channel() do ch___iter__ 
 while false
 put!(ch___iter__, nothing)

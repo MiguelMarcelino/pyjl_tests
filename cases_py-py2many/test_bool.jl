@@ -12,7 +12,7 @@ __bool__
                     BoolTest(count::Int64, __bool__ = nothing) =
                         new(count, __bool__)
 end
-function test_subclass(self::C)
+function test_subclass(self)
 try
 mutable struct C <: AbstractC
 
@@ -26,33 +26,33 @@ end
 assertRaises(self, TypeError, int.__new__, bool, 0)
 end
 
-function test_repr(self::BoolTest)
+function test_repr(self)
 @test (repr(false) == "False")
 @test (repr(true) == "True")
 assertIs(self, eval(repr(false)), false)
 assertIs(self, eval(repr(true)), true)
 end
 
-function test_str(self::BoolTest)
+function test_str(self)
 @test (string(false) == "False")
 @test (string(true) == "True")
 end
 
-function test_int(self::BoolTest)
+function test_int(self)
 @test (parse(Int, false) == 0)
 assertIsNot(self, parse(Int, false), false)
 @test (parse(Int, true) == 1)
 assertIsNot(self, parse(Int, true), true)
 end
 
-function test_float(self::BoolTest)
+function test_float(self)
 @test (float(false) == 0.0)
 assertIsNot(self, float(false), false)
 @test (float(true) == 1.0)
 assertIsNot(self, float(true), true)
 end
 
-function test_math(self::BoolTest)
+function test_math(self)
 @test (+(false) == 0)
 assertIsNot(self, +(false), false)
 @test (-(false) == 0)
@@ -152,7 +152,7 @@ assertIs(self, !(true), false)
 assertIs(self, !(false), true)
 end
 
-function test_convert(self::BoolTest)
+function test_convert(self)
 @test_throws TypeError bool(42, 42)
 assertIs(self, Bool(10), true)
 assertIs(self, Bool(1), true)
@@ -163,30 +163,30 @@ assertIs(self, Bool(""), false)
 assertIs(self, false, false)
 end
 
-function test_keyword_args(self::BoolTest)
+function test_keyword_args(self)
 assertRaisesRegex(self, TypeError, "keyword argument") do 
-Bool(10)
+Bool(x = 10)
 end
 end
 
-function test_format(self::BoolTest)
+function test_format(self)
 @test ("%d" % false == "0")
 @test ("%d" % true == "1")
 @test ("%x" % false == "0")
 @test ("%x" % true == "1")
 end
 
-function test_hasattr(self::BoolTest)
+function test_hasattr(self)
 assertIs(self, hasfield(typeof([]), :append), true)
 assertIs(self, hasfield(typeof([]), :wobble), false)
 end
 
-function test_callable(self::BoolTest)
+function test_callable(self)
 assertIs(self, callable(len), true)
 assertIs(self, callable(1), false)
 end
 
-function test_isinstance(self::BoolTest)
+function test_isinstance(self)
 assertIs(self, isa(true, bool), true)
 assertIs(self, isa(false, bool), true)
 assertIs(self, isa(true, int), true)
@@ -195,17 +195,17 @@ assertIs(self, isa(1, bool), false)
 assertIs(self, isa(0, bool), false)
 end
 
-function test_issubclass(self::BoolTest)
+function test_issubclass(self)
 assertIs(self, Bool <: Int64, true)
 assertIs(self, Int64 <: Bool, false)
 end
 
-function test_contains(self::BoolTest)
+function test_contains(self)
 assertIs(self, 1 ∈ Dict(), false)
 assertIs(self, 1 ∈ keys(Dict(1 => 1)), true)
 end
 
-function test_string(self::BoolTest)
+function test_string(self)
 assertIs(self, endswith("xyz", "z"), true)
 assertIs(self, endswith("xyz", "x"), false)
 assertIs(self, isalnum("xyz0123"), true)
@@ -232,7 +232,7 @@ assertIs(self, startswith("xyz", "x"), true)
 assertIs(self, startswith("xyz", "z"), false)
 end
 
-function test_boolean(self::BoolTest)
+function test_boolean(self)
 @test (true & 1 == 1)
 assertNotIsInstance(self, true & 1, bool)
 assertIs(self, true & true, true)
@@ -244,7 +244,7 @@ assertNotIsInstance(self, true  ⊻  1, bool)
 assertIs(self, true  ⊻  true, false)
 end
 
-function test_fileclosed(self::BoolTest)
+function test_fileclosed(self)
 try
 readline(os_helper.TESTFN) do f 
 assertIs(self, f.closed, false)
@@ -255,13 +255,13 @@ remove(os_helper.TESTFN)
 end
 end
 
-function test_types(self::BoolTest)
+function test_types(self)
 for t in [bool, complex, dict, float, int, list, object, set, str, tuple, type_]
 assertIs(self, Bool(t), true)
 end
 end
 
-function test_operator(self::BoolTest)
+function test_operator(self)
 assertIs(self, truth(0), false)
 assertIs(self, truth(1), true)
 assertIs(self, not_(1), false)
@@ -276,33 +276,33 @@ assertIs(self, is_not(true, true), false)
 assertIs(self, is_not(true, false), true)
 end
 
-function test_marshal(self::BoolTest)
+function test_marshal(self)
 assertIs(self, loads(dumps(true)), true)
 assertIs(self, loads(dumps(false)), false)
 end
 
-function test_pickle(self::BoolTest)
+function test_pickle(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 assertIs(self, loads(dumps(true, proto)), true)
 assertIs(self, loads(dumps(false, proto)), false)
 end
 end
 
-function test_picklevalues(self::BoolTest)
-@test (dumps(true, 0) == b"I01\n.")
-@test (dumps(false, 0) == b"I00\n.")
-@test (dumps(true, 1) == b"I01\n.")
-@test (dumps(false, 1) == b"I00\n.")
-@test (dumps(true, 2) == b"\x80\x02\x88.")
-@test (dumps(false, 2) == b"\x80\x02\x89.")
+function test_picklevalues(self)
+@test (dumps(true, protocol = 0) == b"I01\n.")
+@test (dumps(false, protocol = 0) == b"I00\n.")
+@test (dumps(true, protocol = 1) == b"I01\n.")
+@test (dumps(false, protocol = 1) == b"I00\n.")
+@test (dumps(true, protocol = 2) == b"\x80\x02\x88.")
+@test (dumps(false, protocol = 2) == b"\x80\x02\x89.")
 end
 
-function test_convert_to_bool(self::Eggs)
+function test_convert_to_bool(self)
 check = (o) -> assertRaises(self, TypeError, bool, o)
 mutable struct Foo <: AbstractFoo
 
 end
-function __bool__(self::Foo)
+function __bool__(self)
 return self
 end
 
@@ -310,7 +310,7 @@ check(Foo())
 mutable struct Bar <: AbstractBar
 
 end
-function __bool__(self::Bar)::String
+function __bool__(self)::String
 return "Yes"
 end
 
@@ -318,7 +318,7 @@ check(Bar())
 mutable struct Baz <: AbstractBaz
 
 end
-function __bool__(self::Baz)
+function __bool__(self)
 return self
 end
 
@@ -326,7 +326,7 @@ check(Baz())
 mutable struct Spam <: AbstractSpam
 
 end
-function __bool__(self::Spam)::Int64
+function __bool__(self)::Int64
 return 1
 end
 
@@ -334,24 +334,24 @@ check(Spam())
 mutable struct Eggs <: AbstractEggs
 
 end
-function __len__(self::Eggs)::Int64
+function __len__(self)::Int64
 return -1
 end
 
 assertRaises(self, ValueError, bool, Eggs())
 end
 
-function test_from_bytes(self::BoolTest)
+function test_from_bytes(self)
 assertIs(self, from_bytes(bool, repeat(b"\x00",8), "big"), false)
 assertIs(self, from_bytes(bool, b"abcd", "little"), true)
 end
 
-function test_sane_len(self::A)
+function test_sane_len(self)
 for badval in ["illegal", -1, 1 << 32]
 mutable struct A <: AbstractA
 
 end
-function __len__(self::A)
+function __len__(self)
 return badval
 end
 
@@ -375,7 +375,7 @@ end
 end
 end
 
-function test_blocked(self::B)
+function test_blocked(self)
 mutable struct A <: AbstractA
 __bool__
 
@@ -390,14 +390,14 @@ __bool__
                     B(__bool__ = nothing) =
                         new(__bool__)
 end
-function __len__(self::B)::Int64
+function __len__(self)::Int64
 return 10
 end
 
 assertRaises(self, TypeError, bool, B())
 end
 
-function test_real_and_imag(self::BoolTest)
+function test_real_and_imag(self)
 @test (true.real == 1)
 @test (true.imag == 0)
 assertIs(self, type_(true.real), int)
@@ -408,11 +408,11 @@ assertIs(self, type_(false.real), int)
 assertIs(self, type_(false.imag), int)
 end
 
-function test_bool_called_at_least_once(self::X)
+function test_bool_called_at_least_once(self)
 mutable struct X <: AbstractX
 count::Int64
 end
-function __bool__(self::X)::Bool
+function __bool__(self)::Bool
 self.count += 1
 return true
 end

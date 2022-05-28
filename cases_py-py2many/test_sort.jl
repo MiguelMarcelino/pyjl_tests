@@ -22,7 +22,7 @@ println("    checking$(tag)")
 end
 orig = raw[begin:end]
 if compare
-sort(raw, cmp_to_key(compare))
+sort(raw, key = cmp_to_key(compare))
 else
 sort(raw)
 end
@@ -58,7 +58,7 @@ maybe_complain::Bool
                     TestBase(i, index, key, maybe_complain::Bool = true) =
                         new(i, index, key, maybe_complain)
 end
-function testStressfully(self::Stable)
+function testStressfully(self)
 sizes = [0]
 for power in 1:9
 n = 2^power
@@ -72,7 +72,7 @@ maybe_complain::Bool
                     Complains(i, maybe_complain::Bool = true) =
                         new(i, maybe_complain)
 end
-function __lt__(self::Complains, other)::Bool
+function __lt__(self, other)::Bool
 if Complains.maybe_complain && random() < 0.001
 if verbose
 println("        complaining at$(self)$(other)")
@@ -82,7 +82,7 @@ end
 return self.i < other.i
 end
 
-function __repr__(self::Complains)::String
+function __repr__(self)::String
 return "Complains(%d)" % self.i
 end
 
@@ -90,11 +90,11 @@ mutable struct Stable <: AbstractStable
 key
 index
 end
-function __lt__(self::Stable, other)::Bool
+function __lt__(self, other)::Bool
 return self.key < other.key
 end
 
-function __repr__(self::Stable)
+function __repr__(self)
 return "Stable(%d, %d)" % (self.key, self.index)
 end
 
@@ -120,7 +120,7 @@ println("    Checking against an insane comparison function.")
 println("        If the implementation isn\'t careful, this may segfault.")
 end
 s = x[begin:end]
-sort(s, cmp_to_key((a, b) -> Int(random()*3) - 1))
+sort(s, key = cmp_to_key((a, b) -> Int(random()*3) - 1))
 check("an insane function left some permutation", x, s)
 if length(x) >= 2
 function bad_key(x)
@@ -128,7 +128,7 @@ throw(RuntimeError)
 end
 
 s = x[begin:end]
-assertRaises(self, RuntimeError, s.sort, bad_key)
+assertRaises(self, RuntimeError, s.sort, key = bad_key)
 end
 x = [Complains(i) for i in x]
 s = x[begin:end]
@@ -157,11 +157,11 @@ end
 mutable struct TestBugs <: AbstractTestBugs
 
 end
-function test_bug453523(self::C)
+function test_bug453523(self)
 mutable struct C <: AbstractC
 
 end
-function __lt__(self::C, other)::Bool
+function __lt__(self, other)::Bool
 if L && random() < 0.75
 pop(L)
 else
@@ -174,7 +174,7 @@ L = [C() for i in 0:49]
 assertRaises(self, ValueError, L.sort)
 end
 
-function test_undetected_mutation(self::TestBugs)
+function test_undetected_mutation(self)
 memorywaster = []
 for i in 0:19
 function mutating_cmp(x, y)::Bool
@@ -184,14 +184,14 @@ return x > y - x < y
 end
 
 L = [1, 2]
-@test_throws ValueError L.sort(cmp_to_key(mutating_cmp))
+@test_throws ValueError L.sort(key = cmp_to_key(mutating_cmp))
 function mutating_cmp(x, y)::Bool
 push!(L, 3)
 empty!(L)
 return x > y - x < y
 end
 
-@test_throws ValueError L.sort(cmp_to_key(mutating_cmp))
+@test_throws ValueError L.sort(key = cmp_to_key(mutating_cmp))
 memorywaster = [memorywaster]
 end
 end
@@ -199,40 +199,40 @@ end
 mutable struct TestDecorateSortUndecorate <: AbstractTestDecorateSortUndecorate
 
 end
-function test_decorated(self::TestDecorateSortUndecorate)
+function test_decorated(self)
 data = split("The quick Brown fox Jumped over The lazy Dog")
 copy = data[begin:end]
 shuffle(data)
-sort(data, str.lower)
+sort(data, key = str.lower)
 function my_cmp(x, y)::Bool
 xlower, ylower = (lower(x), lower(y))
 return xlower > ylower - xlower < ylower
 end
 
-sort(copy, cmp_to_key(my_cmp))
+sort(copy, key = cmp_to_key(my_cmp))
 end
 
-function test_baddecorator(self::TestDecorateSortUndecorate)
+function test_baddecorator(self)
 data = split("The quick Brown fox Jumped over The lazy Dog")
-@test_throws TypeError data.sort((x, y) -> 0)
+@test_throws TypeError data.sort(key = (x, y) -> 0)
 end
 
-function test_stability(self::TestDecorateSortUndecorate)
+function test_stability(self)
 data = [(randrange(100), i) for i in 0:199]
 copy = data[begin:end]
-sort(data, (t) -> t[1])
+sort(data, key = (t) -> t[1])
 sort(copy)
 @test (data == copy)
 end
 
-function test_key_with_exception(self::TestDecorateSortUndecorate)
+function test_key_with_exception(self)
 data = collect(-2:1)
 dup = data[begin:end]
-@test_throws ZeroDivisionError data.sort((x) -> 1 / x)
+@test_throws ZeroDivisionError data.sort(key = (x) -> 1 / x)
 @test (data == dup)
 end
 
-function test_key_with_mutation(self::TestDecorateSortUndecorate)
+function test_key_with_mutation(self)
 data = collect(0:9)
 function k(x)
 #Delete Unsupported
@@ -241,10 +241,10 @@ data[begin:end] = 0:19
 return x
 end
 
-@test_throws ValueError data.sort(k)
+@test_throws ValueError data.sort(key = k)
 end
 
-function test_key_with_mutating_del(self::SortKiller)
+function test_key_with_mutating_del(self)
 data = collect(0:9)
 mutable struct SortKiller <: AbstractSortKiller
 
@@ -254,20 +254,20 @@ mutable struct SortKiller <: AbstractSortKiller
                 new(x)
             end
 end
-function __del__(self::SortKiller)
+function __del__(self)
 #Delete Unsupported
 del(data)
 data[begin:end] = 0:19
 end
 
-function __lt__(self::SortKiller, other)::Bool
+function __lt__(self, other)::Bool
 return id(self) < id(other)
 end
 
-assertRaises(self, ValueError, data.sort, SortKiller)
+assertRaises(self, ValueError, data.sort, key = SortKiller)
 end
 
-function test_key_with_mutating_del_and_exception(self::SortKiller)
+function test_key_with_mutating_del_and_exception(self)
 data = collect(0:9)
 mutable struct SortKiller <: AbstractSortKiller
 
@@ -279,23 +279,23 @@ end
                 new(x)
             end
 end
-function __del__(self::SortKiller)
+function __del__(self)
 #Delete Unsupported
 del(data)
 data[begin:end] = collect(0:19)
 end
 
-assertRaises(self, RuntimeError, data.sort, SortKiller)
+assertRaises(self, RuntimeError, data.sort, key = SortKiller)
 end
 
-function test_reverse(self::TestDecorateSortUndecorate)
+function test_reverse(self)
 data = collect(0:99)
 shuffle(data)
-sort(data, true)
+sort(data, reverse = true)
 @test (data == collect(0:-1:99))
 end
 
-function test_reverse_stability(self::TestDecorateSortUndecorate)
+function test_reverse_stability(self)
 data = [(randrange(100), i) for i in 0:199]
 copy1 = data[begin:end]
 copy2 = data[begin:end]
@@ -309,14 +309,14 @@ x0, y0 = (x[1], y[1])
 return y0 > x0 - y0 < x0
 end
 
-sort(data, cmp_to_key(my_cmp), true)
-sort(copy1, cmp_to_key(my_cmp_reversed))
+sort(data, key = cmp_to_key(my_cmp), reverse = true)
+sort(copy1, key = cmp_to_key(my_cmp_reversed))
 @test (data == copy1)
-sort(copy2, (x) -> x[1], true)
+sort(copy2, key = (x) -> x[1], reverse = true)
 @test (data == copy2)
 end
 
-function check_against_PyObject_RichCompareBool(self::TestOptimizedCompares, L)
+function check_against_PyObject_RichCompareBool(self, L)
 seed(0)
 shuffle(L)
 L_1 = L[begin:end]
@@ -334,7 +334,7 @@ end
 mutable struct TestOptimizedCompares <: AbstractTestOptimizedCompares
 
 end
-function test_safe_object_compare(self::TestOptimizedCompares)
+function test_safe_object_compare(self)
 heterogeneous_lists = [[0, "foo"], [0.0, "foo"], [("foo",), "foo"]]
 for L in heterogeneous_lists
 @test_throws TypeError L.sort()
@@ -347,11 +347,11 @@ check_against_PyObject_RichCompareBool(self, L)
 end
 end
 
-function test_unsafe_object_compare(self::PointlessComparator)
+function test_unsafe_object_compare(self)
 mutable struct WackyComparator <: AbstractWackyComparator
 
 end
-function __lt__(self::WackyComparator, other)
+function __lt__(self, other)
 elem.__class__ = WackyList2
 return __lt__(int, self)
 end
@@ -363,7 +363,7 @@ end
 mutable struct WackyList2 <: AbstractWackyList2
 
 end
-function __lt__(self::WackyList2, other)
+function __lt__(self, other)
 throw(ValueError)
 end
 
@@ -380,7 +380,7 @@ end
 mutable struct PointlessComparator <: AbstractPointlessComparator
 
 end
-function __lt__(self::PointlessComparator, other)
+function __lt__(self, other)
 return NotImplemented
 end
 
@@ -393,24 +393,24 @@ check_against_PyObject_RichCompareBool(self, L)
 end
 end
 
-function test_unsafe_latin_compare(self::TestOptimizedCompares)
+function test_unsafe_latin_compare(self)
 check_against_PyObject_RichCompareBool(self, [string(x) for x in 0:99])
 end
 
-function test_unsafe_long_compare(self::TestOptimizedCompares)
+function test_unsafe_long_compare(self)
 check_against_PyObject_RichCompareBool(self, [x for x in 0:99])
 end
 
-function test_unsafe_float_compare(self::TestOptimizedCompares)
+function test_unsafe_float_compare(self)
 check_against_PyObject_RichCompareBool(self, [float(x) for x in 0:99])
 end
 
-function test_unsafe_tuple_compare(self::TestOptimizedCompares)
+function test_unsafe_tuple_compare(self)
 check_against_PyObject_RichCompareBool(self, repeat([float("nan")],100))
 check_against_PyObject_RichCompareBool(self, [float("nan") for _ in 0:99])
 end
 
-function test_not_all_tuples(self::TestOptimizedCompares)
+function test_not_all_tuples(self)
 @test_throws TypeError [(1.0, 1.0), (false, "A"), 6].sort()
 @test_throws TypeError [("a", 1), (1, "a")].sort()
 @test_throws TypeError [(1, "a"), ("a", 1)].sort()

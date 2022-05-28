@@ -19,7 +19,7 @@ mutable struct ComplexTest <: AbstractComplexTest
 value
 assertEqual
 end
-function assertAlmostEqual(self::ComplexTest, a, b)
+function assertAlmostEqual(self, a, b)
 if isa(a, complex)
 if isa(b, complex)
 assertAlmostEqual(unittest.TestCase, self, a.real)
@@ -36,7 +36,7 @@ assertAlmostEqual(unittest.TestCase, self, a)
 end
 end
 
-function assertCloseAbs(self::ComplexTest, x, y, eps = 1e-09)::Bool
+function assertCloseAbs(self, x, y, eps = 1e-09)::Bool
 #= Return true iff floats x and y "are close". =#
 if abs(x) > abs(y)
 x, y = (y, x)
@@ -50,7 +50,7 @@ end
 @test abs((x - y) / y) < eps
 end
 
-function assertFloatsAreIdentical(self::ComplexTest, x, y)
+function assertFloatsAreIdentical(self, x, y)
 #= assert that floats x and y are identical, in the sense that:
         (1) both x and y are nans, or
         (2) both x and y are infinities, with the same sign, or
@@ -75,13 +75,13 @@ end
 fail(self, msg)
 end
 
-function assertClose(self::ComplexTest, x, y, eps = 1e-09)
+function assertClose(self, x, y, eps = 1e-09)
 #= Return true iff complexes x and y "are close". =#
 assertCloseAbs(self, x.real, y.real, eps)
 assertCloseAbs(self, x.imag, y.imag, eps)
 end
 
-function check_div(self::ComplexTest, x, y)
+function check_div(self, x, y)
 #= Compute complex z=x*y, and check that z/x==y and z/y==x. =#
 z = x*y
 if x != 0
@@ -98,7 +98,7 @@ assertClose(self, q, x)
 end
 end
 
-function test_truediv(self::ComplexTest)
+function test_truediv(self)
 simple_real = [float(i) for i in -5:5]
 simple_complex = [complex(x, y) for x in simple_real for y in simple_real]
 for x in simple_complex
@@ -119,7 +119,7 @@ z = complex(0, 0) / complex(denom_real, denom_imag)
 end
 end
 
-function test_truediv_zero_division(self::ComplexTest)
+function test_truediv_zero_division(self)
 for (a, b) in ZERO_DIVISION
 assertRaises(self, ZeroDivisionError) do 
 a / b
@@ -127,7 +127,7 @@ end
 end
 end
 
-function test_floordiv(self::ComplexTest)
+function test_floordiv(self)
 assertRaises(self, TypeError) do 
 (1 + 1im) ÷ (1 + 0im)
 end
@@ -145,7 +145,7 @@ assertRaises(self, TypeError) do
 end
 end
 
-function test_floordiv_zero_division(self::ComplexTest)
+function test_floordiv_zero_division(self)
 for (a, b) in ZERO_DIVISION
 assertRaises(self, TypeError) do 
 a ÷ b
@@ -153,7 +153,7 @@ end
 end
 end
 
-function test_richcompare(self::ComplexTest)
+function test_richcompare(self)
 assertIs(self, __eq__(complex, 1 + 1im, 1 << 10000), false)
 assertIs(self, __lt__(complex, 1 + 1im, nothing), NotImplemented)
 assertIs(self, __eq__(complex, 1 + 1im, 1 + 1im), true)
@@ -181,7 +181,7 @@ assertIs(self, ne(1 + 1im, 1 + 1im), false)
 assertIs(self, ne(1 + 1im, 2 + 2im), true)
 end
 
-function test_richcompare_boundaries(self::ComplexTest)
+function test_richcompare_boundaries(self)
 function check(n, deltas, is_equal, imag = 0.0)
 for delta in deltas
 i = n + delta
@@ -200,7 +200,7 @@ end
 check(2^53, -100:-1, (delta) -> true)
 end
 
-function test_mod(self::ComplexTest)
+function test_mod(self)
 assertRaises(self, TypeError) do 
 (1 + 1im) % (1 + 0im)
 end
@@ -218,7 +218,7 @@ assertRaises(self, TypeError) do
 end
 end
 
-function test_mod_zero_division(self::ComplexTest)
+function test_mod_zero_division(self)
 for (a, b) in ZERO_DIVISION
 assertRaises(self, TypeError) do 
 a % b
@@ -226,7 +226,7 @@ end
 end
 end
 
-function test_divmod(self::ComplexTest)
+function test_divmod(self)
 @test_throws TypeError divmod(1 + 1im, 1 + 0im)
 @test_throws TypeError divmod(1 + 1im, 1.0)
 @test_throws TypeError divmod(1 + 1im, 1)
@@ -234,13 +234,13 @@ function test_divmod(self::ComplexTest)
 @test_throws TypeError divmod(1, 1 + 0im)
 end
 
-function test_divmod_zero_division(self::ComplexTest)
+function test_divmod_zero_division(self)
 for (a, b) in ZERO_DIVISION
 @test_throws TypeError divmod(a, b)
 end
 end
 
-function test_pow(self::ComplexTest)
+function test_pow(self)
 assertAlmostEqual(self, pow(1 + 1im, 0 + 0im), 1.0)
 assertAlmostEqual(self, pow(0 + 0im, 2 + 0im), 0.0)
 @test_throws ZeroDivisionError pow(0 + 0im, 1im)
@@ -276,7 +276,7 @@ b = 5.1 + 2.3im
 values = (sys.maxsize, sys.maxsize + 1, sys.maxsize - 1, -(sys.maxsize), -(sys.maxsize) + 1, -(sys.maxsize) + 1)
 for real in values
 for imag in values
-subTest(self, real, imag) do 
+subTest(self, real = real, imag = imag) do 
 c = complex(real, imag)
 try
 c^real
@@ -297,12 +297,12 @@ end
 end
 end
 
-function test_pow_with_small_integer_exponents(self::ComplexTest)
+function test_pow_with_small_integer_exponents(self)
 values = [complex(5.0, 12.0), complex(5e+100, 1.2e+101), complex(-4.0, INF), complex(INF, 0.0)]
 exponents = [-19, -5, -3, -2, -1, 0, 1, 2, 3, 5, 19]
 for value in values
 for exponent in exponents
-subTest(self, value, exponent) do 
+subTest(self, value = value, exponent = exponent) do 
 try
 int_pow = value^exponent
 catch exn
@@ -331,29 +331,29 @@ end
 end
 end
 
-function test_boolcontext(self::ComplexTest)
+function test_boolcontext(self)
 for i in 0:99
 @test complex(pylib::random::random() + 1e-06, pylib::random::random() + 1e-06)
 end
 @test !complex(0.0, 0.0)
 end
 
-function test_conjugate(self::ComplexTest)
+function test_conjugate(self)
 assertClose(self, conjugate(complex(5.3, 9.8)), 5.3 - 9.8im)
 end
 
-function test_constructor(self::complex2)
+function test_constructor(self)
 mutable struct OS <: AbstractOS
 value
 end
-function __complex__(self::OS)
+function __complex__(self)
 return self.value
 end
 
 mutable struct NS <: AbstractNS
 value
 end
-function __complex__(self::NS)
+function __complex__(self)
 return self.value
 end
 
@@ -413,10 +413,10 @@ mutable struct complex2 <: Abstractcomplex2
 end
 
 assertAlmostEqual(self, complex(complex2(1 + 1im)), 1 + 1im)
-assertAlmostEqual(self, complex(17, 23), 17 + 23im)
-assertAlmostEqual(self, complex(17 + 23im), 17 + 23im)
-assertAlmostEqual(self, complex(17 + 23im, 23), 17 + 46im)
-assertAlmostEqual(self, complex(1 + 2im, 3 + 4im), -3 + 5im)
+assertAlmostEqual(self, complex(real = 17, imag = 23), 17 + 23im)
+assertAlmostEqual(self, complex(real = 17 + 23im), 17 + 23im)
+assertAlmostEqual(self, complex(real = 17 + 23im, imag = 23), 17 + 46im)
+assertAlmostEqual(self, complex(real = 1 + 2im, imag = 3 + 4im), -3 + 5im)
 function split_zeros(x)
 #= Function that produces different results for 0. and -0. =#
 return atan2(x, -1.0)
@@ -471,7 +471,7 @@ end
 mutable struct evilcomplex <: Abstractevilcomplex
 
 end
-function __complex__(self::evilcomplex)
+function __complex__(self)
 throw(EvilExc)
 end
 
@@ -479,17 +479,17 @@ assertRaises(self, EvilExc, complex, evilcomplex())
 mutable struct float2 <: Abstractfloat2
 value
 end
-function __float__(self::float2)
+function __float__(self)
 return self.value
 end
 
 assertAlmostEqual(self, complex(float2(42.0)), 42)
-assertAlmostEqual(self, complex(float2(17.0), float2(23.0)), 17 + 23im)
+assertAlmostEqual(self, complex(real = float2(17.0), imag = float2(23.0)), 17 + 23im)
 assertRaises(self, TypeError, complex, float2(nothing))
 mutable struct MyIndex <: AbstractMyIndex
 value
 end
-function __index__(self::MyIndex)
+function __index__(self)
 return self.value
 end
 
@@ -500,7 +500,7 @@ assertRaises(self, OverflowError, complex, 123, MyIndex(2^2000))
 mutable struct MyInt <: AbstractMyInt
 
 end
-function __int__(self::MyInt)::Int64
+function __int__(self)::Int64
 return 42
 end
 
@@ -510,7 +510,7 @@ mutable struct complex0 <: Abstractcomplex0
 #= Test usage of __complex__() when inheriting from 'complex' =#
 
 end
-function __complex__(self::complex0)::Complex
+function __complex__(self)::Complex
 return 42im
 end
 
@@ -518,11 +518,11 @@ mutable struct complex1 <: Abstractcomplex1
 #= Test usage of __complex__() with a __new__() method =#
 
 end
-function __new__(self::complex1, value = 0im)
+function __new__(self, value = 0im)
 return __new__(complex, self)
 end
 
-function __complex__(self::complex1)
+function __complex__(self)
 return self
 end
 
@@ -531,7 +531,7 @@ mutable struct complex2 <: Abstractcomplex2
             complex is returned =#
 
 end
-function __complex__(self::complex2)
+function __complex__(self)
 return nothing
 end
 
@@ -542,14 +542,14 @@ end
 assertRaises(self, TypeError, complex, complex2(1im))
 end
 
-function test_constructor_special_numbers(self::complex2)
+function test_constructor_special_numbers(self)
 mutable struct complex2 <: Abstractcomplex2
 
 end
 
 for x in (0.0, -0.0, INF, -(INF), NAN)
 for y in (0.0, -0.0, INF, -(INF), NAN)
-subTest(self, x, y) do 
+subTest(self, x = x, y = y) do 
 z = complex(x, y)
 assertFloatsAreIdentical(self, z.real, x)
 assertFloatsAreIdentical(self, z.imag, y)
@@ -570,7 +570,7 @@ end
 end
 end
 
-function test_underscores(self::ComplexTest)
+function test_underscores(self)
 for lit in VALID_UNDERSCORE_LITERALS
 if !any((ch ∈ lit for ch in "xXoObB"))
 @test (complex(lit) == eval(lit))
@@ -587,7 +587,7 @@ end
 end
 end
 
-function test_hash(self::ComplexTest)
+function test_hash(self)
 for x in -30:29
 @test (hash(x) == hash(complex(x, 0)))
 x /= 3.0
@@ -595,14 +595,14 @@ x /= 3.0
 end
 end
 
-function test_abs(self::ComplexTest)
+function test_abs(self)
 nums = [complex(x / 3.0, y / 7.0) for x in -9:8 for y in -9:8]
 for num in nums
 assertAlmostEqual(self, (num.real^2 + num.imag^2)^0.5, abs(num))
 end
 end
 
-function test_repr_str(self::ComplexTest)
+function test_repr_str(self)
 function test(v, expected, test_fn = self.assertEqual)
 test_fn(repr(v), expected)
 test_fn(string(v), expected)
@@ -627,7 +627,7 @@ test(complex(0, NAN), "nanj")
 @test (6im == complex(repr(6im)))
 end
 
-function test_negative_zero_repr_str(self::ComplexTest)
+function test_negative_zero_repr_str(self)
 function test(v, expected, test_fn = self.assertEqual)
 test_fn(repr(v), expected)
 test_fn(string(v), expected)
@@ -643,11 +643,11 @@ test(complex(-0.0, 0.0), "(-0+0j)")
 test(complex(-0.0, -0.0), "(-0-0j)")
 end
 
-function test_neg(self::ComplexTest)
+function test_neg(self)
 @test (-(1 + 6im) == -1 - 6im)
 end
 
-function test_getnewargs(self::ComplexTest)
+function test_getnewargs(self)
 @test (__getnewargs__(1 + 2im) == (1.0, 2.0))
 @test (__getnewargs__(1 - 2im) == (1.0, -2.0))
 @test (__getnewargs__(2im) == (0.0, 2.0))
@@ -656,13 +656,13 @@ function test_getnewargs(self::ComplexTest)
 @test (__getnewargs__(complex(INF, 0)) == (INF, 0.0))
 end
 
-function test_plus_minus_0j(self::ComplexTest)
+function test_plus_minus_0j(self)
 z1, z2 = (0im, -0im)
 @test (atan2(z1.imag, -1.0) == atan2(0.0, -1.0))
 @test (atan2(z2.imag, -1.0) == atan2(-0.0, -1.0))
 end
 
-function test_negated_imaginary_literal(self::ComplexTest)
+function test_negated_imaginary_literal(self)
 z0 = -0im
 z1 = -7im
 z2 = -infim
@@ -674,13 +674,13 @@ assertFloatsAreIdentical(self, z2.real, -0.0)
 assertFloatsAreIdentical(self, z2.imag, -(INF))
 end
 
-function test_overflow(self::ComplexTest)
+function test_overflow(self)
 @test (complex("1e500") == complex(INF, 0.0))
 @test (complex("-1e500j") == complex(0.0, -(INF)))
 @test (complex("-1e500+1.8e308j") == complex(-(INF), INF))
 end
 
-function test_repr_roundtrip(self::ComplexTest)
+function test_repr_roundtrip(self)
 vals = [0.0, 0.0, 1e-315, 1e-200, 0.0123, 3.1415, 1e+50, INF, NAN]
 vals = vals + [-(v) for v in vals]
 for x in vals
@@ -703,7 +703,7 @@ end
 end
 end
 
-function test_format(self::ComplexTest)
+function test_format(self)
 @test (1 + 3im == string(1 + 3im))
 @test (1.5 + 3.5im == string(1.5 + 3.5im))
 @test (3im == string(3im))

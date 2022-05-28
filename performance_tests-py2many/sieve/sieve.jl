@@ -1,5 +1,4 @@
 
-
 function sieve(n::Int64)
     primes = repeat([true], n)
     primes[1], primes[2] = (false, false)

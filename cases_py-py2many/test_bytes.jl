@@ -50,7 +50,7 @@ if sys.flags.bytes_warning
 function check_bytes_warnings(func)
 function wrapper()
 check_warnings(("", BytesWarning)) do 
-return func(args..., kw)
+return func(args..., None = kw)
 end
 end
 
@@ -66,20 +66,20 @@ end
 mutable struct Indexable <: AbstractIndexable
 value
 end
-function __index__(self::Indexable)
+function __index__(self)
 return self.value
 end
 
 mutable struct BaseBytesTest <: AbstractBaseBytesTest
 type2test
 end
-function test_basics(self::BaseBytesTest)
+function test_basics(self)
 b = type2test(self)
 assertEqual(self, type_(b), self.type2test)
 assertEqual(self, b.__class__, self.type2test)
 end
 
-function test_copy(self::BaseBytesTest)
+function test_copy(self)
 a = type2test(self, b"abcd")
 for copy_method in (copy.copy, copy.deepcopy)
 b = copy_method(a)
@@ -88,7 +88,7 @@ assertEqual(self, type_(a), type_(b))
 end
 end
 
-function test_empty_sequence(self::BaseBytesTest)
+function test_empty_sequence(self)
 b = type2test(self)
 assertEqual(self, length(b), 0)
 assertRaises(self, IndexError, () -> b[1])
@@ -104,7 +104,7 @@ assertRaises(self, IndexError, () -> b[-(sys.maxsize) - -1])
 assertRaises(self, IndexError, () -> b[-(10^100) + 1])
 end
 
-function test_from_iterable(self::S)
+function test_from_iterable(self)
 b = type2test(self, 0:255)
 assertEqual(self, length(b), 256)
 assertEqual(self, collect(b), collect(0:255))
@@ -121,7 +121,7 @@ assertEqual(self, collect(b), collect(0:255)[end:2:2])
 mutable struct S <: AbstractS
 
 end
-function __getitem__(self::S, i)
+function __getitem__(self, i)
 return (1, 2, 3)[i + 1]
 end
 
@@ -129,7 +129,7 @@ b = type2test(self, S())
 assertEqual(self, b, b"\x01\x02\x03")
 end
 
-function test_from_tuple(self::BaseBytesTest)
+function test_from_tuple(self)
 b = type2test(self, tuple(0:255))
 assertEqual(self, length(b), 256)
 assertEqual(self, collect(b), collect(0:255))
@@ -137,7 +137,7 @@ b = type2test(self, (1, 2, 3))
 assertEqual(self, b, b"\x01\x02\x03")
 end
 
-function test_from_list(self::BaseBytesTest)
+function test_from_list(self)
 b = type2test(self, collect(0:255))
 assertEqual(self, length(b), 256)
 assertEqual(self, collect(b), collect(0:255))
@@ -145,11 +145,11 @@ b = type2test(self, [1, 2, 3])
 assertEqual(self, b, b"\x01\x02\x03")
 end
 
-function test_from_mutating_list(self::Y)
+function test_from_mutating_list(self)
 mutable struct X <: AbstractX
 
 end
-function __index__(self::X)::Int64
+function __index__(self)::Int64
 empty!(a)
 return 42
 end
@@ -159,7 +159,7 @@ assertEqual(self, bytes(a), b"*")
 mutable struct Y <: AbstractY
 
 end
-function __index__(self::Y)::Int64
+function __index__(self)::Int64
 if length(a) < 1000
 push!(a, self)
 end
@@ -170,14 +170,14 @@ a = [Y()]
 assertEqual(self, bytes(a), repeat(b"*",1000))
 end
 
-function test_from_index(self::BaseBytesTest)
+function test_from_index(self)
 b = type2test(self, [Indexable(), Indexable(1), Indexable(254), Indexable(255)])
 assertEqual(self, collect(b), [0, 1, 254, 255])
 assertRaises(self, ValueError, self.type2test, [Indexable(-1)])
 assertRaises(self, ValueError, self.type2test, [Indexable(256)])
 end
 
-function test_from_buffer(self::B)
+function test_from_buffer(self)
 a = type2test(self, array("B", [1, 2, 3]))
 assertEqual(self, a, b"\x01\x02\x03")
 a = type2test(self, b"\x01\x02\x03")
@@ -185,14 +185,14 @@ assertEqual(self, a, b"\x01\x02\x03")
 mutable struct B <: AbstractB
 
 end
-function __index__(self::B)
+function __index__(self)
 throw(TypeError)
 end
 
 assertEqual(self, type2test(self, B(b"foobar")), b"foobar")
 end
 
-function test_from_ssize(self::BaseBytesTest)
+function test_from_ssize(self)
 assertEqual(self, type2test(self, 0), b"")
 assertEqual(self, type2test(self, 1), b"\x00")
 assertEqual(self, type2test(self, 5), b"\x00\x00\x00\x00\x00")
@@ -202,7 +202,7 @@ assertEqual(self, type2test(self, b"0"), b"0")
 assertRaises(self, OverflowError, self.type2test, sys.maxsize + 1)
 end
 
-function test_constructor_type_errors(self::C)
+function test_constructor_type_errors(self)
 assertRaises(self, TypeError, self.type2test, 0.0)
 mutable struct C <: AbstractC
 
@@ -212,19 +212,19 @@ assertRaises(self, TypeError, self.type2test, ["0"])
 assertRaises(self, TypeError, self.type2test, [0.0])
 assertRaises(self, TypeError, self.type2test, [nothing])
 assertRaises(self, TypeError, self.type2test, [C()])
-assertRaises(self, TypeError, self.type2test, "ascii")
-assertRaises(self, TypeError, self.type2test, "ignore")
+assertRaises(self, TypeError, self.type2test, encoding = "ascii")
+assertRaises(self, TypeError, self.type2test, errors = "ignore")
 assertRaises(self, TypeError, self.type2test, 0, "ascii")
 assertRaises(self, TypeError, self.type2test, b"", "ascii")
-assertRaises(self, TypeError, self.type2test, 0, "ignore")
-assertRaises(self, TypeError, self.type2test, b"", "ignore")
+assertRaises(self, TypeError, self.type2test, 0, errors = "ignore")
+assertRaises(self, TypeError, self.type2test, b"", errors = "ignore")
 assertRaises(self, TypeError, self.type2test, "")
-assertRaises(self, TypeError, self.type2test, "", "ignore")
+assertRaises(self, TypeError, self.type2test, "", errors = "ignore")
 assertRaises(self, TypeError, self.type2test, "", b"ascii")
 assertRaises(self, TypeError, self.type2test, "", "ascii", b"ignore")
 end
 
-function test_constructor_value_errors(self::BaseBytesTest)
+function test_constructor_value_errors(self)
 assertRaises(self, ValueError, self.type2test, [-1])
 assertRaises(self, ValueError, self.type2test, [-(sys.maxsize)])
 assertRaises(self, ValueError, self.type2test, [-(sys.maxsize) - 1])
@@ -237,7 +237,7 @@ assertRaises(self, ValueError, self.type2test, [sys.maxsize + 1])
 assertRaises(self, ValueError, self.type2test, [10^100])
 end
 
-function test_constructor_overflow(self::BaseBytesTest)
+function test_constructor_overflow(self)
 size = MAX_Py_ssize_t
 assertRaises(self, (OverflowError, MemoryError), self.type2test, size)
 try
@@ -249,11 +249,11 @@ end
 end
 end
 
-function test_constructor_exceptions(self::BadIterable)
+function test_constructor_exceptions(self)
 mutable struct BadInt <: AbstractBadInt
 
 end
-function __index__(self::BadInt)
+function __index__(self)
 1 / 0
 end
 
@@ -262,14 +262,14 @@ assertRaises(self, ZeroDivisionError, self.type2test, [BadInt()])
 mutable struct BadIterable <: AbstractBadIterable
 
 end
-function __iter__(self::BadIterable)
+function __iter__(self)
 1 / 0
 end
 
 assertRaises(self, ZeroDivisionError, self.type2test, BadIterable())
 end
 
-function test_compare(self::BaseBytesTest)
+function test_compare(self)
 b1 = type2test(self, [1, 2, 3])
 b2 = type2test(self, [1, 2, 3])
 b3 = type2test(self, [1, 3])
@@ -291,7 +291,7 @@ assertFalse(self, b3 < b2)
 assertFalse(self, b3 <= b2)
 end
 
-function test_compare_to_str(self::BaseBytesTest)
+function test_compare_to_str(self)
 assertEqual(self, type2test(self, b"\x00a\x00b\x00c") == "abc", false)
 assertEqual(self, type2test(self, b"\x00\x00\x00a\x00\x00\x00b\x00\x00\x00c") == "abc", false)
 assertEqual(self, type2test(self, b"a\x00b\x00c\x00") == "abc", false)
@@ -300,7 +300,7 @@ assertEqual(self, type2test(self) == string(), false)
 assertEqual(self, type2test(self) != string(), true)
 end
 
-function test_reversed(self::BaseBytesTest)
+function test_reversed(self)
 input = collect(map(ord, "Hello"))
 b = type2test(self, input)
 output = collect(reversed(b))
@@ -308,7 +308,7 @@ reverse(input)
 assertEqual(self, output, input)
 end
 
-function test_getslice(self::BaseBytesTest)
+function test_getslice(self)
 function by(s)
 return type2test(self, map(ord, s))
 end
@@ -329,7 +329,7 @@ assertEqual(self, b[length(b) - -4:100], by("world"))
 assertEqual(self, b[length(b) - -99:5], by("Hello"))
 end
 
-function test_extended_getslice(self::BaseBytesTest)
+function test_extended_getslice(self)
 L = collect(0:254)
 b = type2test(self, L)
 indices = (0, nothing, 1, 3, 19, 100, sys.maxsize, -1, -2, -31, -100)
@@ -342,7 +342,7 @@ end
 end
 end
 
-function test_encoding(self::BaseBytesTest)
+function test_encoding(self)
 sample = "Hello world\nሴ噸骼"
 for enc in ("utf-8", "utf-16")
 b = type2test(self, sample, enc)
@@ -353,7 +353,7 @@ b = type2test(self, sample, "latin-1", "ignore")
 assertEqual(self, b, type2test(self, sample[begin:-3], "utf-8"))
 end
 
-function test_decode(self::BaseBytesTest)
+function test_decode(self)
 sample = "Hello world\nሴ噸骼"
 for enc in ("utf-8", "utf-16")
 b = type2test(self, sample, enc)
@@ -363,11 +363,11 @@ sample = "Hello world\n\x80þ\xff"
 b = type2test(self, sample, "latin-1")
 assertRaises(self, UnicodeDecodeError, b.decode, "utf-8")
 assertEqual(self, decode(b, "utf-8", "ignore"), "Hello world\n")
-assertEqual(self, decode(b, "ignore", "utf-8"), "Hello world\n")
+assertEqual(self, decode(b, errors = "ignore", encoding = "utf-8"), "Hello world\n")
 assertEqual(self, decode(type2test(self, b"\xe2\x98\x83")), "☃")
 end
 
-function test_check_encoding_errors(self::BaseBytesTest)
+function test_check_encoding_errors(self)
 invalid = "Boom, Shaka Laka, Boom!"
 encodings = ("ascii", "utf8", "latin1")
 code = dedent("\n            import sys\n            type2test = $(self.type2test.__name__)\n            encodings = $('encodings')\n\n            for data in (\'\', \'short string\'):\n                try:\n                    type2test(data, encoding=$('invalid'))\n                except LookupError:\n                    pass\n                else:\n                    sys.exit(21)\n\n                for encoding in encodings:\n                    try:\n                        type2test(data, encoding=encoding, errors=$('invalid'))\n                    except LookupError:\n                        pass\n                    else:\n                        sys.exit(22)\n\n            for data in (b\'\', b\'short string\'):\n                data = type2test(data)\n                print(repr(data))\n                try:\n                    data.decode(encoding=$('invalid'))\n                except LookupError:\n                    sys.exit(10)\n                else:\n                    sys.exit(23)\n\n                try:\n                    data.decode(errors=$('invalid'))\n                except LookupError:\n                    pass\n                else:\n                    sys.exit(24)\n\n                for encoding in encodings:\n                    try:\n                        data.decode(encoding=encoding, errors=$('invalid'))\n                    except LookupError:\n                        pass\n                    else:\n                        sys.exit(25)\n\n            sys.exit(10)\n        ")
@@ -375,7 +375,7 @@ proc = assert_python_failure("-X", "dev", "-c", code)
 assertEqual(self, proc.rc, 10, proc)
 end
 
-function test_from_int(self::BaseBytesTest)
+function test_from_int(self)
 b = type2test(self, 0)
 assertEqual(self, b, type2test(self))
 b = type2test(self, 10)
@@ -384,7 +384,7 @@ b = type2test(self, 10000)
 assertEqual(self, b, type2test(self, repeat([0],10000)))
 end
 
-function test_concat(self::BaseBytesTest)
+function test_concat(self)
 b1 = type2test(self, b"abc")
 b2 = type2test(self, b"def")
 assertEqual(self, b1 + b2, b"abcdef")
@@ -394,7 +394,7 @@ assertRaises(self, TypeError, () -> b1 + "def")
 assertRaises(self, TypeError, () -> "abc" + b2)
 end
 
-function test_repeat(self::BaseBytesTest)
+function test_repeat(self)
 for b in (b"abc", type2test(self, b"abc"))
 assertEqual(self, repeat(b,3), b"abcabcabc")
 assertEqual(self, repeat(b,0), b"")
@@ -410,11 +410,11 @@ end
 end
 end
 
-function test_repeat_1char(self::BaseBytesTest)
+function test_repeat_1char(self)
 assertEqual(self, type2test(self, b"x")*100, type2test(self, repeat([Int(codepoint('x'))],100)))
 end
 
-function test_contains(self::BaseBytesTest)
+function test_contains(self)
 b = type2test(self, b"abc")
 assertIn(self, Int(codepoint('a')), b)
 assertIn(self, parse(Int, Int(codepoint('a'))), b)
@@ -440,7 +440,7 @@ assertNotIn(self, f(b"abd"), b)
 end
 end
 
-function test_fromhex(self::BaseBytesTest)
+function test_fromhex(self)
 assertRaises(self, TypeError, self.type2test.fromhex)
 assertRaises(self, TypeError, self.type2test.fromhex, 1)
 assertEqual(self, fromhex(self.type2test, ""), type2test(self))
@@ -469,7 +469,7 @@ assertIn(self, "at position %s" % pos, string(cm.exception))
 end
 end
 
-function test_hex(self::BaseBytesTest)
+function test_hex(self)
 assertRaises(self, TypeError, self.type2test.hex)
 assertRaises(self, TypeError, self.type2test.hex, 1)
 assertEqual(self, hex(type2test(self, b"")), "")
@@ -478,7 +478,7 @@ assertEqual(self, hex(type2test(self, b"\x1a+0")), "1a2b30")
 assertEqual(self, hex(memoryview(b"\x1a+0")), "1a2b30")
 end
 
-function test_hex_separator_basics(self::BaseBytesTest)
+function test_hex_separator_basics(self)
 three_bytes = type2test(self, b"\xb9\x01\xef")
 assertEqual(self, hex(three_bytes), "b901ef")
 assertRaises(self, ValueError) do 
@@ -522,12 +522,12 @@ value = b"{s\x05\x00\x00\x00worldi\x02\x00\x00\x00s\x05\x00\x00\x00helloi\x01\x0
 assertEqual(self, hex(value, ".", 8), "7b7305000000776f.726c646902000000.730500000068656c.6c6f690100000030")
 end
 
-function test_hex_separator_five_bytes(self::BaseBytesTest)
+function test_hex_separator_five_bytes(self)
 five_bytes = type2test(self, 90:94)
 assertEqual(self, hex(five_bytes), "5a5b5c5d5e")
 end
 
-function test_hex_separator_six_bytes(self::BaseBytesTest)
+function test_hex_separator_six_bytes(self)
 six_bytes = type2test(self, (x*3 for x in 1:6))
 assertEqual(self, hex(six_bytes), "0306090c0f12")
 assertEqual(self, hex(six_bytes, ".", 1), "03.06.09.0c.0f.12")
@@ -544,7 +544,7 @@ assertEqual(self, hex(six_bytes, ":", -6), "0306090c0f12")
 assertEqual(self, hex(six_bytes, " ", -95), "0306090c0f12")
 end
 
-function test_join(self::BaseBytesTest)
+function test_join(self)
 assertEqual(self, join([], type2test(self, b"")), b"")
 assertEqual(self, join([b""], type2test(self, b"")), b"")
 for lst in [[b"abc"], [b"a", b"bc"], [b"ab", b"c"], [b"a", b"b", b"c"]]
@@ -574,7 +574,7 @@ dot_join([memoryview(b"ab"), "cd", b"ef"])
 end
 end
 
-function test_count(self::BaseBytesTest)
+function test_count(self)
 b = type2test(self, b"mississippi")
 i = 105
 p = 112
@@ -594,7 +594,7 @@ assertEqual(self, count(b, i, 1, 3), 1)
 assertEqual(self, count(b, p, 7, 9), 1)
 end
 
-function test_startswith(self::BaseBytesTest)
+function test_startswith(self)
 b = type2test(self, b"hello")
 assertFalse(self, startswith(type2test(self), b"anything"))
 assertTrue(self, startswith(b, b"hello"))
@@ -610,7 +610,7 @@ assertIn(self, "bytes", exc)
 assertIn(self, "tuple", exc)
 end
 
-function test_endswith(self::BaseBytesTest)
+function test_endswith(self)
 b = type2test(self, b"hello")
 assertFalse(self, endswith(Vector{UInt8}(), b"anything"))
 assertTrue(self, endswith(b, b"hello"))
@@ -626,7 +626,7 @@ assertIn(self, "bytes", exc)
 assertIn(self, "tuple", exc)
 end
 
-function test_find(self::BaseBytesTest)
+function test_find(self)
 b = type2test(self, b"mississippi")
 i = 105
 w = 119
@@ -646,7 +646,7 @@ assertRaisesRegex(self, ValueError, "byte must be in range\\(0, 256\\)", b.find,
 end
 end
 
-function test_rfind(self::BaseBytesTest)
+function test_rfind(self)
 b = type2test(self, b"mississippi")
 i = 105
 w = 119
@@ -662,7 +662,7 @@ assertEqual(self, rfind(b, i, 3, 9), 7)
 assertEqual(self, rfind(b, w, 1, 3), -1)
 end
 
-function test_index(self::BaseBytesTest)
+function test_index(self)
 b = type2test(self, b"mississippi")
 i = 105
 w = 119
@@ -679,7 +679,7 @@ assertEqual(self, index(b, i, 1, 3), 1)
 assertRaises(self, ValueError, b.index, w, 1, 3)
 end
 
-function test_rindex(self::BaseBytesTest)
+function test_rindex(self)
 b = type2test(self, b"mississippi")
 i = 105
 w = 119
@@ -695,7 +695,7 @@ assertEqual(self, rindex(b, i, 3, 9), 7)
 assertRaises(self, ValueError, b.rindex, w, 1, 3)
 end
 
-function test_mod(self::BaseBytesTest)
+function test_mod(self)
 b = type2test(self, b"hello, %b!")
 orig = b
 b = b % b"world"
@@ -712,7 +712,7 @@ assertEqual(self, b, b"hello,\x00world!")
 assertIs(self, type_(b), self.type2test)
 end
 
-function test_imod(self::BaseBytesTest)
+function test_imod(self)
 b = type2test(self, b"hello, %b!")
 orig = b
 b %= b"world"
@@ -729,34 +729,34 @@ assertEqual(self, b, b"hello,\x00world!")
 assertIs(self, type_(b), self.type2test)
 end
 
-function test_rmod(self::BaseBytesTest)
+function test_rmod(self)
 assertRaises(self, TypeError) do 
 object() % type2test(self, b"abc")
 end
 assertIs(self, __rmod__(type2test(self, b"abc"), "%r"), NotImplemented)
 end
 
-function test_replace(self::BaseBytesTest)
+function test_replace(self)
 b = type2test(self, b"mississippi")
 assertEqual(self, replace(b, b"i", b"a"), b"massassappa")
 assertEqual(self, replace(b, b"ss", b"x"), b"mixixippi")
 end
 
-function test_replace_int_error(self::BaseBytesTest)
+function test_replace_int_error(self)
 assertRaises(self, TypeError, type2test(self, b"a b").replace, 32, b"")
 end
 
-function test_split_string_error(self::BaseBytesTest)
+function test_split_string_error(self)
 assertRaises(self, TypeError, type2test(self, b"a b").split, " ")
 assertRaises(self, TypeError, type2test(self, b"a b").rsplit, " ")
 end
 
-function test_split_int_error(self::BaseBytesTest)
+function test_split_int_error(self)
 assertRaises(self, TypeError, type2test(self, b"a b").split, 32)
 assertRaises(self, TypeError, type2test(self, b"a b").rsplit, 32)
 end
 
-function test_split_unicodewhitespace(self::BaseBytesTest)
+function test_split_unicodewhitespace(self)
 for b in (b"a\x1cb", b"a\x1db", b"a\x1eb", b"a\x1fb")
 b = type2test(self, b)
 assertEqual(self, split(b), [b])
@@ -765,35 +765,35 @@ b = type2test(self, b"\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f")
 assertEqual(self, split(b), [b"\x1c\x1d\x1e\x1f"])
 end
 
-function test_rsplit_unicodewhitespace(self::BaseBytesTest)
+function test_rsplit_unicodewhitespace(self)
 b = type2test(self, b"\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f")
 assertEqual(self, rsplit(b), [b"\x1c\x1d\x1e\x1f"])
 end
 
-function test_partition(self::BaseBytesTest)
+function test_partition(self)
 b = type2test(self, b"mississippi")
 assertEqual(self, partition(b, b"ss"), (b"mi", b"ss", b"issippi"))
 assertEqual(self, partition(b, b"w"), (b"mississippi", b"", b""))
 end
 
-function test_rpartition(self::BaseBytesTest)
+function test_rpartition(self)
 b = type2test(self, b"mississippi")
 assertEqual(self, rpartition(b, b"ss"), (b"missi", b"ss", b"ippi"))
 assertEqual(self, rpartition(b, b"i"), (b"mississipp", b"i", b""))
 assertEqual(self, rpartition(b, b"w"), (b"", b"", b"mississippi"))
 end
 
-function test_partition_string_error(self::BaseBytesTest)
+function test_partition_string_error(self)
 assertRaises(self, TypeError, type2test(self, b"a b").partition, " ")
 assertRaises(self, TypeError, type2test(self, b"a b").rpartition, " ")
 end
 
-function test_partition_int_error(self::BaseBytesTest)
+function test_partition_int_error(self)
 assertRaises(self, TypeError, type2test(self, b"a b").partition, 32)
 assertRaises(self, TypeError, type2test(self, b"a b").rpartition, 32)
 end
 
-function test_pickling(self::BaseBytesTest)
+function test_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 for b in (b"", b"a", b"abc", b"\xffab\x80", b"\x00\x00\xff\x00\x00")
 b = type2test(self, b)
@@ -804,7 +804,7 @@ end
 end
 end
 
-function test_iterator_pickling(self::BaseBytesTest)
+function test_iterator_pickling(self)
 for proto in 0:pickle.HIGHEST_PROTOCOL
 for b in (b"", b"a", b"abc", b"\xffab\x80", b"\x00\x00\xff\x00\x00")
 it = (x for x in type2test(self, b))
@@ -826,57 +826,57 @@ end
 end
 end
 
-function test_strip_bytearray(self::BaseBytesTest)
+function test_strip_bytearray(self)
 assertEqual(self, strip(type2test(self, b"abc"), memoryview(b"ac")), b"b")
 assertEqual(self, lstrip(type2test(self, b"abc"), memoryview(b"ac")), b"bc")
 assertEqual(self, rstrip(type2test(self, b"abc"), memoryview(b"ac")), b"ab")
 end
 
-function test_strip_string_error(self::BaseBytesTest)
+function test_strip_string_error(self)
 assertRaises(self, TypeError, type2test(self, b"abc").strip, "ac")
 assertRaises(self, TypeError, type2test(self, b"abc").lstrip, "ac")
 assertRaises(self, TypeError, type2test(self, b"abc").rstrip, "ac")
 end
 
-function test_strip_int_error(self::BaseBytesTest)
+function test_strip_int_error(self)
 assertRaises(self, TypeError, type2test(self, b" abc ").strip, 32)
 assertRaises(self, TypeError, type2test(self, b" abc ").lstrip, 32)
 assertRaises(self, TypeError, type2test(self, b" abc ").rstrip, 32)
 end
 
-function test_center(self::BaseBytesTest)
+function test_center(self)
 b = type2test(self, b"abc")
 for fill_type in (bytes, bytearray)
 assertEqual(self, center(b, 7, fill_type(b"-")), type2test(self, b"--abc--"))
 end
 end
 
-function test_ljust(self::BaseBytesTest)
+function test_ljust(self)
 b = type2test(self, b"abc")
 for fill_type in (bytes, bytearray)
 assertEqual(self, ljust(b, 7, fill_type(b"-")), type2test(self, b"abc----"))
 end
 end
 
-function test_rjust(self::BaseBytesTest)
+function test_rjust(self)
 b = type2test(self, b"abc")
 for fill_type in (bytes, bytearray)
 assertEqual(self, rjust(b, 7, fill_type(b"-")), type2test(self, b"----abc"))
 end
 end
 
-function test_xjust_int_error(self::BaseBytesTest)
+function test_xjust_int_error(self)
 assertRaises(self, TypeError, type2test(self, b"abc").center, 7, 32)
 assertRaises(self, TypeError, type2test(self, b"abc").ljust, 7, 32)
 assertRaises(self, TypeError, type2test(self, b"abc").rjust, 7, 32)
 end
 
-function test_ord(self::BaseBytesTest)
+function test_ord(self)
 b = type2test(self, b"\x00A\x7f\x80\xff")
 assertEqual(self, [Int(codepoint(b[i + 1:i + 1])) for i in 0:length(b) - 1], [0, 65, 127, 128, 255])
 end
 
-function test_maketrans(self::BaseBytesTest)
+function test_maketrans(self)
 transtable = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`xyzdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff"
 assertEqual(self, maketrans(self.type2test, b"abc", b"xyz"), transtable)
 transtable = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xc0\xc1\xc2\xc3\xc4\xc5\xc6\xc7\xc8\xc9\xca\xcb\xcc\xcd\xce\xcf\xd0\xd1\xd2\xd3\xd4\xd5\xd6\xd7\xd8\xd9\xda\xdb\xdc\xdd\xde\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfcxyz"
@@ -885,7 +885,7 @@ assertRaises(self, ValueError, self.type2test.maketrans, b"abc", b"xyzq")
 assertRaises(self, TypeError, self.type2test.maketrans, "abc", "def")
 end
 
-function test_none_arguments(self::BaseBytesTest)
+function test_none_arguments(self)
 b = type2test(self, b"hello")
 l = type2test(self, b"l")
 h = type2test(self, b"h")
@@ -921,7 +921,7 @@ assertEqual(self, true, startswith(b, h, nothing, -2))
 assertEqual(self, false, startswith(b, x, nothing, nothing))
 end
 
-function test_integer_arguments_out_of_byte_range(self::BaseBytesTest)
+function test_integer_arguments_out_of_byte_range(self)
 b = type2test(self, b"hello")
 for method in (b.count, b.find, b.index, b.rfind, b.rindex)
 assertRaises(self, ValueError, method, -1)
@@ -930,7 +930,7 @@ assertRaises(self, ValueError, method, 9999)
 end
 end
 
-function test_find_etc_raise_correct_error_messages(self::BaseBytesTest)
+function test_find_etc_raise_correct_error_messages(self)
 b = type2test(self, b"hello")
 x = type2test(self, b"x")
 assertRaisesRegex(self, TypeError, "\\bfind\\b", b.find, x, nothing, nothing, nothing)
@@ -942,12 +942,12 @@ assertRaisesRegex(self, TypeError, "\\bstartswith\\b", b.startswith, x, nothing,
 assertRaisesRegex(self, TypeError, "\\bendswith\\b", b.endswith, x, nothing, nothing, nothing)
 end
 
-function test_free_after_iterating(self::BaseBytesTest)
+function test_free_after_iterating(self)
 check_free_after_iterating(self, iter, self.type2test)
 check_free_after_iterating(self, reversed, self.type2test)
 end
 
-function test_translate(self::BaseBytesTest)
+function test_translate(self)
 b = type2test(self, b"hello")
 rosetta = Vector{UInt8}(0:255)
 rosetta[Int(codepoint('o')) + 1] = Int(codepoint('e'))
@@ -965,15 +965,15 @@ c = translate(b, rosetta, b"l")
 assertEqual(self, c, b"hee")
 c = translate(b, nothing, b"e")
 assertEqual(self, c, b"hllo")
-c = translate(b, rosetta, b"")
+c = translate(b, rosetta, delete = b"")
 assertEqual(self, c, b"helle")
-c = translate(b, rosetta, b"l")
+c = translate(b, rosetta, delete = b"l")
 assertEqual(self, c, b"hee")
-c = translate(b, nothing, b"e")
+c = translate(b, nothing, delete = b"e")
 assertEqual(self, c, b"hllo")
 end
 
-function test_sq_item(self::BaseBytesTest)
+function test_sq_item(self)
 _testcapi = import_module("_testcapi")
 obj = type2test(self, (42,))
 assertRaises(self, IndexError) do 
@@ -992,7 +992,7 @@ type2test
                     BytesTest(__bytes__ = nothing, type2test = bytes) =
                         new(__bytes__, type2test)
 end
-function test_getitem_error(self::BytesTest)
+function test_getitem_error(self)
 b = b"python"
 msg = "byte indices must be integers or slices"
 assertRaisesRegex(self, TypeError, msg) do 
@@ -1000,18 +1000,18 @@ b["a"]
 end
 end
 
-function test_buffer_is_readonly(self::BytesTest)
+function test_buffer_is_readonly(self)
 fd = readline(__file__)
 readline(fd) do f 
 @test_throws TypeError f.readinto(b"")
 end
 end
 
-function test_custom(self::A)
+function test_custom(self)
 mutable struct A <: AbstractA
 
 end
-function __bytes__(self::A)::Array{UInt8}
+function __bytes__(self)::Array{UInt8}
 return b"abc"
 end
 
@@ -1024,7 +1024,7 @@ assertRaises(self, TypeError, bytes, A())
 mutable struct A <: AbstractA
 
 end
-function __bytes__(self::A)
+function __bytes__(self)
 return nothing
 end
 
@@ -1032,11 +1032,11 @@ assertRaises(self, TypeError, bytes, A())
 mutable struct A <: AbstractA
 
 end
-function __bytes__(self::A)::Array{UInt8}
+function __bytes__(self)::Array{UInt8}
 return b"a"
 end
 
-function __index__(self::A)::Int64
+function __index__(self)::Int64
 return 42
 end
 
@@ -1044,7 +1044,7 @@ assertEqual(self, bytes(A()), b"a")
 mutable struct A <: AbstractA
 
 end
-function __bytes__(self::A)::Array{UInt8}
+function __bytes__(self)::Array{UInt8}
 return b"abc"
 end
 
@@ -1053,7 +1053,7 @@ assertEqual(self, bytes(A("€"), "iso8859-15"), b"\xa4")
 mutable struct A <: AbstractA
 
 end
-function __bytes__(self::A)::OtherBytesSubclass
+function __bytes__(self)::OtherBytesSubclass
 return OtherBytesSubclass(b"abc")
 end
 
@@ -1063,7 +1063,7 @@ assertEqual(self, BytesSubclass(A()), b"abc")
 assertIs(self, type_(BytesSubclass(A())), BytesSubclass)
 end
 
-function test_from_format(self::BytesTest)
+function test_from_format(self)
 ctypes = import_module("ctypes")
 _testcapi = import_module("_testcapi")
 PyBytes_FromFormat = pythonapi.PyBytes_FromFormat
@@ -1114,7 +1114,7 @@ end
 @test (PyBytes_FromFormat(b"%s", b"") == b"")
 end
 
-function test_bytes_blocking(self::BufferBlocked)
+function test_bytes_blocking(self)
 mutable struct IterationBlocked <: AbstractIterationBlocked
 __bytes__
 
@@ -1155,7 +1155,7 @@ assertEqual(self, bytes(ba), b"ab")
 assertRaises(self, TypeError, bytes, bb)
 end
 
-function test_repeat_id_preserving(self::SubBytes)
+function test_repeat_id_preserving(self)
 a = b"123abc1@"
 b = b"456zyx-+"
 assertEqual(self, id(a), id(a))
@@ -1185,7 +1185,7 @@ type2test
                     ByteArrayTest(test_exhausted_iterator = test.list_tests.CommonTest.test_exhausted_iterator, type2test = bytearray) =
                         new(test_exhausted_iterator, type2test)
 end
-function test_getitem_error(self::ByteArrayTest)
+function test_getitem_error(self)
 b = Vector{UInt8}(b"python")
 msg = "bytearray indices must be integers or slices"
 assertRaisesRegex(self, TypeError, msg) do 
@@ -1193,7 +1193,7 @@ b["a"]
 end
 end
 
-function test_setitem_error(self::ByteArrayTest)
+function test_setitem_error(self)
 b = Vector{UInt8}(b"python")
 msg = "bytearray indices must be integers or slices"
 assertRaisesRegex(self, TypeError, msg) do 
@@ -1201,11 +1201,11 @@ b["a"] = "python"
 end
 end
 
-function test_nohash(self::ByteArrayTest)
+function test_nohash(self)
 @test_throws TypeError hash(Vector{UInt8}())
 end
 
-function test_bytearray_api(self::ByteArrayTest)
+function test_bytearray_api(self)
 short_sample = b"Hello world\n"
 sample = append!(short_sample, repeat(b"\x00",(20 - length(short_sample))))
 tfn = mktemp()
@@ -1236,7 +1236,7 @@ end
 end
 end
 
-function test_reverse(self::ByteArrayTest)
+function test_reverse(self)
 b = Vector{UInt8}(b"hello")
 @test (reverse(b) == nothing)
 @test (b == b"olleh")
@@ -1248,7 +1248,7 @@ reverse(b)
 @test !(b)
 end
 
-function test_clear(self::ByteArrayTest)
+function test_clear(self)
 b = Vector{UInt8}(b"python")
 clear(b)
 @test (b == b"")
@@ -1262,7 +1262,7 @@ append(b, Int(codepoint('p')))
 @test (b == b"p")
 end
 
-function test_copy(self::ByteArrayTest)
+function test_copy(self)
 b = Vector{UInt8}(b"abc")
 bb = copy(b)
 @test (bb == b"abc")
@@ -1278,7 +1278,7 @@ append(bb, Int(codepoint('d')))
 @test (b == b"abc")
 end
 
-function test_regexps(self::ByteArrayTest)
+function test_regexps(self)
 function by(s)::Vector{Int8}
 return Vector{UInt8}(map(ord, s))
 end
@@ -1287,7 +1287,7 @@ b = by("Hello, world")
 @test (findall(b"\\w+", b) == [by("Hello"), by("world")])
 end
 
-function test_setitem(self::ByteArrayTest)
+function test_setitem(self)
 b = Vector{UInt8}([1, 2, 3])
 b[2] = 100
 @test (b == Vector{UInt8}([1, 100, 3]))
@@ -1337,7 +1337,7 @@ end
 end
 end
 
-function test_delitem(self::ByteArrayTest)
+function test_delitem(self)
 b = Vector{UInt8}(0:9)
 #Delete Unsupported
 del(b)
@@ -1350,7 +1350,7 @@ del(b)
 @test (b == Vector{UInt8}([1, 2, 3, 4, 6, 7, 8]))
 end
 
-function test_setslice(self::ByteArrayTest)
+function test_setslice(self)
 b = Vector{UInt8}(0:9)
 @test (collect(b) == collect(0:9))
 b[1:5] = Vector{UInt8}([1, 1, 1, 1, 1])
@@ -1384,7 +1384,7 @@ end
 end
 end
 
-function test_setslice_extend(self::ByteArrayTest)
+function test_setslice_extend(self)
 b = Vector{UInt8}(0:99)
 @test (collect(b) == collect(0:99))
 #Delete Unsupported
@@ -1394,7 +1394,7 @@ extend(b, 100:109)
 @test (collect(b) == collect(10:109))
 end
 
-function test_fifo_overrun(self::ByteArrayTest)
+function test_fifo_overrun(self)
 b = Vector{UInt8}(10)
 pop(b)
 #Delete Unsupported
@@ -1404,7 +1404,7 @@ b += bytes(2)
 del(b)
 end
 
-function test_del_expand(self::ByteArrayTest)
+function test_del_expand(self)
 b = Vector{UInt8}(10)
 size = getsizeof(b)
 #Delete Unsupported
@@ -1412,7 +1412,7 @@ del(b)
 assertLessEqual(self, getsizeof(b), size)
 end
 
-function test_extended_set_del_slice(self::ByteArrayTest)
+function test_extended_set_del_slice(self)
 indices = (0, nothing, 1, 3, 19, 300, 1 << 333, sys.maxsize, -1, -2, -31, -300)
 for start in indices
 for stop in indices
@@ -1434,13 +1434,13 @@ end
 end
 end
 
-function test_setslice_trap(self::ByteArrayTest)
+function test_setslice_trap(self)
 b = Vector{UInt8}(0:255)
 b[9:end] = b
 @test (b == Vector{UInt8}(append!(collect(0:7), collect(0:255))))
 end
 
-function test_iconcat(self::ByteArrayTest)
+function test_iconcat(self)
 b = Vector{UInt8}(b"abc")
 b1 = b
 b += b"def"
@@ -1458,7 +1458,7 @@ end
 end
 end
 
-function test_irepeat(self::ByteArrayTest)
+function test_irepeat(self)
 b = Vector{UInt8}(b"abc")
 b1 = b
 b *= 3
@@ -1467,7 +1467,7 @@ b *= 3
 assertIs(self, b, b1)
 end
 
-function test_irepeat_1char(self::ByteArrayTest)
+function test_irepeat_1char(self)
 b = Vector{UInt8}(b"x")
 b1 = b
 b *= 100
@@ -1476,7 +1476,7 @@ b *= 100
 assertIs(self, b, b1)
 end
 
-function test_alloc(self::ByteArrayTest)
+function test_alloc(self)
 b = Vector{UInt8}()
 alloc = __alloc__(b)
 assertGreaterEqual(self, alloc, 0)
@@ -1491,7 +1491,7 @@ end
 end
 end
 
-function test_init_alloc(self::ByteArrayTest)
+function test_init_alloc(self)
 Channel() do ch_test_init_alloc 
 b = Vector{UInt8}()
 function g()
@@ -1516,7 +1516,7 @@ assertGreater(self, alloc, length(b))
 end
 end
 
-function test_extend(self::ByteArrayTest)
+function test_extend(self)
 orig = b"hello"
 a = Vector{UInt8}(orig)
 extend(a, a)
@@ -1544,7 +1544,7 @@ extend(a, [Indexable(Int(codepoint('a')))])
 @test (a == b"a")
 end
 
-function test_remove(self::ByteArrayTest)
+function test_remove(self)
 b = Vector{UInt8}(b"hello")
 remove(b, Int(codepoint('l')))
 @test (b == b"helo")
@@ -1566,7 +1566,7 @@ remove(c, 129)
 @test (c == bytes([126, 128]))
 end
 
-function test_pop(self::ByteArrayTest)
+function test_pop(self)
 b = Vector{UInt8}(b"world")
 @test (pop(b) == Int(codepoint('d')))
 @test (pop(b, 0) == Int(codepoint('w')))
@@ -1576,11 +1576,11 @@ b = Vector{UInt8}(b"world")
 @test (pop(Vector{UInt8}(b"\xff")) == 255)
 end
 
-function test_nosort(self::ByteArrayTest)
+function test_nosort(self)
 @test_throws AttributeError () -> sort(Vector{UInt8}())()
 end
 
-function test_append(self::ByteArrayTest)
+function test_append(self)
 b = Vector{UInt8}(b"hell")
 append(b, Int(codepoint('o')))
 @test (b == b"hello")
@@ -1594,7 +1594,7 @@ append(b, Indexable(Int(codepoint('A'))))
 @test (b == b"A")
 end
 
-function test_insert(self::ByteArrayTest)
+function test_insert(self)
 b = Vector{UInt8}(b"msssspp")
 insert(b, 1, Int(codepoint('i')))
 insert(b, 4, Int(codepoint('i')))
@@ -1607,7 +1607,7 @@ insert(b, 0, Indexable(Int(codepoint('A'))))
 @test (b == b"A")
 end
 
-function test_copied(self::ByteArrayTest)
+function test_copied(self)
 b = Vector{UInt8}(b"abc")
 assertIsNot(self, b, replace(b, b"abc", b"cde", 0))
 t = Vector{UInt8}([i for i in 0:255])
@@ -1615,7 +1615,7 @@ x = Vector{UInt8}(b"")
 assertIsNot(self, x, replace!(collect(x), t...))
 end
 
-function test_partition_bytearray_doesnt_share_nullstring(self::ByteArrayTest)
+function test_partition_bytearray_doesnt_share_nullstring(self)
 a, b, c = partition(Vector{UInt8}(b"x"), b"y")
 @test (b == b"")
 @test (c == b"")
@@ -1636,7 +1636,7 @@ c, b, a = rpartition(Vector{UInt8}(b"x"), b"y")
 @test (c == b"")
 end
 
-function test_resize_forbidden(self::ByteArrayTest)
+function test_resize_forbidden(self)
 b = Vector{UInt8}(0:9)
 v = memoryview(b)
 function resize(n)
@@ -1670,11 +1670,11 @@ end
 @test (b == orig)
 end
 
-function test_obsolete_write_lock(self::ByteArrayTest)
+function test_obsolete_write_lock(self)
 @test_throws BufferError getbuffer_with_null_view(Vector{UInt8}())
 end
 
-function test_iterator_pickling2(self::ByteArrayTest)
+function test_iterator_pickling2(self)
 orig = Vector{UInt8}(b"abc")
 data = collect(b"qwerty")
 for proto in 0:pickle.HIGHEST_PROTOCOL
@@ -1706,7 +1706,7 @@ b[begin:end] = data
 end
 end
 
-function test_iterator_length_hint(self::ByteArrayTest)
+function test_iterator_length_hint(self)
 ba = Vector{UInt8}(b"ab")
 it = (x for x in ba)
 next(it)
@@ -1714,7 +1714,7 @@ clear(ba)
 @test (collect(it) == [])
 end
 
-function test_repeat_after_setslice(self::ByteArrayTest)
+function test_repeat_after_setslice(self)
 b = Vector{UInt8}(b"abc")
 b[begin:2] = b"x"
 b1 = repeat(b,1)
@@ -1727,7 +1727,7 @@ end
 mutable struct AssortedBytesTest <: AbstractAssortedBytesTest
 
 end
-function test_repr_str(self::AssortedBytesTest)
+function test_repr_str(self)
 for f in (str, repr)
 @test (f(Vector{UInt8}()) == "bytearray(b\'\')")
 @test (f(Vector{UInt8}([0])) == "bytearray(b\'\\x00\')")
@@ -1738,7 +1738,7 @@ for f in (str, repr)
 end
 end
 
-function test_format(self::AssortedBytesTest)
+function test_format(self)
 for b in (b"abc", Vector{UInt8}(b"abc"))
 @test (b == string(b))
 @test (b == string(b))
@@ -1748,7 +1748,7 @@ end
 end
 end
 
-function test_compare_bytes_to_bytearray(self::AssortedBytesTest)
+function test_compare_bytes_to_bytearray(self)
 @test (b"abc" == bytes(b"abc") == true_)
 @test (b"ab" != bytes(b"abc") == true_)
 @test (b"ab" <= bytes(b"abc") == true_)
@@ -1775,21 +1775,21 @@ function test_compare_bytes_to_bytearray(self::AssortedBytesTest)
 @test (bytes(b"abc") <= b"ab" == false_)
 end
 
-function test_doc(self::AssortedBytesTest)
+function test_doc(self)
 assertIsNotNone(self, bytearray.__doc__)
 @test startswith(bytearray.__doc__, "bytearray(")
 assertIsNotNone(self, bytes.__doc__)
 @test startswith(bytes.__doc__, "bytes(")
 end
 
-function test_from_bytearray(self::AssortedBytesTest)
+function test_from_bytearray(self)
 sample = bytes(b"Hello world\n\x80\x81\xfe\xff")
 buf = memoryview(sample)
 b = Vector{UInt8}(buf)
 @test (b == Vector{UInt8}(sample))
 end
 
-function test_to_str(self::AssortedBytesTest)
+function test_to_str(self)
 @test (string(b"") == "b\'\'")
 @test (string(b"x") == "b\'x\'")
 @test (string(b"\x80") == "b\'\\x80\'")
@@ -1798,7 +1798,7 @@ function test_to_str(self::AssortedBytesTest)
 @test (string(Vector{UInt8}(b"\x80")) == "bytearray(b\'\\x80\')")
 end
 
-function test_literal(self::AssortedBytesTest)
+function test_literal(self)
 tests = [(b"Wonderful spam", "Wonderful spam"), (b"Wonderful spam too", "Wonderful spam too"), (b"\xaa\x00\x00\x80", "ª\0\0\x80"), (b"\\xaa\\x00\\000\\200", "\\xaa\\x00\\000\\200")]
 for (b, s) in tests
 @test (b == Vector{UInt8}(s))
@@ -1808,20 +1808,20 @@ for c in 128:255
 end
 end
 
-function test_split_bytearray(self::AssortedBytesTest)
+function test_split_bytearray(self)
 @test (split(b"a b", memoryview(b" ")) == [b"a", b"b"])
 end
 
-function test_rsplit_bytearray(self::AssortedBytesTest)
+function test_rsplit_bytearray(self)
 @test (rsplit(b"a b", memoryview(b" ")) == [b"a", b"b"])
 end
 
-function test_return_self(self::AssortedBytesTest)
+function test_return_self(self)
 b = Vector{UInt8}()
 assertIsNot(self, replace(b, b"", b""), b)
 end
 
-function test_compare(self::AssortedBytesTest)
+function test_compare(self)
 function bytes_warning()
 return check_warnings(("", BytesWarning))
 end
@@ -1867,11 +1867,11 @@ end
 mutable struct BytearrayPEP3137Test <: AbstractBytearrayPEP3137Test
 
 end
-function marshal(self::BytearrayPEP3137Test, x)::Vector{Int8}
+function marshal(self, x)::Vector{Int8}
 return Vector{UInt8}(x)
 end
 
-function test_returns_new_copy(self::BytearrayPEP3137Test)
+function test_returns_new_copy(self)
 val = marshal(self, b"1234")
 for methname in ("zfill", "rjust", "ljust", "center")
 method = getfield(val, :methname)
@@ -1896,7 +1896,7 @@ contains_bytes::Bool
                     FixedStringTest(contains_bytes::Bool = true) =
                         new(contains_bytes)
 end
-function fixtype(self::FixedStringTest, obj)
+function fixtype(self, obj)
 if isa(obj, str)
 return type2test(self, encode(obj, "utf-8"))
 end
@@ -1921,7 +1921,7 @@ mutable struct SubclassTest <: AbstractSubclassTest
 type2test
 basetype
 end
-function test_basic(self::SubclassTest)
+function test_basic(self)
 assertTrue(self, self.type2test <: self.basetype)
 assertIsInstance(self, type2test(self), self.basetype)
 a, b = (b"abcd", b"efgh")
@@ -1939,7 +1939,7 @@ assertEqual(self, a + b, _a + b)
 assertTrue(self, (a*5) == (_a*5))
 end
 
-function test_join(self::SubclassTest)
+function test_join(self)
 s1 = type2test(self, b"abcd")
 s2 = join([s1], basetype(self))
 assertIsNot(self, s1, s2)
@@ -1948,7 +1948,7 @@ s3 = join([b"abcd"], s1)
 assertIs(self, type_(s3), self.basetype)
 end
 
-function test_pickle(self::SubclassTest)
+function test_pickle(self)
 a = type2test(self, b"abcd")
 a.x = 10
 a.y = type2test(self, b"efgh")
@@ -1963,7 +1963,7 @@ assertEqual(self, type_(a.y), type_(b.y))
 end
 end
 
-function test_copy(self::SubclassTest)
+function test_copy(self)
 a = type2test(self, b"abcd")
 a.x = 10
 a.y = type2test(self, b"efgh")
@@ -1978,7 +1978,7 @@ assertEqual(self, type_(a.y), type_(b.y))
 end
 end
 
-function test_fromhex(self::B2)
+function test_fromhex(self)
 b = fromhex(self.type2test, "1a2B30")
 assertEqual(self, b, b"\x1a+0")
 assertIs(self, type_(b), self.type2test)
@@ -2000,7 +2000,7 @@ basetype
 
             B2() = begin
                 if basetype !== bytes
-basetype.__init__(me, args..., kwargs)
+basetype.__init__(me, args..., None = kwargs)
 end
                 new()
             end
@@ -2032,12 +2032,12 @@ type2test::AbstractByteArraySubclass
                     ByteArraySubclassTest(basetype = bytearray, newarg::Int64 = 1, type2test::AbstractByteArraySubclass = ByteArraySubclass) =
                         new(basetype, newarg, type2test)
 end
-function test_init_override(self::subclass)
+function test_init_override(self)
 mutable struct subclass <: Abstractsubclass
 newarg::Int64
 
             subclass(newarg = 1) = begin
-                bytearray.__init__(me, args..., kwargs)
+                bytearray.__init__(me, args..., None = kwargs)
                 new(newarg )
             end
 end

@@ -7,12 +7,12 @@ abstract type AbstractBuiltinCompileTests end
 mutable struct PEP3120Test <: AbstractPEP3120Test
 
 end
-function test_pep3120(self::PEP3120Test)
+function test_pep3120(self)
 @test (encode("Питон", "utf-8") == b"\xd0\x9f\xd0\xb8\xd1\x82\xd0\xbe\xd0\xbd")
 @test (encode("\\П", "utf-8") == b"\\\xd0\x9f")
 end
 
-function test_badsyntax(self::PEP3120Test)
+function test_badsyntax(self)
 try
 catch exn
  let msg = exn
@@ -27,7 +27,7 @@ end
 mutable struct BuiltinCompileTests <: AbstractBuiltinCompileTests
 
 end
-function test_latin1(self::BuiltinCompileTests)
+function test_latin1(self)
 source_code = encode("# coding: Latin-1\nu = \"Ç\"\n", "Latin-1")
 try
 code = compile(source_code, "<dummy>", "exec")

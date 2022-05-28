@@ -4,8 +4,8 @@ using test.support.import_helper: import_fresh_module
 TESTS = "test.datetimetester"
 function load_tests(loader, tests, pattern)
 try
-pure_tests = import_fresh_module(TESTS, ["datetime", "_strptime"], ["_datetime"])
-fast_tests = import_fresh_module(TESTS, ["datetime", "_datetime", "_strptime"])
+pure_tests = import_fresh_module(TESTS, fresh = ["datetime", "_strptime"], blocked = ["_datetime"])
+fast_tests = import_fresh_module(TESTS, fresh = ["datetime", "_datetime", "_strptime"])
 finally
 for modname in ["datetime", "_datetime", "_strptime"]
 pop(sys.modules, modname, nothing)
@@ -26,7 +26,7 @@ suit = cls()
 append!(test_classes, (type_(test) for test in suit))
 end
 end
-test_classes = sorted(set(test_classes), (cls) -> cls.__qualname__)
+test_classes = sorted(set(test_classes), key = (cls) -> cls.__qualname__)
 for cls in test_classes
 cls.__name__ += suffix
 cls.__qualname__ += suffix

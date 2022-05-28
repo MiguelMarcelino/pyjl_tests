@@ -11,14 +11,14 @@ type2test
                     UserStringTest(type2test = UserString) =
                         new(type2test)
 end
-function checkequal(self::UserStringTest, result, object, methodname)
+function checkequal(self, result, object, methodname)
 result = fixtype(self, result)
 object = fixtype(self, object)
-realresult = getfield(object, :methodname)(args..., kwargs)
+realresult = getfield(object, :methodname)(args..., None = kwargs)
 @test (result == realresult)
 end
 
-function checkraises(self::UserStringTest, exc, obj, methodname)
+function checkraises(self, exc, obj, methodname)
 obj = fixtype(self, obj)
 assertRaises(self, exc) do cm 
 getfield(obj, :methodname)(args...)
@@ -26,12 +26,12 @@ end
 assertNotEqual(self, string(cm.exception), "")
 end
 
-function checkcall(self::UserStringTest, object, methodname)
+function checkcall(self, object, methodname)
 object = fixtype(self, object)
 getfield(object, :methodname)(args...)
 end
 
-function test_rmod(self::ustr3)
+function test_rmod(self)
 mutable struct ustr2 <: Abstractustr2
 
 end
@@ -39,7 +39,7 @@ end
 mutable struct ustr3 <: Abstractustr3
 
 end
-function __rmod__(self::ustr3, other)
+function __rmod__(self, other)
 return __rmod__(super(), other)
 end
 
@@ -48,13 +48,13 @@ str3 = ustr3("TEST")
 assertEqual(self, __mod__(fmt2, str3), "value is TEST")
 end
 
-function test_encode_default_args(self::UserStringTest)
+function test_encode_default_args(self)
 checkequal(self, b"hello", "hello", "encode")
 checkequal(self, b"\xf0\xa3\x91\x96", "𣑖", "encode")
 checkraises(self, UnicodeError, "\ud800", "encode")
 end
 
-function test_encode_explicit_none_args(self::UserStringTest)
+function test_encode_explicit_none_args(self)
 checkequal(self, b"hello", "hello", "encode")
 checkequal(self, b"\xf0\xa3\x91\x96", "𣑖", "encode")
 checkraises(self, UnicodeError, "\ud800", "encode")

@@ -67,32 +67,32 @@ end
                 new(num , den , __radd__ , __rmul__ , __slots__)
             end
 end
-function _get_num(self::Rat)::Int64
+function _get_num(self)::Int64
 #= Accessor function for read-only 'num' attribute of Rat. =#
 return self.__num
 end
 
-function _get_den(self::Rat)::Int64
+function _get_den(self)::Int64
 #= Accessor function for read-only 'den' attribute of Rat. =#
 return self.__den
 end
 
-function __repr__(self::Rat)
+function __repr__(self)
 #= Convert a Rat to a string resembling a Rat constructor call. =#
 return "Rat(%d, %d)" % (self.__num, self.__den)
 end
 
-function __str__(self::Rat)::String
+function __str__(self)::String
 #= Convert a Rat to a string resembling a decimal numeric value. =#
 return string(float(self))
 end
 
-function __float__(self::Rat)::Float64
+function __float__(self)::Float64
 #= Convert a Rat to a float. =#
 return self.__num*1.0 / self.__den
 end
 
-function __int__(self::Rat)::Int64
+function __int__(self)::Int64
 #= Convert a Rat to an int; self.den must be 1. =#
 if self.__den == 1
 try
@@ -106,7 +106,7 @@ end
 throw(ValueError("can\'t convert %s to int" % repr(self)))
 end
 
-function __add__(self::Rat, other)::Union[Union[Union[Rat,float],Rat],float]
+function __add__(self, other)::Union[Union[Union[Rat,float],Rat],float]
 #= Add two Rats, or a Rat and a number. =#
 if isint(other)
 other = Rat(other)
@@ -120,7 +120,7 @@ end
 return NotImplemented
 end
 
-function __sub__(self::Rat, other)::Union[Union[Union[Rat,float],Rat],float]
+function __sub__(self, other)::Union[Union[Union[Rat,float],Rat],float]
 #= Subtract two Rats, or a Rat and a number. =#
 if isint(other)
 other = Rat(other)
@@ -134,7 +134,7 @@ end
 return NotImplemented
 end
 
-function __rsub__(self::Rat, other)::Union[Union[Union[Rat,float],Rat],float]
+function __rsub__(self, other)::Union[Union[Union[Rat,float],Rat],float]
 #= Subtract two Rats, or a Rat and a number (reversed args). =#
 if isint(other)
 other = Rat(other)
@@ -148,7 +148,7 @@ end
 return NotImplemented
 end
 
-function __mul__(self::Rat, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
+function __mul__(self, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
 #= Multiply two Rats, or a Rat and a number. =#
 if isRat(other)
 return Rat(self.__num*other.__num, self.__den*other.__den)
@@ -162,7 +162,7 @@ end
 return NotImplemented
 end
 
-function __truediv__(self::Rat, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
+function __truediv__(self, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
 #= Divide two Rats, or a Rat and a number. =#
 if isRat(other)
 return Rat(self.__num*other.__den, self.__den*other.__num)
@@ -176,7 +176,7 @@ end
 return NotImplemented
 end
 
-function __rtruediv__(self::Rat, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
+function __rtruediv__(self, other)::Union[Union[Union[Union[Rat,float],Rat],Rat],float]
 #= Divide two Rats, or a Rat and a number (reversed args). =#
 if isRat(other)
 return Rat(other.__num*self.__den, other.__den*self.__num)
@@ -190,7 +190,7 @@ end
 return NotImplemented
 end
 
-function __floordiv__(self::Rat, other)::Any
+function __floordiv__(self, other)::Any
 #= Divide two Rats, returning the floored result. =#
 if isint(other)
 other = Rat(other)
@@ -201,13 +201,13 @@ x = self / other
 return x.__num ÷ x.__den
 end
 
-function __rfloordiv__(self::Rat, other)::Any
+function __rfloordiv__(self, other)::Any
 #= Divide two Rats, returning the floored result (reversed args). =#
 x = other / self
 return x.__num ÷ x.__den
 end
 
-function __divmod__(self::Rat, other)::Tuple
+function __divmod__(self, other)::Tuple
 #= Divide two Rats, returning quotient and remainder. =#
 if isint(other)
 other = Rat(other)
@@ -218,7 +218,7 @@ x = self ÷ other
 return (x, self - other*x)
 end
 
-function __rdivmod__(self::Rat, other)
+function __rdivmod__(self, other)
 #= Divide two Rats, returning quotient and remainder (reversed args). =#
 if isint(other)
 other = Rat(other)
@@ -228,17 +228,17 @@ end
 return div(other)
 end
 
-function __mod__(self::Rat, other)
+function __mod__(self, other)
 #= Take one Rat modulo another. =#
 return div(self)[2]
 end
 
-function __rmod__(self::Rat, other)
+function __rmod__(self, other)
 #= Take one Rat modulo another (reversed args). =#
 return div(other)[2]
 end
 
-function __eq__(self::Rat, other)::Bool
+function __eq__(self, other)::Bool
 #= Compare two Rats for equality. =#
 if isint(other)
 return self.__den == 1 && self.__num == other
@@ -256,7 +256,7 @@ mutable struct RatTestCase <: AbstractRatTestCase
 #= Unit tests for Rat class and its support utilities. =#
 
 end
-function test_gcd(self::RatTestCase)
+function test_gcd(self)
 @test (gcd(10, 12) == 2)
 @test (gcd(10, 15) == 5)
 @test (gcd(10, 11) == 1)
@@ -274,7 +274,7 @@ end
 end
 end
 
-function test_constructor(self::RatTestCase)
+function test_constructor(self)
 a = Rat(10, 15)
 @test (a.num == 2)
 @test (a.den == 3)
@@ -315,7 +315,7 @@ end
 end
 end
 
-function test_add(self::RatTestCase)
+function test_add(self)
 @test (Rat(2, 3) + Rat(1, 3) == 1)
 @test (Rat(2, 3) + 1 == Rat(5, 3))
 @test (1 + Rat(2, 3) == Rat(5, 3))
@@ -323,7 +323,7 @@ function test_add(self::RatTestCase)
 @test (Rat(1, 2) + 1.0 == 1.5)
 end
 
-function test_sub(self::RatTestCase)
+function test_sub(self)
 @test (Rat(7, 2) - Rat(7, 5) == Rat(21, 10))
 @test (Rat(7, 5) - 1 == Rat(2, 5))
 @test (1 - Rat(3, 5) == Rat(2, 5))
@@ -331,7 +331,7 @@ function test_sub(self::RatTestCase)
 @test (1.0 - Rat(1, 2) == 0.5)
 end
 
-function test_mul(self::RatTestCase)
+function test_mul(self)
 @test (Rat(2, 3)*Rat(5, 7) == Rat(10, 21))
 @test (Rat(10, 3)*3 == 10)
 @test (3*Rat(10, 3) == 10)
@@ -339,7 +339,7 @@ function test_mul(self::RatTestCase)
 @test (0.5*Rat(10, 5) == 1.0)
 end
 
-function test_div(self::RatTestCase)
+function test_div(self)
 @test (Rat(10, 3) / Rat(5, 7) == Rat(14, 3))
 @test (Rat(10, 3) / 3 == Rat(10, 9))
 @test (2 / Rat(5) == Rat(2, 5))
@@ -347,14 +347,14 @@ function test_div(self::RatTestCase)
 @test (Rat(1, 2)*3.0 == 1.5)
 end
 
-function test_floordiv(self::RatTestCase)
+function test_floordiv(self)
 @test (Rat(10) ÷ Rat(4) == 2)
 @test (Rat(10, 3) ÷ Rat(4, 3) == 2)
 @test (Rat(10) ÷ 4 == 2)
 @test (10 ÷ Rat(4) == 2)
 end
 
-function test_eq(self::RatTestCase)
+function test_eq(self)
 @test (Rat(10) == Rat(20, 2))
 @test (Rat(10) == 10)
 @test (10 == Rat(10))
@@ -362,7 +362,7 @@ function test_eq(self::RatTestCase)
 @test (10.0 == Rat(10))
 end
 
-function test_true_div(self::RatTestCase)
+function test_true_div(self)
 @test (Rat(10, 3) / Rat(5, 7) == Rat(14, 3))
 @test (Rat(10, 3) / 3 == Rat(10, 9))
 @test (2 / Rat(5) == Rat(2, 5))
@@ -375,7 +375,7 @@ mutable struct OperationLogger <: AbstractOperationLogger
 #= Base class for classes with operation logging. =#
 logger
 end
-function log_operation(self::OperationLogger)
+function log_operation(self)
 logger(self, args...)
 end
 
@@ -400,17 +400,17 @@ end
 mutable struct A <: AbstractA
 
 end
-function __eq__(self::A, other)
+function __eq__(self, other)
 log_operation(self, "A.__eq__")
 return NotImplemented
 end
 
-function __le__(self::A, other)
+function __le__(self, other)
 log_operation(self, "A.__le__")
 return NotImplemented
 end
 
-function __ge__(self::A, other)
+function __ge__(self, other)
 log_operation(self, "A.__ge__")
 return NotImplemented
 end
@@ -418,17 +418,17 @@ end
 mutable struct B <: AbstractB
 
 end
-function __eq__(self::B, other)
+function __eq__(self, other)
 log_operation(self, "B.__eq__")
 return NotImplemented
 end
 
-function __le__(self::B, other)
+function __le__(self, other)
 log_operation(self, "B.__le__")
 return NotImplemented
 end
 
-function __ge__(self::B, other)
+function __ge__(self, other)
 log_operation(self, "B.__ge__")
 return NotImplemented
 end
@@ -436,17 +436,17 @@ end
 mutable struct C <: AbstractC
 
 end
-function __eq__(self::C, other)
+function __eq__(self, other)
 log_operation(self, "C.__eq__")
 return NotImplemented
 end
 
-function __le__(self::C, other)
+function __le__(self, other)
 log_operation(self, "C.__le__")
 return NotImplemented
 end
 
-function __ge__(self::C, other)
+function __ge__(self, other)
 log_operation(self, "C.__ge__")
 return NotImplemented
 end
@@ -455,17 +455,17 @@ mutable struct V <: AbstractV
 #= Virtual subclass of B =#
 
 end
-function __eq__(self::V, other)
+function __eq__(self, other)
 log_operation(self, "V.__eq__")
 return NotImplemented
 end
 
-function __le__(self::V, other)
+function __le__(self, other)
 log_operation(self, "V.__le__")
 return NotImplemented
 end
 
-function __ge__(self::V, other)
+function __ge__(self, other)
 log_operation(self, "V.__ge__")
 return NotImplemented
 end
@@ -474,7 +474,7 @@ B.register(V)
 mutable struct OperationOrderTests <: AbstractOperationOrderTests
 
 end
-function test_comparison_orders(self::OperationOrderTests)
+function test_comparison_orders(self)
 @test (op_sequence(eq) == ["A.__eq__", "A.__eq__"])
 @test (op_sequence(eq) == ["A.__eq__", "B.__eq__"])
 @test (op_sequence(eq) == ["B.__eq__", "A.__eq__"])
@@ -494,7 +494,7 @@ mutable struct SupEq <: AbstractSupEq
 #= Class that can test equality =#
 
 end
-function __eq__(self::SupEq, other)::Bool
+function __eq__(self, other)::Bool
 return true
 end
 
@@ -534,7 +534,7 @@ __ne__
                     XN(__ne__ = nothing) =
                         new(__ne__)
 end
-function __eq__(self::XN, other)::Bool
+function __eq__(self, other)::Bool
 return true
 end
 
@@ -542,7 +542,7 @@ mutable struct FallbackBlockingTests <: AbstractFallbackBlockingTests
 #= Unit tests for None method blocking =#
 
 end
-function test_fallback_rmethod_blocking(self::FallbackBlockingTests)
+function test_fallback_rmethod_blocking(self)
 e, f, s, x = (SupEq(), F(), S(), X())
 @test (e == e)
 @test (e == f)
@@ -553,7 +553,7 @@ e, f, s, x = (SupEq(), F(), S(), X())
 @test_throws TypeError eq(s, e)
 end
 
-function test_fallback_ne_blocking(self::FallbackBlockingTests)
+function test_fallback_ne_blocking(self)
 e, sn, xn = (SupEq(), SN(), XN())
 @test !(e !== e)
 @test_throws TypeError ne(e, sn)

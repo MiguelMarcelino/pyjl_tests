@@ -69,7 +69,7 @@ end
 mutable struct HashEqualityTestCase <: AbstractHashEqualityTestCase
 
 end
-function same_hash(self::HashEqualityTestCase)
+function same_hash(self)
 hashed = collect(map(hash, objlist))
 for h in hashed[2:end]
 if h != hashed[1]
@@ -78,14 +78,14 @@ end
 end
 end
 
-function test_numeric_literals(self::HashEqualityTestCase)
+function test_numeric_literals(self)
 same_hash(self)
 same_hash(self)
 same_hash(self)
 same_hash(self)
 end
 
-function test_coerced_integers(self::HashEqualityTestCase)
+function test_coerced_integers(self)
 same_hash(self)
 same_hash(self)
 same_hash(self)
@@ -95,12 +95,12 @@ same_hash(self)
 same_hash(self)
 end
 
-function test_coerced_floats(self::HashEqualityTestCase)
+function test_coerced_floats(self)
 same_hash(self)
 same_hash(self)
 end
 
-function test_unaligned_buffers(self::HashEqualityTestCase)
+function test_unaligned_buffers(self)
 b = repeat(b"123456789abcdefghijklmnopqrstuvwxyz",128)
 for i in 0:15
 for j in 0:15
@@ -120,21 +120,21 @@ _FIXED_HASH_VALUE = 42
 mutable struct FixedHash <: AbstractFixedHash
 
 end
-function __hash__(self::FixedHash)::Int64
+function __hash__(self)::Int64
 return _FIXED_HASH_VALUE
 end
 
 mutable struct OnlyEquality <: AbstractOnlyEquality
 
 end
-function __eq__(self::OnlyEquality, other)::Bool
+function __eq__(self, other)::Bool
 return self === other
 end
 
 mutable struct OnlyInequality <: AbstractOnlyInequality
 
 end
-function __ne__(self::OnlyInequality, other)::Bool
+function __ne__(self, other)::Bool
 return self !== other
 end
 
@@ -154,39 +154,39 @@ __hash__
 end
 
 mutable struct HashInheritanceTestCase <: AbstractHashInheritanceTestCase
-default_expected::Vector{Union{OnlyInequality, DefaultHash}}
-error_expected::Vector{Union{NoHash, OnlyEquality}}
-fixed_expected::Vector{Union{InheritedHashWithInequality, InheritedHashWithEquality, FixedHash}}
+default_expected
+error_expected
+fixed_expected
 
-                    HashInheritanceTestCase(default_expected::Vector{Union{OnlyInequality, DefaultHash}} = [object(), DefaultHash(), OnlyInequality()], error_expected::Vector{Union{NoHash, OnlyEquality}} = [NoHash(), OnlyEquality()], fixed_expected::Vector{Union{InheritedHashWithInequality, InheritedHashWithEquality, FixedHash}} = [FixedHash(), InheritedHashWithEquality(), InheritedHashWithInequality()]) =
+                    HashInheritanceTestCase(default_expected = [object(), DefaultHash(), OnlyInequality()], error_expected = [NoHash(), OnlyEquality()], fixed_expected = [FixedHash(), InheritedHashWithEquality(), InheritedHashWithInequality()]) =
                         new(default_expected, error_expected, fixed_expected)
 end
-function test_default_hash(self::HashInheritanceTestCase)
+function test_default_hash(self)
 for obj in self.default_expected
 @test (hash(obj) == _default_hash(obj))
 end
 end
 
-function test_fixed_hash(self::HashInheritanceTestCase)
+function test_fixed_hash(self)
 for obj in self.fixed_expected
 @test (hash(obj) == _FIXED_HASH_VALUE)
 end
 end
 
-function test_error_hash(self::HashInheritanceTestCase)
+function test_error_hash(self)
 for obj in self.error_expected
 @test_throws TypeError hash(obj)
 end
 end
 
-function test_hashable(self::HashInheritanceTestCase)
+function test_hashable(self)
 objects = self.default_expected + self.fixed_expected
 for obj in objects
 @test isa(self, obj)
 end
 end
 
-function test_not_hashable(self::HashInheritanceTestCase)
+function test_not_hashable(self)
 for obj in self.error_expected
 assertNotIsInstance(self, obj, Hashable)
 end
@@ -198,11 +198,11 @@ seq
                     DefaultIterSeq(seq = 0:9) =
                         new(seq)
 end
-function __len__(self::DefaultIterSeq)::Int64
+function __len__(self)::Int64
 return length(self.seq)
 end
 
-function __getitem__(self::DefaultIterSeq, index)
+function __getitem__(self, index)
 return self.seq[index + 1]
 end
 
@@ -212,7 +212,7 @@ hashes_to_check::Vector
                     HashBuiltinsTestCase(hashes_to_check::Vector = [enumerate(0:9), (x for x in DefaultIterSeq()), (x for x in () -> 0)]) =
                         new(hashes_to_check)
 end
-function test_hashes(self::HashBuiltinsTestCase)
+function test_hashes(self)
 _default_hash = object.__hash__
 for obj in self.hashes_to_check
 @test (hash(obj) == _default_hash(obj))
@@ -222,11 +222,11 @@ end
 mutable struct HashRandomizationTests <: AbstractHashRandomizationTests
 
 end
-function get_hash_command(self::HashRandomizationTests, repr_)::String
+function get_hash_command(self, repr_)::String
 return "print(hash(eval(%a)))" % repr_
 end
 
-function get_hash(self::HashRandomizationTests, repr_, seed = nothing)::Int64
+function get_hash(self, repr_, seed = nothing)::Int64
 env = copy(os.environ)
 env["__cleanenv"] = true
 if seed !== nothing
@@ -234,12 +234,12 @@ env["PYTHONHASHSEED"] = string(seed)
 else
 pop(env, "PYTHONHASHSEED", nothing)
 end
-out = assert_python_ok("-c", get_hash_command(self, repr_), env)
+out = assert_python_ok("-c", get_hash_command(self, repr_), None = env)
 stdout = strip(out[2])
 return parse(Int, stdout)
 end
 
-function test_randomized_hash(self::HashRandomizationTests)
+function test_randomized_hash(self)
 run1 = get_hash(self, self.repr_)
 run2 = get_hash(self, self.repr_)
 assertNotEqual(self, run1, run2)
@@ -253,7 +253,7 @@ repr_long
                     StringlikeHashRandomizationTests(known_hashes::Dict{String, Vector{Vector{Int64}}} = Dict("djba33x" => [[193485960, 193485960, 193485960, 193485960], [-678966196, 573763426263223372, -820489388, -4282905804826039665]], "siphash24" => [[1198583518, 4596069200710135518, 1198583518, 4596069200710135518], [273876886, -4501618152524544106, 273876886, -4501618152524544106], [-1745215313, 4436719588892876975, -1745215313, 4436719588892876975], [493570806, 5749986484189612790, -1006381564, -5915111450199468540], [-1677110816, -2947981342227738144, -1860207793, -4296699217652516017]], "fnv" => [[-1600925533, 1453079729188098211, -1600925533, 1453079729188098211], [-206076799, -4410911502303878509, -1024014457, -3570150969479994130], [811136751, -5046230049376118746, -77208053, -4779029615281019666], [44402817, 8998297579845987431, -1956240331, -782697888614047887], [-283066365, -4576729883824601543, -271871407, -3927695501187247084]]), repr_ = nothing, repr_long = nothing) =
                         new(known_hashes, repr_, repr_long)
 end
-function get_expected_hash(self::StringlikeHashRandomizationTests, position, length)::List<List<int>>
+function get_expected_hash(self, position, length)::List<List<int>>
 if length < sys.hash_info.cutoff
 algorithm = "djba33x"
 else
@@ -268,23 +268,23 @@ end
 return self.known_hashes[algorithm][position][platform]
 end
 
-function test_null_hash(self::StringlikeHashRandomizationTests)
+function test_null_hash(self)
 known_hash_of_obj = get_expected_hash(self, 0, 3)
 assertNotEqual(self, get_hash(self, self.repr_), known_hash_of_obj)
-assertEqual(self, get_hash(self, self.repr_, 0), known_hash_of_obj)
+assertEqual(self, get_hash(self, self.repr_, seed = 0), known_hash_of_obj)
 end
 
-function test_fixed_hash(self::StringlikeHashRandomizationTests)
+function test_fixed_hash(self)
 h = get_expected_hash(self, 1, 3)
-assertEqual(self, get_hash(self, self.repr_, 42), h)
+assertEqual(self, get_hash(self, self.repr_, seed = 42), h)
 end
 
-function test_long_fixed_hash(self::StringlikeHashRandomizationTests)
+function test_long_fixed_hash(self)
 if self.repr_long === nothing
 return
 end
 h = get_expected_hash(self, 2, 11)
-assertEqual(self, get_hash(self, self.repr_long, 42), h)
+assertEqual(self, get_hash(self, self.repr_long, seed = 42), h)
 end
 
 mutable struct StrHashRandomizationTests <: AbstractStrHashRandomizationTests
@@ -295,15 +295,15 @@ repr_ucs2
                     StrHashRandomizationTests(repr_ = repr("abc"), repr_long = repr("abcdefghijk"), repr_ucs2 = repr("äú∑ℇ")) =
                         new(repr_, repr_long, repr_ucs2)
 end
-function test_empty_string(self::StrHashRandomizationTests)
+function test_empty_string(self)
 @test (hash("") == 0)
 end
 
-function test_ucs2_string(self::StrHashRandomizationTests)
+function test_ucs2_string(self)
 h = get_expected_hash(self, 3, 6)
-@test (get_hash(self, self.repr_ucs2, 0) == h)
+@test (get_hash(self, self.repr_ucs2, seed = 0) == h)
 h = get_expected_hash(self, 4, 6)
-@test (get_hash(self, self.repr_ucs2, 42) == h)
+@test (get_hash(self, self.repr_ucs2, seed = 42) == h)
 end
 
 mutable struct BytesHashRandomizationTests <: AbstractBytesHashRandomizationTests
@@ -313,7 +313,7 @@ repr_long
                     BytesHashRandomizationTests(repr_ = repr(b"abc"), repr_long = repr(b"abcdefghijk")) =
                         new(repr_, repr_long)
 end
-function test_empty_string(self::BytesHashRandomizationTests)
+function test_empty_string(self)
 @test (hash(b"") == 0)
 end
 
@@ -324,14 +324,14 @@ repr_long::String
                     MemoryviewHashRandomizationTests(repr_::String = "memoryview(b\'abc\')", repr_long::String = "memoryview(b\'abcdefghijk\')") =
                         new(repr_, repr_long)
 end
-function test_empty_string(self::MemoryviewHashRandomizationTests)
+function test_empty_string(self)
 @test (hash(memoryview(b"")) == 0)
 end
 
 mutable struct DatetimeTests <: AbstractDatetimeTests
 
 end
-function get_hash_command(self::DatetimeTests, repr_)::String
+function get_hash_command(self, repr_)::String
 return "import datetime; print(hash(%s))" % repr_
 end
 
@@ -359,11 +359,11 @@ end
 mutable struct HashDistributionTestCase <: AbstractHashDistributionTestCase
 
 end
-function test_hash_distribution(self::HashDistributionTestCase)
+function test_hash_distribution(self)
 base = "abcdefghabcdefg"
 for i in 1:length(base) - 1
 prefix = base[begin:i]
-subTest(self, prefix) do 
+subTest(self, prefix = prefix) do 
 s15 = set()
 s255 = set()
 for c in 0:255

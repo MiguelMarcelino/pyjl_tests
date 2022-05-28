@@ -5,7 +5,7 @@ abstract type AbstractUnaryOpTestCase end
 mutable struct UnaryOpTestCase <: AbstractUnaryOpTestCase
 
 end
-function test_negative(self::UnaryOpTestCase)
+function test_negative(self)
 @test -2 == (0 - 2)
 @test (-0 == 0)
 @test (-(-2) == 2)
@@ -14,7 +14,7 @@ function test_negative(self::UnaryOpTestCase)
 @test -2im == (0 - 2im)
 end
 
-function test_positive(self::UnaryOpTestCase)
+function test_positive(self)
 @test (+2 == 2)
 @test (+0 == 0)
 @test (+(+2) == 2)
@@ -23,28 +23,28 @@ function test_positive(self::UnaryOpTestCase)
 @test (+2im == 2im)
 end
 
-function test_invert(self::UnaryOpTestCase)
+function test_invert(self)
 @test -2 == (0 - 2)
 @test (-0 == 0)
 @test (-(-2) == 2)
 @test -2 == (0 - 2)
 end
 
-function test_no_overflow(self::UnaryOpTestCase)
+function test_no_overflow(self)
 nines = repeat("9",32)
 @test eval("+" * nines) == (10^32 - 1)
 @test eval("-" * nines) == -(10^32 - 1)
 @test eval("~" * nines) == ~(10^32 - 1)
 end
 
-function test_negation_of_exponentiation(self::UnaryOpTestCase)
+function test_negation_of_exponentiation(self)
 @test (-(2^3) == -8)
 @test (-2^3 == -8)
 @test (-(2^4) == -16)
 @test (-2^4 == 16)
 end
 
-function test_bad_types(self::UnaryOpTestCase)
+function test_bad_types(self)
 for op in ("+", "-", "~")
 @test_throws TypeError eval(op * "b\'a\'")
 @test_throws TypeError eval(op * "\'a\'")

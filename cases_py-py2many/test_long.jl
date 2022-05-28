@@ -84,7 +84,7 @@ n
 d::Int64
 foo::String
 end
-function getran(self::LongTest, ndigits)::Int64
+function getran(self, ndigits)::Int64
 assertGreater(self, ndigits, 0)
 nbits_hi = ndigits*SHIFT
 nbits_lo = (nbits_hi - SHIFT) + 1
@@ -120,9 +120,9 @@ end
 return answer
 end
 
-function check_division(self::LongTest, x, y)
+function check_division(self, x, y)
 eq = self.assertEqual
-subTest(self, x, y) do 
+subTest(self, x = x, y = y) do 
 q, r = div(x)
 q2, r2 = (x ÷ y, x % y)
 pab, pba = (x*y, y*x)
@@ -138,7 +138,7 @@ end
 end
 end
 
-function test_division(self::LongTest)
+function test_division(self)
 digits = append!(collect(1:MAXDIGITS), collect(KARATSUBA_CUTOFF:KARATSUBA_CUTOFF + 13))
 push!(digits, KARATSUBA_CUTOFF*3)
 for lenx in digits
@@ -162,7 +162,7 @@ check_division(self, 710031681576388032, 26769404391308)
 check_division(self, 1933622614268221, 30212853348836)
 end
 
-function test_karatsuba(self::LongTest)
+function test_karatsuba(self)
 digits = append!(collect(1:4), collect(KARATSUBA_CUTOFF:KARATSUBA_CUTOFF + 9))
 append!(digits, [KARATSUBA_CUTOFF*10, KARATSUBA_CUTOFF*100])
 bits = [digit*SHIFT for digit in digits]
@@ -172,7 +172,7 @@ for bbits in bits
 if bbits < abits
 continue;
 end
-subTest(self, abits, bbits) do 
+subTest(self, abits = abits, bbits = bbits) do 
 b = (1 << bbits) - 1
 x = a*b
 y = (((1 << (abits + bbits)) - (1 << abits)) - (1 << bbits)) + 1
@@ -182,9 +182,9 @@ end
 end
 end
 
-function check_bitop_identities_1(self::LongTest, x)
+function check_bitop_identities_1(self, x)
 eq = self.assertEqual
-subTest(self, x) do 
+subTest(self, x = x) do 
 eq(x & 0, 0)
 eq(x | 0, x)
 eq(x  ⊻  0, x)
@@ -203,7 +203,7 @@ eq(-(x), ~(x - 1))
 end
 for n in 0:2*SHIFT - 1
 p2 = 2^n
-subTest(self, x, n, p2) do 
+subTest(self, x = x, n = n, p2 = p2) do 
 eq((x << n) >> n, x)
 eq(x ÷ p2, x >> n)
 eq(x*p2, x << n)
@@ -213,9 +213,9 @@ end
 end
 end
 
-function check_bitop_identities_2(self::LongTest, x, y)
+function check_bitop_identities_2(self, x, y)
 eq = self.assertEqual
-subTest(self, x, y) do 
+subTest(self, x = x, y = y) do 
 eq(x & y, y & x)
 eq(x | y, y | x)
 eq(x  ⊻  y, y  ⊻  x)
@@ -228,9 +228,9 @@ eq(x  ⊻  y, (x | y) & (~(x) | ~(y)))
 end
 end
 
-function check_bitop_identities_3(self::LongTest, x, y, z)
+function check_bitop_identities_3(self, x, y, z)
 eq = self.assertEqual
-subTest(self, x, y, z) do 
+subTest(self, x = x, y = y, z = z) do 
 eq((x & y) & z, x & (y & z))
 eq((x | y) | z, x | (y | z))
 eq((x  ⊻  y)  ⊻  z, x  ⊻  (y  ⊻  z))
@@ -239,7 +239,7 @@ eq(x | (y & z), (x | y) & (x | z))
 end
 end
 
-function test_bitop_identities(self::LongTest)
+function test_bitop_identities(self)
 for x in special
 check_bitop_identities_1(self, x)
 end
@@ -255,7 +255,7 @@ end
 end
 end
 
-function slow_format(self::LongTest, x, base)::Any
+function slow_format(self, x, base)::Any
 digits = []
 sign = 0
 if x < 0
@@ -270,20 +270,20 @@ digits = digits || [0]
 return ("-"[begin:sign] + Dict(2 => "0b", 8 => "0o", 10 => "", 16 => "0x")[base + 1]) + join(("0123456789abcdef"[i + 1] for i in digits), "")
 end
 
-function check_format_1(self::LongTest, x)
+function check_format_1(self, x)
 for (base, mapper) in ((2, bin), (8, oct), (10, str), (10, repr), (16, hex))
 got = mapper(x)
-subTest(self, x, mapper.__name__) do 
+subTest(self, x = x, mapper = mapper.__name__) do 
 expected = slow_format(self, x, base)
 @test (got == expected)
 end
-subTest(self, got) do 
+subTest(self, got = got) do 
 @test (parse(Int, got) == x)
 end
 end
 end
 
-function test_format(self::LongTest)
+function test_format(self)
 for x in special
 check_format_1(self, x)
 end
@@ -295,7 +295,7 @@ end
 end
 end
 
-function test_long(self::LongTest)
+function test_long(self)
 LL = [("1" * repeat("0",20), 10^20), ("1" * repeat("0",100), 10^100)]
 for (s, v) in LL
 for sign in ("", "+", "-")
@@ -342,11 +342,11 @@ end
 @test_throws ValueError int("こんにちは")
 end
 
-function test_conversion(self::LongTrunc)
+function test_conversion(self)
 mutable struct JustLong <: AbstractJustLong
 
 end
-function __long__(self::JustLong)::Int64
+function __long__(self)::Int64
 return 42
 end
 
@@ -354,18 +354,18 @@ assertRaises(self, TypeError, int, JustLong())
 mutable struct LongTrunc <: AbstractLongTrunc
 
 end
-function __long__(self::LongTrunc)::Int64
+function __long__(self)::Int64
 return 42
 end
 
-function __trunc__(self::LongTrunc)::Int64
+function __trunc__(self)::Int64
 return 1729
 end
 
 assertEqual(self, parse(Int, LongTrunc()), 1729)
 end
 
-function check_float_conversion(self::LongTest, n)
+function check_float_conversion(self, n)
 try
 actual = float(n)
 catch exn
@@ -384,7 +384,7 @@ msg = "Error in conversion of integer $() to float.  Got $(), expected $()."
 @test (actual == expected)
 end
 
-function test_float_conversion(self::LongTest)
+function test_float_conversion(self)
 exact_values = [0, 1, 2, 2^53 - 3, 2^53 - 2, 2^53 - 1, 2^53, 2^53 + 2, 2^54 - 4, 2^54 - 2, 2^54, 2^54 + 4]
 for x in exact_values
 @test (float(x) == x)
@@ -436,7 +436,7 @@ check_float_conversion(self, -(value))
 end
 end
 
-function test_float_overflow(self::LongTest)
+function test_float_overflow(self)
 for x in (-2.0, -1.0, 0.0, 1.0, 2.0)
 @test (float(Int(floor(x))) == x)
 end
@@ -450,7 +450,7 @@ end
 assertNotEqual(self, float(shuge), parse(Int, shuge), "float(shuge) should not equal int(shuge)")
 end
 
-function test_logs(self::LongTest)
+function test_logs(self)
 LOG10E = log10(math.e)
 for exp in append!(collect(0:9), [100, 1000, 10000])
 value = 10^exp
@@ -466,7 +466,7 @@ for bad in (-(1 << 10000), -2, 0)
 end
 end
 
-function test_mixed_compares(self::Rat)
+function test_mixed_compares(self)
 eq = self.assertEqual
 mutable struct Rat <: AbstractRat
 n
@@ -509,7 +509,7 @@ end
                 new(value)
             end
 end
-function _cmp__(self::Rat, other)::Bool
+function _cmp__(self, other)::Bool
 if !isa(other, Rat)
 other = Rat(other)
 end
@@ -517,23 +517,23 @@ x, y = (self.n*other.d, self.d*other.n)
 return x > y - x < y
 end
 
-function __eq__(self::Rat, other)::Bool
+function __eq__(self, other)::Bool
 return _cmp__(self, other) == 0
 end
 
-function __ge__(self::Rat, other)::Bool
+function __ge__(self, other)::Bool
 return _cmp__(self, other) >= 0
 end
 
-function __gt__(self::Rat, other)::Bool
+function __gt__(self, other)::Bool
 return _cmp__(self, other) > 0
 end
 
-function __le__(self::Rat, other)::Bool
+function __le__(self, other)::Bool
 return _cmp__(self, other) <= 0
 end
 
-function __lt__(self::Rat, other)::Bool
+function __lt__(self, other)::Bool
 return _cmp__(self, other) < 0
 end
 
@@ -550,7 +550,7 @@ Rx = Rat(x)
 for y in cases
 Ry = Rat(y)
 Rcmp = Rx > Ry - Rx < Ry
-subTest(self, x, y, Rcmp) do 
+subTest(self, x = x, y = y, Rcmp = Rcmp) do 
 xycmp = x > y - x < y
 eq(Rcmp, xycmp)
 eq(x == y, Rcmp == 0)
@@ -564,7 +564,7 @@ end
 end
 end
 
-function test__format__(self::LongTest)
+function test__format__(self)
 @test (123456789 == "123456789")
 @test (123456789 == "123456789")
 @test (123456789 == "123,456,789")
@@ -652,13 +652,13 @@ end
 end
 end
 
-function test_nan_inf(self::LongTest)
+function test_nan_inf(self)
 @test_throws OverflowError int(float("inf"))
 @test_throws OverflowError int(float("-inf"))
 @test_throws ValueError int(float("nan"))
 end
 
-function test_mod_division(self::LongTest)
+function test_mod_division(self)
 assertRaises(self, ZeroDivisionError) do 
 _ = 1 % 0
 end
@@ -672,7 +672,7 @@ end
 @test (-12 % -4 == 0)
 end
 
-function test_true_division(self::LongTest)
+function test_true_division(self)
 huge = 1 << 40000
 mhuge = -(huge)
 @test (huge / huge == 1.0)
@@ -702,7 +702,7 @@ for zero in ["huge / 0", "mhuge / 0"]
 end
 end
 
-function test_floordiv(self::LongTest)
+function test_floordiv(self)
 assertRaises(self, ZeroDivisionError) do 
 _ = 1 ÷ 0
 end
@@ -720,7 +720,7 @@ end
 @test (12 ÷ 3 == 4)
 end
 
-function check_truediv(self::LongTest, a, b, skip_small = true)
+function check_truediv(self, a, b, skip_small = true)
 #= Verify that the result of a/b is correctly rounded, by
         comparing it with a pure Python implementation of correctly
         rounded division.  b should be nonzero. =#
@@ -750,7 +750,7 @@ end
 @test (expected == got)
 end
 
-function test_correctly_rounded_true_division(self::LongTest)
+function test_correctly_rounded_true_division(self)
 check_truediv(self, 123, 0)
 check_truediv(self, -456, 0)
 check_truediv(self, 0, 3)
@@ -812,7 +812,7 @@ check_truediv(self, -(x), -(y))
 end
 end
 
-function test_negative_shift_count(self::LongTest)
+function test_negative_shift_count(self)
 assertRaises(self, ValueError) do 
 42 << -3
 end
@@ -827,7 +827,7 @@ assertRaises(self, ValueError) do
 end
 end
 
-function test_lshift_of_zero(self::LongTest)
+function test_lshift_of_zero(self)
 @test (0 << 0 == 0)
 @test (0 << 10 == 0)
 assertRaises(self, ValueError) do 
@@ -839,27 +839,27 @@ assertRaises(self, ValueError) do
 end
 end
 
-function test_huge_lshift_of_zero(self::LongTest)
+function test_huge_lshift_of_zero(self)
 @test (0 << sys.maxsize == 0)
 @test (0 << (sys.maxsize + 1) == 0)
 end
 
-function test_huge_lshift(self::LongTest, size)
+function test_huge_lshift(self, size)
 @test (1 << (sys.maxsize + 1000) == (1 << 1000) << sys.maxsize)
 end
 
-function test_huge_rshift(self::LongTest)
+function test_huge_rshift(self)
 @test (42 >> (1 << 1000) == 0)
 @test (-42 >> (1 << 1000) == -1)
 end
 
-function test_huge_rshift_of_huge(self::LongTest, size)
+function test_huge_rshift_of_huge(self, size)
 huge = ((1 << 500) + 11) << sys.maxsize
 @test (huge >> (sys.maxsize + 1) == (1 << 499) + 5)
 @test (huge >> (sys.maxsize + 1000) == 0)
 end
 
-function test_small_ints_in_huge_calculation(self::LongTest)
+function test_small_ints_in_huge_calculation(self)
 a = 2^100
 b = -(a) + 1
 c = a + 1
@@ -867,7 +867,7 @@ assertIs(self, a + b, 1)
 assertIs(self, c - a, 1)
 end
 
-function test_small_ints(self::LongTest)
+function test_small_ints(self)
 for i in -5:256
 assertIs(self, i, i + 0)
 assertIs(self, i, i*1)
@@ -886,7 +886,7 @@ assertIs(self, i - i, 0)
 assertIs(self, 0*i, 0)
 end
 
-function test_bit_length(self::LongTest)
+function test_bit_length(self)
 tiny = 1e-10
 for x in -65000:64999
 k = bit_length(x)
@@ -916,7 +916,7 @@ a = 2^i
 end
 end
 
-function test_bit_count(self::LongTest)
+function test_bit_count(self)
 for a in -1000:999
 @test (bit_count(a) == count(bin(a), "1"))
 end
@@ -929,7 +929,7 @@ a = 2^exp
 end
 end
 
-function test_round(self::LongTest)
+function test_round(self)
 test_dict = OrderedDict(0 => 0, 1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0, 6 => 10, 7 => 10, 8 => 10, 9 => 10, 10 => 10, 11 => 10, 12 => 10, 13 => 10, 14 => 10, 15 => 20, 16 => 20, 17 => 20, 18 => 20, 19 => 20)
 for offset in -520:20:519
 for (k, v) in collect(test_dict)
@@ -998,11 +998,11 @@ for e in bad_exponents
 end
 end
 
-function test_to_bytes(self::LongTest)
+function test_to_bytes(self)
 function check(tests, byteorder, signed = false)
 for (test, expected) in items(tests)
 try
-@test (to_bytes(test, length(expected), byteorder, signed) == expected)
+@test (to_bytes(test, length(expected), byteorder, signed = signed) == expected)
 catch exn
  let err = exn
 if err isa Exception
@@ -1021,24 +1021,24 @@ tests3 = Dict(0 => b"\x00", 1 => b"\x01", 127 => b"\x7f", 128 => b"\x80", 255 =>
 check(tests3, "big")
 tests4 = Dict(0 => b"\x00", 1 => b"\x01", 127 => b"\x7f", 128 => b"\x80", 255 => b"\xff", 256 => b"\x00\x01", 32767 => b"\xff\x7f", 32768 => b"\x00\x80", 65535 => b"\xff\xff", 65536 => b"\x00\x00\x01")
 check(tests4, "little")
-@test_throws OverflowError 256.to_bytes(1, "big", false)
-@test_throws OverflowError 256.to_bytes(1, "big", true)
-@test_throws OverflowError 256.to_bytes(1, "little", false)
-@test_throws OverflowError 256.to_bytes(1, "little", true)
-@test_throws OverflowError -1.to_bytes(2, "big", false)
-@test_throws OverflowError -1.to_bytes(2, "little", false)
+@test_throws OverflowError 256.to_bytes(1, "big", signed = false)
+@test_throws OverflowError 256.to_bytes(1, "big", signed = true)
+@test_throws OverflowError 256.to_bytes(1, "little", signed = false)
+@test_throws OverflowError 256.to_bytes(1, "little", signed = true)
+@test_throws OverflowError -1.to_bytes(2, "big", signed = false)
+@test_throws OverflowError -1.to_bytes(2, "little", signed = false)
 @test (to_bytes(0, 0, "big") == b"")
 @test (to_bytes(1, 5, "big") == b"\x00\x00\x00\x00\x01")
 @test (to_bytes(0, 5, "big") == b"\x00\x00\x00\x00\x00")
-@test (to_bytes(-1, 5, "big", true) == b"\xff\xff\xff\xff\xff")
+@test (to_bytes(-1, 5, "big", signed = true) == b"\xff\xff\xff\xff\xff")
 @test_throws OverflowError 1.to_bytes(0, "big")
 end
 
-function test_from_bytes(self::myint3)
+function test_from_bytes(self)
 function check(tests, byteorder, signed = false)
 for (test, expected) in items(tests)
 try
-assertEqual(self, from_bytes(int, test, byteorder, signed), expected)
+assertEqual(self, from_bytes(int, test, byteorder, signed = signed), expected)
 catch exn
  let err = exn
 if err isa Exception
@@ -1063,18 +1063,18 @@ end
 
 assertIs(self, type_(myint.from_bytes(b"\x00", "big")), myint)
 assertEqual(self, myint.from_bytes(b"\x01", "big"), 1)
-assertIs(self, type_(myint.from_bytes(b"\x00", "big", false)), myint)
-assertEqual(self, myint.from_bytes(b"\x01", "big", false), 1)
+assertIs(self, type_(myint.from_bytes(b"\x00", "big", signed = false)), myint)
+assertEqual(self, myint.from_bytes(b"\x01", "big", signed = false), 1)
 assertIs(self, type_(myint.from_bytes(b"\x00", "little")), myint)
 assertEqual(self, myint.from_bytes(b"\x01", "little"), 1)
-assertIs(self, type_(myint.from_bytes(b"\x00", "little", false)), myint)
-assertEqual(self, myint.from_bytes(b"\x01", "little", false), 1)
-assertEqual(self, from_bytes(int, [255, 0, 0], "big", true), -65536)
-assertEqual(self, from_bytes(int, (255, 0, 0), "big", true), -65536)
-assertEqual(self, from_bytes(int, Vector{UInt8}(b"\xff\x00\x00"), "big", true), -65536)
-assertEqual(self, from_bytes(int, Vector{UInt8}(b"\xff\x00\x00"), "big", true), -65536)
-assertEqual(self, from_bytes(int, array("B", b"\xff\x00\x00"), "big", true), -65536)
-assertEqual(self, from_bytes(int, memoryview(b"\xff\x00\x00"), "big", true), -65536)
+assertIs(self, type_(myint.from_bytes(b"\x00", "little", signed = false)), myint)
+assertEqual(self, myint.from_bytes(b"\x01", "little", signed = false), 1)
+assertEqual(self, from_bytes(int, [255, 0, 0], "big", signed = true), -65536)
+assertEqual(self, from_bytes(int, (255, 0, 0), "big", signed = true), -65536)
+assertEqual(self, from_bytes(int, Vector{UInt8}(b"\xff\x00\x00"), "big", signed = true), -65536)
+assertEqual(self, from_bytes(int, Vector{UInt8}(b"\xff\x00\x00"), "big", signed = true), -65536)
+assertEqual(self, from_bytes(int, array("B", b"\xff\x00\x00"), "big", signed = true), -65536)
+assertEqual(self, from_bytes(int, memoryview(b"\xff\x00\x00"), "big", signed = true), -65536)
 assertRaises(self, ValueError, int.from_bytes, [256], "big")
 assertRaises(self, ValueError, int.from_bytes, [0], "big\0")
 assertRaises(self, ValueError, int.from_bytes, [0], "little\0")
@@ -1107,7 +1107,7 @@ assertEqual(self, (hasfield(typeof(i), :foo) ?
                 getfield(i, :foo) : "none"), "bar")
 end
 
-function test_access_to_nonexistent_digit_0(self::Integer)
+function test_access_to_nonexistent_digit_0(self)
 mutable struct Integer <: AbstractInteger
 foo::String
 end
@@ -1123,7 +1123,7 @@ assertEqual(self, n, 0)
 end
 end
 
-function test_shift_bool(self::LongTest)
+function test_shift_bool(self)
 for value in (true, false)
 for shift in (0, 2)
 @test (type_(value << shift) == int)
@@ -1132,7 +1132,7 @@ end
 end
 end
 
-function test_as_integer_ratio(self::myint)
+function test_as_integer_ratio(self)
 mutable struct myint <: Abstractmyint
 
 end

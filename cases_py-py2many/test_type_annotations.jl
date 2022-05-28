@@ -12,7 +12,7 @@ name
                     TypeAnnotationTests(my_annotations::Dict, a::Int64 = 3, b::String = 4, bases = nothing, d = nothing, name = nothing) =
                         new(my_annotations, a, b, bases, d, name)
 end
-function test_lazy_create_annotations(self::TypeAnnotationTests)
+function test_lazy_create_annotations(self)
 foo = type_("Foo", (), Dict())
 for i in 0:2
 @test !("__annotations__" ∈ foo.__dict__)
@@ -25,7 +25,7 @@ del(foo.__annotations__)
 end
 end
 
-function test_setting_annotations(self::TypeAnnotationTests)
+function test_setting_annotations(self)
 foo = type_("Foo", (), Dict())
 for i in 0:2
 @test !("__annotations__" ∈ foo.__dict__)
@@ -39,7 +39,7 @@ del(foo.__annotations__)
 end
 end
 
-function test_annotations_getset_raises(self::TypeAnnotationTests)
+function test_annotations_getset_raises(self)
 assertRaises(self, AttributeError) do 
 println(float.__annotations__)
 end
@@ -60,7 +60,7 @@ del(foo.__annotations__)
 end
 end
 
-function test_annotations_are_created_correctly(self::C)
+function test_annotations_are_created_correctly(self)
 mutable struct C <: AbstractC
 a::Int64
 b::String
@@ -75,7 +75,7 @@ del(C.__annotations__)
 assertFalse(self, "__annotations__" ∈ C.__dict__)
 end
 
-function test_descriptor_still_works(self::D)
+function test_descriptor_still_works(self)
 mutable struct C <: AbstractC
 my_annotations::Dict
 bases
@@ -85,7 +85,7 @@ name
                     C(my_annotations::Dict, bases = nothing, d = nothing, name = nothing) =
                         new(my_annotations, bases, d, name)
 end
-function __annotations__(self::C)
+function __annotations__(self)
 if !hasfield(typeof(self), :my_annotations)
 self.my_annotations = Dict()
 end
@@ -95,14 +95,14 @@ end
 return self.my_annotations
 end
 
-function __annotations__(self::C, value)
+function __annotations__(self, value)
 if !isa(value, dict)
 throw(ValueError("can only set __annotations__ to a dict"))
 end
 self.my_annotations = value
 end
 
-function __annotations__(self::C)
+function __annotations__(self)
 if (hasfield(typeof(self), :my_annotations) ? 
                 getfield(self, :my_annotations) : false) === nothing
 throw(AttributeError("__annotations__"))

@@ -1,6 +1,5 @@
 using OrderedCollections
 
-
 function var_find(f)::Int64
     return length(collect(eachmatch(Regex(f), seq)))
 end
