@@ -3,7 +3,7 @@
 This module contains utility functions, used primarily by advanced COM
 programmers, or other COM modules.
 """
-import pythoncom
+from ext_modules import pythoncom
 
 # Changed
 # from win32com_.client import Dispatch, _get_good_object_

@@ -35,9 +35,17 @@ function permutations(n, start, size)
                 p[1], p[2] = (p[2], p[1])
                 put!(ch_permutations, p[begin:end])
                 i = 2
+                has_break = false
                 while count[i+1] >= i
                     count[i+1] = 0
                     i += 1
+                end
+                if has_break != true
+                    count[i+2] += 1
+                    t = p[begin:end]
+                    for (dst, src) in rotation_swaps[i+2]
+                        p[dst+2] = t[src+2]
+                    end
                 end
             end
         end
@@ -56,7 +64,6 @@ function alternating_flips_generator(n, start, size)
                     permutation[begin:first+1] = permutation[end:-1:first+1]
                     first = permutation[1]
                     if !(first)
-                        has_break = true
                         break
                     end
                     flips_count += 1

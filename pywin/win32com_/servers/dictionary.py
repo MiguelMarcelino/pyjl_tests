@@ -31,7 +31,7 @@ the dictionary's keys. This allows for the following type of VB code:
     next
 """
 
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.server import util, policy
 from win32com_.server.exception import COMException
 import winerror

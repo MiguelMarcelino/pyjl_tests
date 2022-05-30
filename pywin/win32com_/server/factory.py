@@ -1,5 +1,5 @@
 # Class factory utilities.
-import pythoncom
+from ext_modules import pythoncom
 
 
 def RegisterClassFactories(clsids, flags=None, clsctx=None):

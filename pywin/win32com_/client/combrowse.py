@@ -24,7 +24,7 @@
 """
 import win32api, win32ui # PyCall
 import sys
-import pythoncom # PyCall
+from ext_modules import pythoncom # PyCall
 
 # Changed
 import win32com_.ext_modules.win32con as win32con

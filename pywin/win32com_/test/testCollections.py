@@ -9,7 +9,7 @@ import win32com_.server.util
 import win32com_.test.util
 import win32com_.client
 import traceback
-import pythoncom
+from ext_modules import pythoncom
 import pywintypes
 import winerror
 

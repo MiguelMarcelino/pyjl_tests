@@ -24,7 +24,7 @@ this is a pain in the but!
 import threading, traceback
 import win32com_.client
 import win32event, win32api
-import pythoncom
+from ext_modules import pythoncom
 import unittest
 
 from .testServers import InterpCase

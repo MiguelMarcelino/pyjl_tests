@@ -2,7 +2,7 @@
 
   A collection of helpers for server side connection points.
 """
-import pythoncom
+from ext_modules import pythoncom
 from .exception import Exception
 import winerror
 from win32com_ import olectl

@@ -64,7 +64,6 @@ function read_sequences(file)
                     end
                 end
                 put!(ch_read_sequences, (header, sequence))
-                has_break = true
                 break
             end
         end
@@ -72,8 +71,8 @@ function read_sequences(file)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    write = stdout.buffer.write
-    flush = stdout.buffer.flush
+    write = x -> Base.write(stdout, x)
+    flush = Base.flush(stdout)
     s = read_sequences(stdin.buffer)
     data = take!(s)
     @resumable function merge(v, g)

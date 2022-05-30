@@ -35,7 +35,7 @@
 
 
 from win32com_.server.util import wrap
-import pythoncom
+from ext_modules import pythoncom
 from .util import CheckClean
 
 numErrors = 0

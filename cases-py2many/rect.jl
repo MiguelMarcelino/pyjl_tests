@@ -5,7 +5,7 @@ mutable struct Rectangle <: AbstractRectangle
     height::Int64
     length::Int64
 end
-function is_square(self::Rectangle)::Bool
+function is_square(self::AbstractRectangle)::Bool
     #= Go likes this to be camel case =#
     return self.height == self.length
 end

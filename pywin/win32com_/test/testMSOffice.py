@@ -8,7 +8,7 @@
 import win32com_, sys, string, win32api, traceback
 import win32com_.client.dynamic
 from win32com_.test.util import CheckClean
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.client import gencache
 from pywintypes import Unicode
 

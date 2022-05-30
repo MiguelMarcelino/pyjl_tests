@@ -5,7 +5,7 @@ Usage from VB:
 	freeBytes = ob.Query("Memory", "Available Bytes")
 """
 from win32com_.server import exception, register
-import pythoncom, win32pdhutil, winerror
+from ext_modules import pythoncom, win32pdhutil, winerror
 
 
 class PerfMonQuery:

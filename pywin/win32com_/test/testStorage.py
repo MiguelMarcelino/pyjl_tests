@@ -1,5 +1,5 @@
 from win32com_ import storagecon
-import pythoncom, os, win32api
+from ext_modules import pythoncom, os, win32api
 import win32com_.test.util
 
 import unittest

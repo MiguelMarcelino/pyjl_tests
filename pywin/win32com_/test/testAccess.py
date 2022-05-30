@@ -7,7 +7,7 @@
 # You can run this with no args, and a test database will be generated.
 # You can optionally pass a dbname on the command line, in which case it will be dumped.
 
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.client import gencache, constants, Dispatch
 import win32api
 import os, sys

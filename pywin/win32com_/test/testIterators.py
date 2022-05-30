@@ -7,7 +7,7 @@ from win32com_.client.gencache import EnsureDispatch
 from win32com_.client import Dispatch
 import win32com_.server.util
 import win32com_.test.util
-import pythoncom
+from ext_modules import pythoncom
 
 
 class _BaseTestCase(win32com_.test.util.TestCase):

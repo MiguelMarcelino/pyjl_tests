@@ -18,7 +18,7 @@ import sys
 import time
 import win32com_
 
-import pythoncom
+from ext_modules import pythoncom
 from . import build
 
 error = "makepy.error"

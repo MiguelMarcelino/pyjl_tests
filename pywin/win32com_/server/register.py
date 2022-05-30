@@ -9,7 +9,7 @@ construct the necessary Python object, and dispatch COM events.
 import sys
 import win32api
 import win32con
-import pythoncom
+from ext_modules import pythoncom
 import winerror
 import os
 

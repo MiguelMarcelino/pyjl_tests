@@ -3,7 +3,7 @@
 #
 import win32com_, win32com_.client.makepy
 import win32com_.test
-import pythoncom
+from ext_modules import pythoncom
 import sys, os
 
 genList = [

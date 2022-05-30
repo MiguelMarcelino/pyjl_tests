@@ -14,7 +14,7 @@ but no special DCOM configuration should be necessary.
 """
 # NOTE: If you configured the object locally using dcomcnfg, you could
 # simple use Dispatch rather than DispatchEx.
-import pythoncom, win32com_.client, win32api, string, sys
+from ext_modules import pythoncom, win32com_.client, win32api, string, sys
 
 
 def test(serverName):

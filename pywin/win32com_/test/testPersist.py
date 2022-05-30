@@ -1,11 +1,11 @@
-import pythoncom
+from ext_modules import pythoncom
 import win32com_.server.util
 import time
 
 import win32com_, sys, string, win32api, traceback
 import win32com_.client.dynamic
 import win32com_.client
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.axcontrol import axcontrol
 from pywintypes import Unicode
 from win32com_ import storagecon

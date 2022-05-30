@@ -1,7 +1,7 @@
 using BisectPy
 using ResumableFunctions
 
-write = sys.stdout.buffer.write
+write = x -> Base.write(stdout, x)
 function acquired_lock()
     lock = Lock()
     acquire(lock)
@@ -9,7 +9,7 @@ function acquired_lock()
 end
 
 function started_process(target, args)
-    process = Process(target, args)
+    process = Process(target = target, args = args)
     start(process)
     return process
 end
@@ -207,7 +207,8 @@ function fasta(n)
         "\nGGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGA\nTCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACT\nAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAG\nGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCG\nCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA\n",
         r"\\s+" => s"",
     )
-    iub = collect(zip_longest("acgtBDHKMNRSVWY", (0.27, 0.12, 0.12, 0.27), 0.02))
+    iub =
+        collect(zip_longest("acgtBDHKMNRSVWY", (0.27, 0.12, 0.12, 0.27), fillvalue = 0.02))
     homosapiens = collect(
         zip(
             ["a", "c", "g", "t"],
@@ -248,5 +249,5 @@ function fasta(n)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    fasta(parse(Int, sys.argv[2]))
+    fasta(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
 end

@@ -1,4 +1,4 @@
-import pythoncom
+from ext_modules import pythoncom
 import unittest
 import win32com_.test.util
 import winerror

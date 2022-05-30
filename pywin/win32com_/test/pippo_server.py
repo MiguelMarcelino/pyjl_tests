@@ -3,7 +3,7 @@
 # [ 753154 ] memory leak wrapping object having _typelib_guid_ attribute
 # but modified by mhammond for use as part of the test suite.
 import sys, os
-import pythoncom
+from ext_modules import pythoncom
 import win32com_
 import winerror
 from win32com_.server.util import wrap

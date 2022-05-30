@@ -6,7 +6,7 @@
 # dispatch object, the known class will be used.  This contrasts
 # with dynamic.Dispatch behaviour, where dynamic objects are always used.
 
-import pythoncom
+from ext_modules import pythoncom
 from . import dynamic
 from . import gencache
 import sys

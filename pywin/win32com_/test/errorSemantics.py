@@ -11,7 +11,7 @@
 # * In all cases, the description etc end up in the exception tuple
 # * "Normal" Python exceptions resolve to an E_FAIL "internal error"
 
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.server.exception import COMException
 from win32com_.server.util import wrap
 from win32com_.client import Dispatch

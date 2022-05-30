@@ -5,13 +5,19 @@ mutable struct FileOp <: AbstractFileOp
     file_name
     method
     file
+    FileOp(file_name = file_name, method = method) = new(file_name, method)
 end
-function __enter__(self::FileOp)
+function __enter__(self::AbstractFileOp)
     self.file = open(self.file_name, self.method)
     return self.file
 end
 
-function __exit__(self::FileOp, type_ = nothing, value = nothing, traceback = nothing)
+function __exit__(
+    self::AbstractFileOp,
+    type_ = nothing,
+    value = nothing,
+    traceback = nothing,
+)
     close(self.file)
 end
 

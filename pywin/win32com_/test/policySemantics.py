@@ -1,6 +1,6 @@
 import win32com_.server.util
 import win32com_.client
-import pythoncom
+from ext_modules import pythoncom
 import winerror
 import win32com_.test.util
 

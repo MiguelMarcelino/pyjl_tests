@@ -10,7 +10,7 @@ import winerror
 from win32com_.client import constants
 from win32com_.server.util import wrap
 
-import pythoncom
+from ext_modules import pythoncom
 
 pythoncom.__future_currency__ = True
 # We use the constants from the module, so must insist on a gencache.

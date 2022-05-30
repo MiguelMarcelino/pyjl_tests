@@ -1,8 +1,9 @@
 using Distributed
 using StringEncodings
 
+abstract type Abstractlean_call end
 lean_buffer = Dict()
-function lean_args(sequence, reading_frames, i, j)
+function lean_args(sequence::Abstractlean_call, reading_frames, i, j)
     global lean_buffer
     lean_key = length(lean_buffer)
     lean_buffer[lean_key] = sequence
@@ -11,8 +12,9 @@ end
 
 mutable struct lean_call <: Abstractlean_call
     func
+    lean_call(func = func) = new(func)
 end
-function __call__(self::lean_call, lean_key, reading_frames, i, j)::Vector
+function __call__(self::Abstractlean_call, lean_key, reading_frames, i, j)::Vector
     global lean_buffer
     sequence = lean_buffer[lean_key]
     results = func(self, sequence, reading_frames, i, j)
@@ -31,8 +33,8 @@ function __call__(self::lean_call, lean_key, reading_frames, i, j)::Vector
     return lean_results
 end
 
-function count_frequencies(sequence, reading_frames, i, j)
-    frames = tuple(sorted([frame for (frame, _) in reading_frames], true))
+function count_frequencies(sequence::Abstractlean_call, reading_frames, i, j)
+    frames = tuple(sorted([frame for (frame, _) in reading_frames], reverse = true))
     frequences_mask_list =
         tuple(((defaultdict(int), (1 << repeat([frame...], 2)) - 1) for frame in frames)...)
     frame = frames[1]
@@ -107,11 +109,10 @@ function count_frequencies(sequence, reading_frames, i, j)
     ]
 end
 
-function read_sequence(file, header, translation)::Vector{Int8}
+function read_sequence(file::Abstractlean_call, header, translation)::Vector{Int8}
     for line in file
         if line[1] == Int(codepoint('>'))
             if line[2:length(header)+1] == header
-                has_break = true
                 break
             end
         end
@@ -119,7 +120,6 @@ function read_sequence(file, header, translation)::Vector{Int8}
     sequence = Vector{UInt8}()
     for line in file
         if line[1] == Int(codepoint('>'))
-            has_break = true
             break
         end
         sequence += line
@@ -130,7 +130,7 @@ function read_sequence(file, header, translation)::Vector{Int8}
     )
 end
 
-function lookup_frequency(results, frame, bits)
+function lookup_frequency(results::Abstractlean_call, frame, bits)
     n = 1
     frequency = 0
     for (_, n, frequencies) in filter((r) -> r[1] == frame, results)
@@ -139,13 +139,19 @@ function lookup_frequency(results, frame, bits)
     return (frequency, n > 0 ? (n) : (1))
 end
 
-function display(results, display_list, sort = false, relative = false, end_ = "\n")
+function display(
+    results::Abstractlean_call,
+    display_list,
+    sort = false,
+    relative = false,
+    end_ = "\n",
+)
     lines = [
         (k_nucleotide, lookup_frequency(results, frame, bits)) for
         (k_nucleotide, frame, bits) in display_list
     ]
     if sort
-        lines = sorted(lines, (v) -> (-(v[2][1]), v[1]))
+        lines = sorted(lines, key = (v) -> (-(v[2][1]), v[1]))
     end
     for (k_nucleotide, (frequency, n)) in lines
         if relative
@@ -154,7 +160,7 @@ function display(results, display_list, sort = false, relative = false, end_ = "
             println("$(frequency)\t$(k_nucleotide)")
         end
     end
-    println(end_)
+    println(end_ = end_)
 end
 
 function main()
@@ -168,7 +174,7 @@ function main()
         b"c" => b"\x02",
         b"a" => b"\x03",
     )
-    function str_to_bits(text)::Int64
+    function str_to_bits(text::Abstractlean_call)::Int64
         buffer = translate(encode(text, "latin1"), translation)
         bits = 0
         for k = 0:length(buffer)-1
@@ -177,7 +183,7 @@ function main()
         return bits
     end
 
-    function display_list(k_nucleotides)
+    function display_list(k_nucleotides::Abstractlean_call)
         return [(n, length(n), str_to_bits(n)) for n in k_nucleotides]
     end
 
@@ -202,7 +208,7 @@ function main()
         (sequence, reading_frames, partitions[i+1], partitions[i+2]) for
         i = 0:length(partitions)-2
     ]
-    if n === 1
+    if n == 1
         results = collect(chain(starmap(count_frequencies, count_jobs)...))
     else
         lean_jobs = collect(starmap(lean_args, count_jobs))

@@ -1,7 +1,7 @@
 abstract type AbstractHello end
 mutable struct Hello <: AbstractHello
 end
-function test(self::Hello)::String
+function test(self::AbstractHello)::String
     return "ola"
 end
 

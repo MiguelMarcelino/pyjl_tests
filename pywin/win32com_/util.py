@@ -2,7 +2,7 @@
 
   This module contains a collection of general purpose utility functions.
 """
-import pythoncom
+from ext_modules import pythoncom
 import win32api, win32con
 
 

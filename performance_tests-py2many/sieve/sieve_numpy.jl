@@ -11,5 +11,5 @@ function sieve(n)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    sieve(parse(Int, sys.argv[2]))
+    sieve(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
 end

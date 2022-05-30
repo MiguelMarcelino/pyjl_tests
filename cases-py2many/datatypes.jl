@@ -19,6 +19,6 @@ function __key(self::AbstractIntListNonEmpty)
 end
 
 mutable struct IntList <: AbstractIntList
-    NONE
+    NONE::None
     REST::AbstractIntListNonEmpty
 end

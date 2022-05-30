@@ -26,7 +26,7 @@ end
 
 function main()
     global tmp1, tmp2, acc, den, num
-    n = parse(Int, sys.argv[2])
+    n = parse(Int, append!([PROGRAM_FILE], ARGS)[2])
     tmp1 = BigInt(0)
     tmp2 = BigInt(0)
     acc = BigInt(0)

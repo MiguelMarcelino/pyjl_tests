@@ -9,7 +9,7 @@ import win32api
 import win32con
 import winerror
 import glob
-import pythoncom
+from ext_modules import pythoncom
 import time
 from win32com_.test.util import CheckClean
 

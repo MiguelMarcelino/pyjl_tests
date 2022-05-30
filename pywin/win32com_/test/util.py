@@ -4,7 +4,7 @@ import tempfile
 import unittest
 import gc
 import pywintypes
-import pythoncom
+from ext_modules import pythoncom
 import winerror
 from pythoncom import _GetInterfaceCount, _GetGatewayCount
 import win32com_

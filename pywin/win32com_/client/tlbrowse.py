@@ -1,6 +1,6 @@
 import win32ui
 import win32api
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.gen_py.mfc import dialog
 
 # Changed

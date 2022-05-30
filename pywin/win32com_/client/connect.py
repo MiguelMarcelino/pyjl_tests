@@ -1,5 +1,5 @@
 """Utilities for working with Connections"""
-import pythoncom
+from ext_modules import pythoncom
 
 # Changed
 import win32com_.server.util

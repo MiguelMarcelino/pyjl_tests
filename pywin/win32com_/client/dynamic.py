@@ -19,7 +19,7 @@ import sys
 import traceback
 import types
 
-import pythoncom
+from ext_modules import pythoncom
 from pywintypes import IIDType
 from . import build
 

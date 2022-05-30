@@ -3,7 +3,7 @@
 #
 
 import win32api, sys, os
-import pythoncom
+from ext_modules import pythoncom
 
 # flag if we are in a "frozen" build.
 _frozen = getattr(sys, "frozen", 1 == 0)

@@ -4,7 +4,7 @@
 # the win32com_.mapi examples for a low-level interface.
 
 from win32com_.client import gencache, constants
-import pythoncom
+from ext_modules import pythoncom
 import os
 
 ammodule = None  # was the generated module!

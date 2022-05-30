@@ -1,6 +1,6 @@
 # testClipboard.py
 import unittest
-import pythoncom
+from ext_modules import pythoncom
 import win32con
 import winerror
 import win32clipboard

@@ -1,4 +1,4 @@
-import pythoncom
+from ext_modules import pythoncom
 import win32com_.server.util
 import win32com_.test.util
 

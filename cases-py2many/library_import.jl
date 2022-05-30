@@ -27,7 +27,7 @@ end
 
 function calendar_json_test()::js
     now = now(dt.datetime, dt.timezone.utc)
-    return dumps(js, now, date_to_json)
+    return dumps(js, now, default = date_to_json)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

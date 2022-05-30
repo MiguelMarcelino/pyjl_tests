@@ -19,7 +19,6 @@ function pixels(y, n, abs)
                         z = z * z + c
                     end
                     if abs(z) >= 2.0
-                        has_break = true
                         break
                     end
                 end
@@ -78,7 +77,7 @@ function compute_rows(n, f)
 end
 
 function mandelbrot(n)
-    write = stdout.buffer.write
+    write = x -> Base.write(stdout, x)
     compute_rows(n, compute_row) do rows
         write(encode("P4\n$(n) $(n)\n", "UTF-8"))
         for row in rows

@@ -6,7 +6,7 @@ function make_tree(depth::Int64)::Tuple
            ((make_tree(depth - 1), make_tree(depth - 1)))
 end
 
-function check_node(left::Union{Tuple, Any}, right::Union{Tuple, Any})::Int64
+function check_node(left::Union{Tuple, None}, right::Union{Tuple, None})::Int64
     #= 
         Count 1 for each node found.
         (Unpacking directly in the parameters is faster)
@@ -58,5 +58,5 @@ function main(requested_max_depth, min_depth = 4)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main(parse(Int, sys.argv[2]))
+    main(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
 end

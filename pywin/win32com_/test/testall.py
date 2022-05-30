@@ -17,7 +17,7 @@ import win32com_
 # This clearly ins't ideal or perfect :)
 win32com_.__path__[0] = win32com_src_dir
 
-import pythoncom
+from ext_modules import pythoncom
 import win32com_.client
 from win32com_.test.util import (
     CheckClean,

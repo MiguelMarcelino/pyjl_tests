@@ -1,6 +1,6 @@
 # Test dynamic policy, and running object table.
 
-import pythoncom
+from ext_modules import pythoncom
 import winerror
 
 from win32com_.server.exception import Exception

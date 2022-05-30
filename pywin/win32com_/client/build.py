@@ -20,7 +20,7 @@ import sys
 import win32com_.ext_modules.string as string
 import datetime
 
-import pythoncom
+from ext_modules import pythoncom
 from pywintypes import TimeType
 
 # Changed

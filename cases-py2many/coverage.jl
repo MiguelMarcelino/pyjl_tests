@@ -88,7 +88,7 @@ function show()
     else
         println("true")
     end
-    if 1 != nothing
+    if 1 !== nothing
         println("World is sane")
     end
     println(true ? ("True") : ("False"))

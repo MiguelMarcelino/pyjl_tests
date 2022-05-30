@@ -6,7 +6,7 @@ end
 
 function main()
     global seq
-    seq = read()
+    seq = read(stdin, String)()
     ilen = length(seq)
     seq = replace(seq, r">.*\n|\n" => s"")
     clen = length(seq)

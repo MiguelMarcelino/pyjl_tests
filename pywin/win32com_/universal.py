@@ -2,7 +2,7 @@
 
 # See if we have a special directory for the binaries (for developers)
 import types
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.client import gencache
 
 com_error = pythoncom.com_error

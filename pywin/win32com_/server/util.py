@@ -1,6 +1,6 @@
 """ General Server side utilities 
 """
-import pythoncom
+from ext_modules import pythoncom
 from . import policy
 import winerror
 from .exception import COMException

@@ -14,7 +14,7 @@
 import sys
 
 sys.coinit_flags = 2
-import pythoncom
+from ext_modules import pythoncom
 import win32api
 from win32com_.server import factory
 

@@ -1,5 +1,5 @@
 from win32com_.client import Dispatch, DispatchWithEvents, constants
-import pythoncom
+from ext_modules import pythoncom
 import os
 import time
 

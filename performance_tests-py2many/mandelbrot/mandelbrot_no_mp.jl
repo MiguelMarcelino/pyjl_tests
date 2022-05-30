@@ -18,7 +18,6 @@ using StringEncodings
                     z = z * z + c
                 end
                 if abs(z) >= 2.0
-                    has_break = true
                     break
                 end
             end
@@ -48,7 +47,7 @@ end
 end
 
 function mandelbrot(n)
-    write = stdout.buffer.write
+    write = x -> Base.write(stdout, x)
     write(encode("P4\n$(n) $(n)\n", "UTF-8"))
     for row in compute_rows(n, compute_row)
         write(row[2])

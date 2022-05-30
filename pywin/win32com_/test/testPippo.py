@@ -1,6 +1,6 @@
 import sys
 import unittest
-import pythoncom
+from ext_modules import pythoncom
 from win32com_.client import Dispatch
 from win32com_.client.gencache import EnsureDispatch
 

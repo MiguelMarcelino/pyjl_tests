@@ -2,7 +2,6 @@ function for_with_break()
     arr = []
     for i = 0:3
         if i == 2
-            has_break = true
             break
         end
         push!(arr, i)
@@ -38,7 +37,6 @@ function while_with_break()
     i = 0
     while true
         if i == 2
-            has_break = true
             break
         end
         push!(arr, i)

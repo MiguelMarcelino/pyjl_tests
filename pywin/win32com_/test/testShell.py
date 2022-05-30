@@ -11,7 +11,7 @@ except AttributeError:
     sys_maxsize = sys.maxint
 
 import win32con
-import pythoncom
+from ext_modules import pythoncom
 import pywintypes
 from win32com_.shell import shell
 from win32com_.shell.shellcon import *

@@ -21,12 +21,9 @@ def __import_pywin32_system_module__(modname, globs):
     # lib is already loaded.
     # See if this is a debug build.
     suffix = "_d" if "_d.pyd" in importlib.machinery.EXTENSION_SUFFIXES else ""
-    filename = "%s%d%d%s.dll" % (
-        modname,
-        sys.version_info[0],
-        sys.version_info[1],
-        suffix,
-    )
+    # Shortcut for translation to Julia
+    filename = "%s%d%d%s.dll" % (modname,3,9,suffix,)
+    # filename = "%s%d%d%s.dll" % (modname, sys.version_info[0],sys.version_info[1],suffix,)
     if hasattr(sys, "frozen"):
         # If we are running from a frozen program (py2exe, McMillan, freeze)
         # then we try and load the DLL from our sys.path

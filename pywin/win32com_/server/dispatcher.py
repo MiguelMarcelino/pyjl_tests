@@ -2,7 +2,7 @@
 
 Please see policy.py for a discussion on dispatchers and policies
 """
-import pythoncom, traceback, win32api
+from ext_modules import pythoncom, traceback, win32api
 from sys import exc_info
 
 #

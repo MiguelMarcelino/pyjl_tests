@@ -9,7 +9,7 @@ import traceback
 
 import win32com_.test.util
 from win32com_.client import makepy, selecttlb, gencache
-import pythoncom
+from ext_modules import pythoncom
 import winerror
 
 

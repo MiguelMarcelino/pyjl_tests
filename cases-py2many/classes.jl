@@ -4,22 +4,23 @@ abstract type AbstractStudent <: AbstractPerson end
 abstract type AbstractStudent2 <: AbstractPerson end
 mutable struct Foo <: AbstractFoo
 end
-function bar(self::Foo)::Int64
+function bar(self::AbstractFoo)::Int64
     return baz(self)
 end
 
-function baz(self::Foo)::Int64
+function baz(self::AbstractFoo)::Int64
     return 10
 end
 
-function bar_str(self::Foo)::String
+function bar_str(self::AbstractFoo)::String
     return "a"
 end
 
 mutable struct Person <: AbstractPerson
     name::String
+    Person(name::String = name) = new(name)
 end
-function get_name(self::Person)::String
+function get_name(self::AbstractPerson)::String
     return self.name
 end
 
@@ -27,11 +28,13 @@ mutable struct Student <: AbstractStudent
     name::String
     student_number::Int64
     domain::String
-
-    Student(name::String, student_number::Int64, domain::String = "school.student.pt") =
-        new(name, student_number, domain)
+    Student(
+        name::String = "school.student.pt",
+        student_number::Int64 = name,
+        domain::String = student_number,
+    ) = new(name, student_number, domain)
 end
-function get_name(self::Student)
+function get_name(self::AbstractStudent)
     return "$(self.name) - $(self.student_number)"
 end
 
@@ -40,13 +43,16 @@ mutable struct Student2 <: AbstractStudent2
     student_number::Int64
     domain::String
 
-    Student2(name::String, student_number::Int64, domain::String = "school.student.pt") =
-        begin
-            if student_number < 0
-                throw(ValueError("Student number must be a positive number"))
-            end
-            new(name, student_number, domain)
+    Student2(
+        name::String = "school.student.pt",
+        student_number::Int64 = student_number,
+        domain::String = name,
+    ) = begin
+        if student_number < 0
+            throw(ValueError("Student number must be a positive number"))
         end
+        new(name, student_number, domain)
+    end
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

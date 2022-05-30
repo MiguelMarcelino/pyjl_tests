@@ -21,7 +21,7 @@ Hacks, to do, etc
   Maybe an OLE2 compound file, or a bsddb file?
 """
 import pywintypes, os, sys
-import pythoncom
+from ext_modules import pythoncom
 import glob
 from . import CLSIDToClass
 from importlib import reload
