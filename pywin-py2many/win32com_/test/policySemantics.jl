@@ -16,7 +16,7 @@ mutable struct PythonSemanticClass <: AbstractPythonSemanticClass
 list::Vector
 _dispid_to_func_::Dict{Int64, String}
 _public_methods_::Vector{String}
-PythonSemanticClass(list = [], _dispid_to_func_::Dict{Int64, String} = Dict(10 => "Add", 11 => "Remove"), _public_methods_::Vector{String} = ["In"]) = new(list , _dispid_to_func_, _public_methods_)
+PythonSemanticClass(list = []) = new(list )
 end
 function _NewEnum(self::AbstractPythonSemanticClass)
 return win32com_.server.util.NewEnum(self.list)
@@ -42,7 +42,7 @@ function Remove(self::AbstractPythonSemanticClass, value)
 remove(self.list, value)
 end
 
-function DispExTest(ob::AbstractTester)
+function DispExTest(ob)
 if !(__debug__)
 println("WARNING: Tests dressed up as assertions are being skipped!")
 end
@@ -68,21 +68,21 @@ end
 end
 sort(dispids)
 if dispids != [pythoncom.DISPID_EVALUATE, pythoncom.DISPID_NEWENUM, 10, 11, 1000]
-throw(Error("Got back the wrong dispids: "))
+throw(Error("Got back the wrong dispids: $(dispids)"))
 end
 end
 
-function SemanticTest(ob::AbstractTester)
+function SemanticTest(ob)
 Add(ob, 1)
 Add(ob, 2)
 Add(ob, 3)
 if ob() != (1, 2, 3)
-throw(Error("Bad result - got "))
+throw(Error("Bad result - got $(repr(ob()))"))
 end
 dispob = ob._oleobj_
 rc = Invoke(dispob, pythoncom.DISPID_EVALUATE, 0, pythoncom.DISPATCH_METHOD | pythoncom.DISPATCH_PROPERTYGET, 1)
 if rc != 6
-throw(Error("Evaluate returned "))
+throw(Error("Evaluate returned $(rc)"))
 end
 end
 

@@ -5,9 +5,6 @@ using win32com_.server.register: RegisterServer, UnregisterServer
 abstract type AbstractTools end
 mutable struct Tools <: AbstractTools
 _public_methods_::Vector{String}
-
-                    Tools(_public_methods_::Vector{String} = ["reload", "adddir", "echo", "sleep"]) =
-                        new(_public_methods_)
 end
 function reload(self::AbstractTools, module_)::String
 if module_ ∈ sys.modules

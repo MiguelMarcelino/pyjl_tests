@@ -21,9 +21,6 @@ abstract type AbstractTestLogHandler <: logging.Handler end
 mutable struct TestServer <: AbstractTestServer
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-
-                    TestServer(_com_interfaces_::Vector = [pythoncom.IID_IStream], _public_methods_::Vector{String} = ["Clone", "Commit", "LockRegion", "Read"]) =
-                        new(_com_interfaces_, _public_methods_)
 end
 function Clone(self::AbstractTestServer)
 throw(COMException("Not today", scode = winerror.E_UNEXPECTED))
@@ -79,8 +76,8 @@ end
 end
 end
 end
-if find(get_captured(cap), "Traceback") < 0
-throw(error("$(get_captured(cap))"))
+if find(cap.get_captured(), "Traceback") < 0
+throw(error("Could not find a traceback in stderr: $(get_captured(cap))"))
 end
 com_server = Dispatch(wrap(TestServer()))
 try
@@ -127,8 +124,8 @@ end
 end
 end
 end
-if find(get_captured(cap), "Traceback") < 0
-throw(error("$(get_captured(cap))"))
+if find(cap.get_captured(), "Traceback") < 0
+throw(error("Could not find a traceback in stderr: $(get_captured(cap))"))
 end
 clear(cap)
 try

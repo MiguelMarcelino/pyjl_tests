@@ -22,12 +22,12 @@ os.mkdir(genPath)
 end
 end
 close(readline(joinpath(genPath, "__init__.py")))
-print("$(fname): generating -" )
+print("$(fname) : generating -" )
 f = readline(joinpath(genPath, fname + ".py"))
 win32com_.client.makepy.GenerateFromTypeLibSpec(loadArgs, f, bQuiet = 1, bGUIProgress = 1)
 close(f)
 print("compiling -" )
-fullModName = "$(genDir)$(fname)"
+fullModName = "win32com_.test.$(genDir).$(fname)"
 exec("import " + fullModName)
 sys.modules[fname + 1] = sys.modules[fullModName + 1]
 println("done")
@@ -43,7 +43,7 @@ println("** Interrupted ***")
 break;
 end
 if exn isa pythoncom.com_error
-println("** Could not generate test code for $(args[1])")
+println("** Could not generate test code for  $(args[1])")
 end
 end
 end
@@ -65,7 +65,7 @@ catch exn
  let details = exn
 if details isa os.error
 if type_(details) == type_(()) && details[1] != 2
-println("Could not deleted generated$(name)$(details)")
+println("Could not deleted generated $(name) $(details)")
 end
 end
 end
@@ -77,7 +77,7 @@ catch exn
  let details = exn
 if details isa os.error
 if type_(details) == type_(()) && details[1] != 2
-println("Could not deleted generated$(name)$(details)")
+println("Could not deleted generated $(name) $(details)")
 end
 end
 end
@@ -98,7 +98,7 @@ os.rmdir(genPath)
 catch exn
  let details = exn
 if details isa os.error
-println("Could not delete test directory -$(details)")
+println("Could not delete test directory - $(details)")
 end
 end
 end

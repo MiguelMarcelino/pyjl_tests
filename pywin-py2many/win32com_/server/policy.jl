@@ -68,8 +68,8 @@ Error Handling
  =#
 using OrderedCollections
 using PyCall
-win32api = pyimport("win32api")
 pywintypes = pyimport("pywintypes")
+win32api = pyimport("win32api")
 using win32com_.util: IIDToInterfaceName
 using win32com_: universal
 import win32com_.client
@@ -96,7 +96,7 @@ regSpec = "CLSID\\%s\\PythonCOM"
 regPolicy = "CLSID\\%s\\PythonCOMPolicy"
 regDispatcher = "CLSID\\%s\\PythonCOMDispatcher"
 regAddnPath = "CLSID\\%s\\PythonCOMPath"
-function CreateInstance(clsid::AbstractDynamicPolicy, reqIID)
+function CreateInstance(clsid, reqIID)
 #= Create a new instance of the specified IID
 
     The COM framework **always** calls this function to create a new
@@ -204,7 +204,7 @@ try
 classSpec = win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, regSpec % clsid)
 catch exn
 if exn isa win32api.error
-throw(error("The object is not correctly registered -  key can not be read"))
+throw(error("The object is not correctly registered - $((regSpec % clsid)) key can not be read"))
 end
 end
 myob = call_func(classSpec)
@@ -215,7 +215,7 @@ catch exn
  let xxx_todo_changeme = exn
 if xxx_todo_changeme isa pythoncom.com_error
 hr, desc, exc, arg = xxx_todo_changeme.args
-desc = "$(myob)$(IIDToInterfaceName(reqIID))$(reqIID)$(desc)"
+desc = "The object \'$(myob)\' was created, but does not support the interface \'$(IIDToInterfaceName(reqIID))\'($(reqIID)): $(desc)"
 throw(pythoncom.com_error(hr, desc, exc, arg))
 end
 end
@@ -554,7 +554,7 @@ self._dispid_to_put_[dispid + 1] = name
 elseif invkind == DISPATCH_PROPERTYGET
 self._dispid_to_get_[dispid + 1] = name
 else
-throw(ValueError("$(invkind)$(name))"))
+throw(ValueError("unexpected invkind: $(invkind) ($(name))"))
 end
 end
 if hasfield(typeof(ob), :_value_)
@@ -801,7 +801,7 @@ return _dynamic_(self._obj_, name, lcid, wFlags, args)
 end
 
 DefaultPolicy = DesignatedWrapPolicy
-function resolve_func(spec::AbstractDynamicPolicy)
+function resolve_func(spec)
 #= Resolve a function by name
 
     Given a function specified by 'module.function', return a callable object
@@ -820,7 +820,7 @@ end
 end
 end
 
-function call_func(spec::AbstractDynamicPolicy)
+function call_func(spec)
 #= Call a function specified by name.
 
     Call a function specified by 'module.function' and return the result.
@@ -828,7 +828,7 @@ function call_func(spec::AbstractDynamicPolicy)
 return resolve_func(spec)(args...)
 end
 
-function _import_module(mname::AbstractDynamicPolicy)
+function _import_module(mname)
 #= Import a module just like the 'import' statement.
 
     Having this function is much nicer for importing arbitrary modules than

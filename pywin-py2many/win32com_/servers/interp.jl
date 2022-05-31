@@ -23,7 +23,7 @@ _reg_clsid_::String
 _reg_desc_::String
 _reg_progid_::String
 _reg_verprogid_::String
-Interpreter(dict = Dict(), _public_methods_::Vector{String} = ["Exec", "Eval"], _reg_class_spec_::String = "win32com_.servers.interp.Interpreter", _reg_clsid_::String = "{30BD3490-2632-11cf-AD5B-524153480001}", _reg_desc_::String = "Python Interpreter", _reg_progid_::String = "Python.Interpreter", _reg_verprogid_::String = "Python.Interpreter.2") = new(dict , _public_methods_, _reg_class_spec_, _reg_clsid_, _reg_desc_, _reg_progid_, _reg_verprogid_)
+Interpreter(dict = Dict()) = new(dict )
 end
 function Eval(self::AbstractInterpreter, exp)
 #= Evaluate an expression. =#

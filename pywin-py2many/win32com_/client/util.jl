@@ -9,7 +9,7 @@ abstract type AbstractEnumerator end
 abstract type AbstractEnumVARIANT <: AbstractEnumerator end
 abstract type AbstractIterator end
 PyIDispatchType = pythoncom.TypeIIDs[pythoncom.IID_IDispatch + 1]
-function WrapEnum(ob::AbstractIterator, resultCLSID = nothing)::EnumVARIANT
+function WrapEnum(ob, resultCLSID = nothing)::EnumVARIANT
 #= Wrap an object in a VARIANT enumerator.
 
     All VT_DISPATCHs returned by the enumerator are converted to wrapper objects
@@ -36,7 +36,7 @@ mutable struct Enumerator <: AbstractEnumerator
 _oleobj_
 index::Int64
 resultCLSID
-Enumerator(enum, _oleobj_ = enum, index = -1) = new(enum, _oleobj_ , index )
+Enumerator(enum, index = -1) = new(enum, index )
 end
 function __getitem__(self::AbstractEnumerator, index)
 return __GetIndex(self, index)
@@ -88,9 +88,9 @@ end
 mutable struct EnumVARIANT <: AbstractEnumVARIANT
 resultCLSID
 
-            EnumVARIANT(enum = nothing, resultCLSID = resultCLSID) = begin
+            EnumVARIANT(enum, resultCLSID = nothing) = begin
                 Enumerator(enum)
-                new(enum , resultCLSID )
+                new(enum, resultCLSID )
             end
 end
 function _make_retval_(self::AbstractEnumVARIANT, result)
@@ -100,7 +100,7 @@ end
 mutable struct Iterator <: AbstractIterator
 resultCLSID
 _iter_
-Iterator(enum = nothing, resultCLSID = resultCLSID, _iter_ = (x for x in enum.QueryInterface(pythoncom.IID_IEnumVARIANT))) = new(enum , resultCLSID , _iter_ )
+Iterator(enum, resultCLSID = nothing, _iter_ = (x for x in enum.QueryInterface(pythoncom.IID_IEnumVARIANT))) = new(enum, resultCLSID , _iter_ )
 end
 function __iter__(self::AbstractIterator)
 return self

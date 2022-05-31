@@ -29,7 +29,7 @@ GEN_FULL = "full"
 GEN_DEMAND_BASE = "demand(base)"
 GEN_DEMAND_CHILD = "demand(child)"
 mapVTToTypeString = Dict(pythoncom.VT_I2 => "types.IntType", pythoncom.VT_I4 => "types.IntType", pythoncom.VT_R4 => "types.FloatType", pythoncom.VT_R8 => "types.FloatType", pythoncom.VT_BSTR => "types.StringType", pythoncom.VT_BOOL => "types.IntType", pythoncom.VT_VARIANT => "types.TypeType", pythoncom.VT_I1 => "types.IntType", pythoncom.VT_UI1 => "types.IntType", pythoncom.VT_UI2 => "types.IntType", pythoncom.VT_UI4 => "types.IntType", pythoncom.VT_I8 => "types.LongType", pythoncom.VT_UI8 => "types.LongType", pythoncom.VT_INT => "types.IntType", pythoncom.VT_DATE => "pythoncom.PyTimeType", pythoncom.VT_UINT => "types.IntType")
-function MakeDefaultArgsForPropertyPut(argsDesc::AbstractGenerator)::Tuple
+function MakeDefaultArgsForPropertyPut(argsDesc)::Tuple
 ret = []
 for desc in argsDesc[2:end]
 default = build.MakeDefaultArgRepr(desc)
@@ -41,12 +41,12 @@ end
 return tuple(ret)
 end
 
-function MakeMapLineEntry(dispid::AbstractGenerator, wFlags, retType, argTypes, user, resultCLSID)
+function MakeMapLineEntry(dispid, wFlags, retType, argTypes, user, resultCLSID)
 argTypes = tuple([what[begin:2] for what in argTypes])
-return "$(dispid)$(wFlags)$(retType[begin:2])$(argTypes)$(user)$(resultCLSID))"
+return "($(dispid), $(wFlags), $(retType[begin:2]), $(argTypes), \"$(user)\", $(resultCLSID))"
 end
 
-function MakeEventMethodName(eventName::AbstractGenerator)::String
+function MakeEventMethodName(eventName)::String
 if eventName[begin:2] == "On"
 return eventName
 else
@@ -54,11 +54,11 @@ return "On" + eventName
 end
 end
 
-function WriteSinkEventMap(obj::AbstractGenerator, stream)
+function WriteSinkEventMap(obj, stream)
 write(stream, "\t_dispid_to_func_ = {")
 for (name, entry) in append!(append!(collect(items(obj.propMapGet)), collect(items(obj.propMapPut))), collect(items(obj.mapFuncs)))
 fdesc = entry.desc
-write(stream, "$(fdesc.memid)$(MakeEventMethodName(entry.names[1]))",")
+write(stream, "\t\t$(fdesc.memid)d : \"$(MakeEventMethodName(entry.names[1]))\",")
 end
 write(stream, "\t\t}")
 end
@@ -84,7 +84,7 @@ return self.order < other.order
 end
 
 function __repr__(self::AbstractWritableItem)
-return "$(repr(self.doc))$(self.order)"
+return "OleItem: doc=$(repr(self.doc)), order=$(self.order)"
 end
 
 mutable struct RecordItem <: build.OleItem
@@ -94,16 +94,16 @@ doc
 order::Int64
 typename::String
 
-            RecordItem(typeInfo, typeAttr, doc = nothing, bForUser = 1, clsid = typeAttr[0], order::Int64 = 9, typename::String = "RECORD") = begin
+            RecordItem(typeInfo, typeAttr, doc = nothing, bForUser = 1, clsid = typeAttr[1]) = begin
                 build.OleItem.__init__(self, doc)
-                new(typeInfo, typeAttr, doc , bForUser , clsid , order, typename)
+                new(typeInfo, typeAttr, doc , bForUser , clsid )
             end
 end
 function WriteClass(self::AbstractRecordItem, generator)
 #= pass =#
 end
 
-function WriteAliasesForItem(item::AbstractGenerator, aliasItems, stream)
+function WriteAliasesForItem(item, aliasItems, stream)
 for alias in values(aliasItems)
 if item.doc && alias.aliasDoc && alias.aliasDoc[1] == item.doc[1]
 WriteAliasItem(alias, aliasItems, stream)
@@ -121,10 +121,10 @@ doc
 order::Int64
 typename::String
 
-            AliasItem(typeinfo, attr = nothing, doc = 1, bForUser = attr[14], ai = attr, order::Int64 = 2, typename::String = "ALIAS") = begin
+            AliasItem(typeinfo, attr, doc = nothing, bForUser = 1, ai = attr[15]) = begin
                 build.OleItem.__init__(self, doc)
-if type_(ai) == type_(()) && type_(ai[1]) == type_(0)
-href = ai[1]
+if type_(ai) == type_(()) && type_(ai[2]) == type_(0)
+href = ai[2]
 alinfo = typeinfo.GetRefTypeInfo(href)
 aliasDoc = alinfo.GetDocumentation(-1)
 aliasAttr = alinfo.GetTypeAttr()
@@ -132,7 +132,7 @@ else
 aliasDoc = nothing
 aliasAttr = nothing
 end
-                new(typeinfo, attr , doc , bForUser , ai , order, typename)
+                new(typeinfo, attr, doc , bForUser , ai )
             end
 end
 function WriteAliasItem(self::AbstractAliasItem, aliasDict, stream)
@@ -144,21 +144,21 @@ depName = self.aliasDoc[1]
 if depName ∈ aliasDict
 WriteAliasItem(aliasDict[depName + 1], aliasDict, stream)
 end
-write(stream, "(self.doc[1] + " = ") + depName")
+write(stream, "$((self.doc[1] + " = ") + depName)")
 else
 ai = self.attr[15]
 if type_(ai) == type_(0)
 try
 typeStr = mapVTToTypeString[ai]
-write(stream, "$(self.doc[1])$(typeStr)")
+write(stream, "# $(self.doc[1])=$(typeStr)")
 catch exn
 if exn isa KeyError
-write(stream, "(self.doc[1] + " = None # Can\'t convert alias info ") * string(ai)")
+write(stream, "$((self.doc[1] + " = None # Can\'t convert alias info ") * string(ai))")
 end
 end
 end
 end
-println(file = stream)
+write(stream, "")
 self.bWritten = 1
 end
 
@@ -171,14 +171,14 @@ doc
 order::Int64
 typename::String
 
-            EnumerationItem(typeinfo, attr, doc = nothing, bForUser = 1, clsid = attr[0], mapVars = Dict(), typeFlags = attr[11], hidden = typeFlags & pythoncom.TYPEFLAG_FHIDDEN || typeFlags & pythoncom.TYPEFLAG_FRESTRICTED, order::Int64 = 1, typename::String = "ENUMERATION") = begin
+            EnumerationItem(typeinfo, attr, doc = nothing, bForUser = 1, clsid = attr[1], mapVars = Dict(), typeFlags = attr[12], hidden = typeFlags & pythoncom.TYPEFLAG_FHIDDEN || typeFlags & pythoncom.TYPEFLAG_FRESTRICTED) = begin
                 build.OleItem.__init__(self, doc)
-for j in 0:attr[7]
+for j in 0:attr[8] - 1
 vdesc = typeinfo.GetVarDesc(j)
-name = typeinfo.GetNames(vdesc[0])[0]
+name = typeinfo.GetNames(vdesc[1])[1]
 mapVars[name] = build.MapEntry(vdesc)
 end
-                new(typeinfo, attr, doc , bForUser , clsid , mapVars , typeFlags , hidden , order, typename)
+                new(typeinfo, attr, doc , bForUser , clsid , mapVars , typeFlags , hidden )
             end
 end
 function WriteEnumerationItems(self::AbstractEnumerationItem, stream)::Int64
@@ -200,7 +200,7 @@ use = replace(use, "\"", "\'")
 use = ("\"" + use) * "\"" * " # This VARIANT type cannot be converted automatically"
 end
 end
-write(stream, "$(build.MakePublicAttributeName(name, true))$(use)$(enumName)")
+write(stream, "\t$(build.MakePublicAttributeName(name, true))s=$(use)s # from enum $(enumName)")
 num += 1
 end
 end
@@ -213,9 +213,6 @@ bWritten::Int64
 python_name
 vtableFuncs
 order::Int64
-
-                    VTableItem(bIsDispatch, bWritten::Int64, python_name, vtableFuncs, order::Int64 = 4) =
-                        new(bIsDispatch, bWritten, python_name, vtableFuncs, order)
 end
 function WriteClass(self::AbstractVTableItem, generator)
 WriteVTableMap(self, generator)
@@ -224,7 +221,7 @@ end
 
 function WriteVTableMap(self::AbstractVTableItem, generator)
 stream = generator.file
-write(stream, "$(self.python_name)$(self.bIsDispatch)")
+write(stream, "$(self.python_name)_vtables_dispatch_ = $(self.bIsDispatch)")
 write(stream, "$(self.python_name)_vtables_ = [")
 for v in self.vtableFuncs
 names, dispid, desc = v
@@ -233,13 +230,13 @@ arg_reprs = []
 item_num = 0
 write(stream, "\t((")
 for name in names
-write(stream, "$(repr(name)),")
+write(stream, "$(repr(name)) ,")
 item_num = item_num + 1
 if (item_num % 5) == 0
 write(stream, "\n\t\t\t")
 end
 end
-write(stream, "$(dispid)$(desc.memid)$(desc.scodeArray), [")
+write(stream, "), $(dispid), ($(desc.memid), $(desc.scodeArray), [")
 for arg in desc.args
 item_num = item_num + 1
 if (item_num % 5) == 0
@@ -251,20 +248,20 @@ arg3_repr = nothing
 else
 arg3_repr = repr(arg[4])
 end
-write(stream, "$(repr((arg[1], arg[2], defval, arg3_repr))),")
+write(stream, "$(repr((arg[1], arg[2], defval, arg3_repr))) ,")
 end
 write(stream, "],")
-write(stream, "$(repr(desc.funckind)),")
-write(stream, "$(repr(desc.invkind)),")
-write(stream, "$(repr(desc.callconv)),")
-write(stream, "$(repr(desc.cParamsOpt)),")
-write(stream, "$(repr(desc.oVft)),")
-write(stream, "$(repr(desc.rettype)),")
-write(stream, "$(repr(desc.wFuncFlags)),")
+write(stream, "$(repr(desc.funckind)) ,")
+write(stream, "$(repr(desc.invkind)) ,")
+write(stream, "$(repr(desc.callconv)) ,")
+write(stream, "$(repr(desc.cParamsOpt)) ,")
+write(stream, "$(repr(desc.oVft)) ,")
+write(stream, "$(repr(desc.rettype)) ,")
+write(stream, "$(repr(desc.wFuncFlags)) ,")
 write(stream, ")),")
 end
 write(stream, "]")
-println(file = stream)
+write(stream, "")
 end
 
 mutable struct DispatchItem <: build.DispatchItem
@@ -279,9 +276,9 @@ type_attr
 doc
 order::Int64
 
-            DispatchItem(typeinfo, attr, doc = nothing, type_attr = attr, coclass_clsid = nothing, order::Int64 = 3) = begin
+            DispatchItem(typeinfo, attr, doc = nothing, coclass_clsid = nothing) = begin
                 build.DispatchItem.__init__(self, typeinfo, attr, doc)
-                new(typeinfo, attr, doc , type_attr , coclass_clsid , order)
+                new(typeinfo, attr, doc , coclass_clsid )
             end
 end
 function WriteClass(self::AbstractDispatchItem, generator)
@@ -295,7 +292,7 @@ else
 WriteClassHeader(self, generator)
 WriteClassBody(self, generator)
 end
-println(file = generator.file)
+write(generator.file, "")
 self.bWritten = 1
 end
 
@@ -303,25 +300,25 @@ function WriteClassHeader(self::AbstractDispatchItem, generator)
 checkWriteDispatchBaseClass(generator)
 doc = self.doc
 stream = generator.file
-write(stream, "("class " + self.python_name) * "(DispatchBaseClass):"")
+write(stream, "$(("class " + self.python_name) * "(DispatchBaseClass):")")
 if doc[2]
-write(stream, "\t" + build._makeDocString(doc[2]")
+write(stream, "$(\t" + build._makeDocString(doc[2])")
 end
 try
 progId = pythoncom.ProgIDFromCLSID(self.clsid)
-write(stream, "	# This class is creatable by the name ''")
+write(stream, "\t# This class is creatable by the name \'$(progId)\'")
 catch exn
 if exn isa pythoncom.com_error
 #= pass =#
 end
 end
-write(stream, "\tCLSID = " + repr(self.clsid")
+write(stream, "$(\tCLSID = " + repr(self.clsid)")
 if self.coclass_clsid === nothing
 write(stream, "\tcoclass_clsid = None")
 else
-write(stream, "\tcoclass_clsid = " + repr(self.coclass_clsid")
+write(stream, "$(\tcoclass_clsid = " + repr(self.coclass_clsid)")
 end
-println(file = stream)
+write(stream, "")
 self.bWritten = 1
 end
 
@@ -329,27 +326,27 @@ function WriteEventSinkClassHeader(self::AbstractDispatchItem, generator)
 checkWriteEventBaseClass(generator)
 doc = self.doc
 stream = generator.file
-write(stream, "("class " + self.python_name) * ":"")
+write(stream, "$(("class " + self.python_name) * ":")")
 if doc[2]
-write(stream, "\t" + build._makeDocString(doc[2]")
+write(stream, "$(\t" + build._makeDocString(doc[2])")
 end
 try
 progId = pythoncom.ProgIDFromCLSID(self.clsid)
-write(stream, "	# This class is creatable by the name ''")
+write(stream, "\t# This class is creatable by the name \'$(progId)\'")
 catch exn
 if exn isa pythoncom.com_error
 #= pass =#
 end
 end
-write(stream, "\tCLSID = CLSID_Sink = " + repr(self.clsid")
+write(stream, "$(\tCLSID = CLSID_Sink = " + repr(self.clsid)")
 if self.coclass_clsid === nothing
 write(stream, "\tcoclass_clsid = None")
 else
-write(stream, "\tcoclass_clsid = " + repr(self.coclass_clsid")
+write(stream, "$(\tcoclass_clsid = " + repr(self.coclass_clsid)")
 end
 write(stream, "\t_public_methods_ = [] # For COM Server support")
 WriteSinkEventMap(self, stream)
-println(file = stream)
+write(stream, "")
 write(stream, "\tdef __init__(self, oobj = None):")
 write(stream, "\t\tif oobj is None:")
 write(stream, "\t\t\tself._olecp = None")
@@ -372,7 +369,7 @@ write(stream, "\t\t\tcp.Unadvise(cookie)")
 write(stream, "\tdef _query_interface_(self, iid):")
 write(stream, "\t\timport win32com_.server.util")
 write(stream, "\t\tif iid==self.CLSID_Sink: return win32com_.server.util.wrap(self)")
-println(file = stream)
+write(stream, "")
 self.bWritten = 1
 end
 
@@ -383,12 +380,12 @@ write(stream, "\t# If you create handlers, they should have the following protot
 for (name, entry) in append!(append!(collect(items(self.propMapGet)), collect(items(self.propMapPut))), collect(items(self.mapFuncs)))
 fdesc = entry.desc
 methName = MakeEventMethodName(entry.names[1])
-write(stream, "("#\tdef " * methName * "(self" + build.BuildCallList(fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", is_comment = true)) * "):"")
+write(stream, "$(("#\tdef " * methName * "(self" + build.BuildCallList(fdesc, entry.names, "defaultNamedOptArg", "defaultNamedNotOptArg", "defaultUnnamedArg", "pythoncom.Missing", is_comment = true)) * "):")")
 if entry.doc && entry.doc[2]
-write(stream, "#\t\t" + build._makeDocString(entry.doc[2]")
+write(stream, "$(#\t\t" + build._makeDocString(entry.doc[2])")
 end
 end
-println(file = stream)
+write(stream, "")
 self.bWritten = 1
 end
 
@@ -421,10 +418,10 @@ specialItems[lkey] = (entry, entry.desc.invkind, nothing)
 end
 if generator.bBuildHidden || !(entry.hidden)
 if GetResultName(entry)
-write(stream, "\t# Result is of type " + GetResultName(entry")
+write(stream, "$(\t# Result is of type " + GetResultName(entry)")
 end
 if entry.wasProperty
-write(stream, "	# The method  is actually a property, but must be used as a method to correctly pass the arguments")
+write(stream, "\t# The method $(name) is actually a property, but must be used as a method to correctly pass the arguments")
 end
 ret = MakeFuncMethod(self, entry, build.MakePublicAttributeName(name))
 for line in ret
@@ -440,7 +437,7 @@ entry = self.propMap[key + 1]
 if generator.bBuildHidden || !(entry.hidden)
 resultName = GetResultName(entry)
 if resultName
-write(stream, "$(key)$(resultName)'")
+write(stream, "\t\t# Property \'$(key)\' is an object of type \'$(resultName)\'")
 end
 lkey = lower(key)
 details = entry.desc
@@ -460,7 +457,7 @@ if details.memid == pythoncom.DISPID_NEWENUM
 continue;
 end
 end
-write(stream, "$(build.MakePublicAttributeName(key))$(mapEntry),")
+write(stream, "\t\t\"$(build.MakePublicAttributeName(key))\": $(mapEntry),")
 end
 end
 names = collect(keys(self.propMapGet))
@@ -469,7 +466,7 @@ for key in names
 entry = self.propMapGet[key + 1]
 if generator.bBuildHidden || !(entry.hidden)
 if GetResultName(entry)
-write(stream, "$(key)$(GetResultName(entry))'")
+write(stream, "\t\t# Method \'$(key)\' returns object of type \'$(GetResultName(entry))\'")
 end
 details = entry.desc
 @assert(details.desckind == pythoncom.DESCKIND_FUNCDESC)
@@ -490,7 +487,7 @@ if details.memid == pythoncom.DISPID_NEWENUM
 continue;
 end
 end
-write(stream, "$(build.MakePublicAttributeName(key))$(mapEntry),")
+write(stream, "\t\t\"$(build.MakePublicAttributeName(key))\": $(mapEntry),")
 end
 end
 write(stream, "\t}")
@@ -508,7 +505,7 @@ defArgDesc = ""
 else
 defArgDesc = defArgDesc * ","
 end
-write(stream, "$(build.MakePublicAttributeName(key))$(details[1])$(pythoncom.DISPATCH_PROPERTYPUT)$(defArgDesc))),")
+write(stream, "\t\t\"$(build.MakePublicAttributeName(key))\" : (($(details[1]), LCID, $(pythoncom.DISPATCH_PROPERTYPUT), 0),($(defArgDesc))),")
 end
 end
 names = collect(keys(self.propMapPut))
@@ -518,7 +515,7 @@ entry = self.propMapPut[key + 1]
 if generator.bBuildHidden || !(entry.hidden)
 details = entry.desc
 defArgDesc = MakeDefaultArgsForPropertyPut(details[3])
-write(stream, "$(build.MakePublicAttributeName(key))$(details[1])$(details[5])$(defArgDesc)),")
+write(stream, "\t\t\"$(build.MakePublicAttributeName(key))\": (($(details[1]), LCID, $(details[5]), 0),$(defArgDesc)),")
 end
 end
 write(stream, "\t}")
@@ -529,10 +526,9 @@ typename = "method"
 ret = MakeFuncMethod(self, entry, "__call__")
 else
 typename = "property"
-ret = ["	def __call__(self):
-		return self._ApplyTypes_(*)"]
+ret = ["\tdef __call__(self):\n\t\treturn self._ApplyTypes_(*$(propArgs))"]
 end
-write(stream, "$(typename)$(entry.names[1])'")
+write(stream, "\t# Default $(typename) for this class is \'$(entry.names[1])\'")
 for line in ret
 write(stream, "$(line)")
 end
@@ -556,10 +552,10 @@ end
 write(stream, "\tdef __iter__(self):")
 write(stream, "\t\t\"Return a Python iterator for this object\"")
 write(stream, "\t\ttry:")
-write(stream, "$(pythoncom.DISPID_NEWENUM)$(invkind),(13, 10),())")
+write(stream, "\t\t\tob = self._oleobj_.InvokeTypes($(pythoncom.DISPID_NEWENUM),LCID,$(invkind),(13, 10),())")
 write(stream, "\t\texcept pythoncom.error:")
 write(stream, "\t\t\traise TypeError(\"This object does not support enumeration\")")
-write(stream, "		return win32com_.client.util.Iterator(ob, )")
+write(stream, "\t\treturn win32com_.client.util.Iterator(ob, $(resultCLSID))")
 if specialItems["item"]
 entry, invoketype, propArgs = specialItems["item"]
 resultCLSID = GetResultCLSIDStr(entry)
@@ -567,7 +563,7 @@ write(stream, "\t#This class has Item property/method which allows indexed acces
 write(stream, "\t#Some objects will accept a string or other type of key in addition to integers.")
 write(stream, "\t#Note that many Office objects do not use zero-based indexing.")
 write(stream, "\tdef __getitem__(self, key):")
-write(stream, "$(entry.desc.memid)$(invoketype)$(resultCLSID))")
+write(stream, "\t\treturn self._get_good_object_(self._oleobj_.Invoke(*($(entry.desc.memid), LCID, $(invoketype), 1, key)), \"Item\", $(resultCLSID))")
 end
 if specialItems["count"]
 entry, invoketype, propArgs = specialItems["count"]
@@ -576,10 +572,9 @@ typename = "method"
 ret = MakeFuncMethod(self, entry, "__len__")
 else
 typename = "property"
-ret = ["	def __len__(self):
-		return self._ApplyTypes_(*)"]
+ret = ["\tdef __len__(self):\n\t\treturn self._ApplyTypes_(*$(propArgs))"]
 end
-write(stream, "	#This class has Count()  - allow len(ob) to provide this")
+write(stream, "\t#This class has Count() $(typename) - allow len(ob) to provide this")
 for line in ret
 write(stream, "$(line)")
 end
@@ -601,9 +596,9 @@ doc
 order::Int64
 typename::String
 
-            CoClassItem(typeinfo = nothing, attr = [], doc = [], sources = 1, interfaces = attr[0], bForUser = sources, clsid = interfaces, bIsDispatch = 1, order::Int64 = 5, typename::String = "COCLASS") = begin
+            CoClassItem(typeinfo, attr, doc = nothing, sources = [], interfaces = [], bForUser = 1, clsid = attr[1], bIsDispatch = 1) = begin
                 build.OleItem.__init__(self, doc)
-                new(typeinfo , attr , doc , sources , interfaces , bForUser , clsid , bIsDispatch , order, typename)
+                new(typeinfo, attr, doc , sources , interfaces , bForUser , clsid , bIsDispatch )
             end
 end
 function WriteClass(self::AbstractCoClassItem, generator)
@@ -620,24 +615,24 @@ push!(referenced_items, ref)
 end
 write(stream, "import sys")
 for ref in referenced_items
-write(stream, "$(generator.base_mod_name)$(ref.python_name)')")
-write(stream, "$(ref.python_name)$(generator.base_mod_name)$(ref.python_name)$(ref.python_name)")
+write(stream, "__import__(\'$(generator.base_mod_name).$(ref.python_name)\')")
+write(stream, "$(ref.python_name) = sys.modules[\'$(generator.base_mod_name).$(ref.python_name)\'].$(ref.python_name)")
 ref.bWritten = 1
 end
 end
 try
 progId = pythoncom.ProgIDFromCLSID(self.clsid)
-write(stream, "# This CoClass is known by the name ''")
+write(stream, "# This CoClass is known by the name \'$(progId)\'")
 catch exn
 if exn isa pythoncom.com_error
 #= pass =#
 end
 end
-write(stream, "class (CoClassBaseClass): # A CoClass")
+write(stream, "class $(self.python_name)(CoClassBaseClass): # A CoClass")
 if doc && doc[2]
-write(stream, "\t# " + doc[2")
+write(stream, "$(\t# " + doc[2)")
 end
-write(stream, "$(self.clsid)")
+write(stream, "\tCLSID = $(self.clsid)")
 write(stream, "\tcoclass_sources = [")
 defItem = nothing
 for (item, flag) in self.sources
@@ -649,7 +644,7 @@ key = item.python_name
 else
 key = repr(string(item.clsid))
 end
-write(stream, "		,")
+write(stream, "\t\t$(key),")
 end
 write(stream, "\t]")
 if defItem
@@ -658,7 +653,7 @@ defName = defItem.python_name
 else
 defName = repr(string(defItem.clsid))
 end
-write(stream, "$(defName)")
+write(stream, "\tdefault_source = $(defName)")
 end
 write(stream, "\tcoclass_interfaces = [")
 defItem = nothing
@@ -671,7 +666,7 @@ key = item.python_name
 else
 key = repr(string(item.clsid))
 end
-write(stream, "$(key),")
+write(stream, "\t\t$(key),")
 end
 write(stream, "\t]")
 if defItem
@@ -680,10 +675,10 @@ defName = defItem.python_name
 else
 defName = repr(string(defItem.clsid))
 end
-write(stream, "$(defName)")
+write(stream, "\tdefault_interface = $(defName)")
 end
 self.bWritten = 1
-println(file = stream)
+write(stream, "")
 end
 
 mutable struct GeneratorProgress <: AbstractGeneratorProgress
@@ -742,9 +737,9 @@ sourceFilename
 typelib
 bUnicodeToString
 
-            Generator(typelib = 1, sourceFilename = nothing, progressObject = 0, bBuildHidden = 0, bUnicodeToString = 0, bHaveWrittenDispatchBaseClass = typelib, bHaveWrittenCoClassBaseClass = sourceFilename, bHaveWrittenEventBaseClass = bBuildHidden, progress = progressObject, file = nothing) = begin
+            Generator(typelib, sourceFilename, progressObject, bBuildHidden = 1, bUnicodeToString = nothing, bHaveWrittenDispatchBaseClass = 0, bHaveWrittenCoClassBaseClass = 0, bHaveWrittenEventBaseClass = 0, file = nothing) = begin
                 @assert(bUnicodeToString === nothing)
-                new(typelib , sourceFilename , progressObject , bBuildHidden , bUnicodeToString , bHaveWrittenDispatchBaseClass , bHaveWrittenCoClassBaseClass , bHaveWrittenEventBaseClass , progress , file )
+                new(typelib, sourceFilename, progressObject, bBuildHidden , bUnicodeToString , bHaveWrittenDispatchBaseClass , bHaveWrittenCoClassBaseClass , bHaveWrittenEventBaseClass , file )
             end
 end
 function CollectOleItemInfosFromType(self::AbstractGenerator)::Vector
@@ -862,7 +857,7 @@ newItem, child_infos = _Build_CoClass(self, type_info_tuple)
 _Build_CoClassChildren(self, newItem, child_infos, oleItems, vtableItems)
 oleItems[newItem.clsid] = newItem
 else
-LogWarning(self.progress, "Unknown TKIND found: ")
+LogWarning(self.progress, "Unknown TKIND found: $(infotype)")
 end
 end
 return (oleItems, enumItems, recordItems, vtableItems)
@@ -904,7 +899,7 @@ end
 end
 
 function get_temp_filename(self::AbstractGenerator, filename)
-return "$(filename)$(os.getpid()).temp"
+return "$(filename).$(os.getpid()).temp"
 end
 
 function generate(self::AbstractGenerator, file, is_for_demand = 0)
@@ -931,34 +926,34 @@ self.bHaveWrittenCoClassBaseClass = 0
 self.bHaveWrittenEventBaseClass = 0
 @assert(self.file.encoding)
 encoding = self.file.encoding
-write(self.file, "$(encoding) -*-")
-write(self.file, "$(makepy_version)")
-write(self.file, "$(replace(sys.version, "\n", "-"))")
+write(self.file, "# -*- coding: $(encoding) -*-")
+write(self.file, "# Created by makepy.py version $(makepy_version)")
+write(self.file, "# By python version $(replace(sys.version, "\n", "-"))")
 if self.sourceFilename
-write(self.file, "$(splitdir(self.sourceFilename)[2])'")
+write(self.file, "# From type library \'$(splitdir(self.sourceFilename)[2])\'")
 end
-write(self.file, "# On ")
+write(self.file, "# On $(Dates.format(Dates.epochms2datetime(Dates.datetime2unix(Dates.now())()), Dates.RFC1123Format))")
 write(self.file, "$(build._makeDocString(docDesc))")
-write(self.file, "makepy_version =$(repr(makepy_version))")
-write(self.file, "$(sys.hexversion)")
-println(file = self.file)
+write(self.file, "makepy_version = $(repr(makepy_version))")
+write(self.file, "python_version = 0x$(sys.hexversion)")
+write(self.file, "")
 write(self.file, "import win32com_.client.CLSIDToClass, pythoncom, pywintypes")
 write(self.file, "import win32com_.client.util")
 write(self.file, "from pywintypes import IID")
 write(self.file, "from win32com_.client import Dispatch")
-println(file = self.file)
+write(self.file, "")
 write(self.file, "# The following 3 lines may need tweaking for the particular server")
 write(self.file, "# Candidates are pythoncom.Missing, .Empty and .ArgNotFound")
 write(self.file, "defaultNamedOptArg=pythoncom.Empty")
 write(self.file, "defaultNamedNotOptArg=pythoncom.Empty")
 write(self.file, "defaultUnnamedArg=pythoncom.Empty")
-println(file = self.file)
-write(self.file, "CLSID = " + repr(la[1]")
-write(self.file, "MajorVersion = " * string(la[4]")
-write(self.file, "MinorVersion = " * string(la[5]")
-write(self.file, "LibraryFlags = " * string(la[6]")
-write(self.file, "LCID = " + hex(la[2]")
-println(file = self.file)
+write(self.file, "")
+write(self.file, "$(CLSID = " + repr(la[1])")
+write(self.file, "$(MajorVersion = " * string(la[4])")
+write(self.file, "$(MinorVersion = " * string(la[5])")
+write(self.file, "$(LibraryFlags = " * string(la[6])")
+write(self.file, "$(LCID = " + hex(la[2])")
+write(self.file, "")
 end
 
 function do_generate(self::AbstractGenerator)
@@ -985,7 +980,7 @@ end
 if !(num_written) != 0
 write(stream, "\tpass")
 end
-println(file = stream)
+write(stream, "")
 end
 if self.generate_type == GEN_FULL
 items = [l for l in values(oleItems) if l !== nothing ]
@@ -1006,18 +1001,18 @@ end
 write(stream, "RecordMap = {")
 for record in values(recordItems)
 if record.clsid == pythoncom.IID_NULL
-write(stream, "$(repr(record.doc[1]))$(repr(string(record.clsid))), # Record disabled because it doesn't have a non-null GUID")
+write(stream, "\t###$(repr(record.doc[1])): $(repr(string(record.clsid))), # Record disabled because it doesn\'t have a non-null GUID")
 else
-write(stream, "$(repr(record.doc[1]))$(repr(string(record.clsid))),")
+write(stream, "\t$(repr(record.doc[1])): $(repr(string(record.clsid))),")
 end
 end
 write(stream, "}")
-println(file = stream)
+write(stream, "")
 if self.generate_type == GEN_FULL
 write(stream, "CLSIDToClassMap = {")
 for item in values(oleItems)
 if item !== nothing && item.bWritten
-write(stream, "$(string(item.clsid))$(item.python_name),")
+write(stream, "\t\'$(string(item.clsid))\' : $(item.python_name),")
 end
 end
 write(stream, "}")
@@ -1026,28 +1021,28 @@ write(stream, "win32com_.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClas
 write(stream, "VTablesToPackageMap = {}")
 write(stream, "VTablesToClassMap = {")
 for item in values(vtableItems)
-write(stream, "$(item.clsid)$(item.python_name)',")
+write(stream, "\t\'$(item.clsid)\' : \'$(item.python_name)\',")
 end
 write(stream, "}")
-println(file = stream)
+write(stream, "")
 else
 write(stream, "CLSIDToClassMap = {}")
 write(stream, "CLSIDToPackageMap = {")
 for item in values(oleItems)
 if item !== nothing
-write(stream, "$(string(item.clsid))$(repr(item.python_name)),")
+write(stream, "\t\'$(string(item.clsid))\' : $(repr(item.python_name)),")
 end
 end
 write(stream, "}")
 write(stream, "VTablesToClassMap = {}")
 write(stream, "VTablesToPackageMap = {")
 for item in values(vtableItems)
-write(stream, "$(item.clsid)$(item.python_name)',")
+write(stream, "\t\'$(item.clsid)\' : \'$(item.python_name)\',")
 end
 write(stream, "}")
-println(file = stream)
+write(stream, "")
 end
-println(file = stream)
+write(stream, "")
 map = OrderedDict()
 for item in values(oleItems)
 if item !== nothing && !isa(item, CoClassItem)
@@ -1059,14 +1054,14 @@ map[item.python_name] = item.clsid
 end
 write(stream, "NamesToIIDMap = {")
 for (name, iid) in collect(map)
-write(stream, "$(name)$(iid)',")
+write(stream, "\t\'$(name)\' : \'$(iid)\',")
 end
 write(stream, "}")
-println(file = stream)
+write(stream, "")
 if enumItems
 write(stream, "win32com_.client.constants.__dicts__.append(constants.__dict__)")
 end
-println(file = stream)
+write(stream, "")
 end
 
 function generate_child(self::AbstractGenerator, child, dir)
@@ -1077,7 +1072,7 @@ lcid = la[2]
 clsid = la[1]
 major = la[4]
 minor = la[5]
-self.base_mod_name = ("win32com_.gen_py." + string(clsid)[2:-1]) + "$(lcid)$(major)$(minor)"
+self.base_mod_name = ("win32com_.gen_py." + string(clsid)[1:end - 1]) + "x$(lcid)x$(major)x$(minor)"
 try
 oleItems = OrderedDict()
 vtableItems = OrderedDict()
@@ -1169,7 +1164,7 @@ SetDescription(self.progress, "Building definitions from type library...")
 do_gen_file_header(self)
 WriteClass(oleitem, self)
 if oleitem.bWritten
-write(self.file, "$(oleitem.clsid)$(oleitem.python_name) )")
+write(self.file, "win32com_.client.CLSIDToClass.RegisterCLSID( \"$(oleitem.clsid)\", $(oleitem.python_name) )")
 end
 end
 

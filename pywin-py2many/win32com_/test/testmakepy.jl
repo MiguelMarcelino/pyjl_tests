@@ -1,3 +1,4 @@
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 
@@ -14,7 +15,7 @@ num = 0
 tlbInfos = selecttlb.EnumTlbs()
 for info in tlbInfos
 if verbose
-println("$(info.desc)$(info.dll))")
+@printf("%s (%s)\n", (info.desc, info.dll))
 end
 try
 makepy.GenerateFromTypeLibSpec(info)
@@ -23,7 +24,7 @@ catch exn
  let details = exn
 if details isa pythoncom.com_error
 if details.hresult ∉ [winerror.TYPE_E_CANTLOADLIBRARY, winerror.TYPE_E_LIBNOTREGISTERED]
-println("** COM error on$(info.desc)")
+println("** COM error on $(info.desc)")
 println(details)
 end
 end
@@ -32,7 +33,7 @@ if exn isa KeyboardInterrupt
 println("Interrupted!")
 throw(KeyboardInterrupt)
 end
-println("Failed:$(info.desc)")
+println("Failed: $(info.desc)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 if makepy.bForDemandDefault
@@ -48,7 +49,7 @@ end
 
 function TestAll(verbose = 0)
 num = TestBuildAll(verbose)
-println("Generated and imported$(num)modules")
+println("Generated and imported $(num) modules")
 win32com_.test.util.CheckClean()
 end
 

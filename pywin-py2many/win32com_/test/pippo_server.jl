@@ -1,3 +1,4 @@
+using Printf
 using distutils.dep_util: newer
 import win32com_.server.register
 
@@ -14,7 +15,7 @@ _reg_desc_::String
 _reg_progid_::String
 _typelib_guid_::String
 _typelib_version_::Tuple{Int64}
-CPippo(MyProp1 = 10, _com_interfaces_::Vector{String} = ["IPippo"], _reg_clsid_::String = "{1F0F75D6-BD63-41B9-9F88-2D9D2E1AA5C3}", _reg_desc_::String = "Pippo Python test object", _reg_progid_::String = "Python.Test.Pippo", _typelib_guid_::String = "{7783054E-9A20-4584-8C62-6ED2A08F6AC6}", _typelib_version_::Tuple{Int64} = (1, 0)) = new(MyProp1 , _com_interfaces_, _reg_clsid_, _reg_desc_, _reg_progid_, _typelib_guid_, _typelib_version_)
+CPippo(MyProp1 = 10) = new(MyProp1 )
 end
 function Method1(self::AbstractCPippo)
 return wrap(CPippo())
@@ -33,8 +34,8 @@ this_dir = dirname(__file__)
 idl = abspath(os.path, joinpath(this_dir, "pippo.idl"))
 tlb = splitext(os.path, idl)[1] + ".tlb"
 if newer(idl, tlb)
-println("$(idl)")
-rc = os.system("$(idl)"")
+@printf("Compiling %s\n", (idl,))
+rc = os.system("midl \"$(idl)\"")
 if rc
 throw(RuntimeError("Compiling MIDL failed!"))
 end
@@ -42,7 +43,7 @@ for fname in split("dlldata.c pippo_i.c pippo_p.c pippo.h")
 rm(joinpath(this_dir, fname))
 end
 end
-println("$(tlb)")
+@printf("Registering %s\n", (tlb,))
 tli = pythoncom.LoadTypeLib(tlb)
 pythoncom.RegisterTypeLib(tli, tlb)
 end
@@ -65,7 +66,7 @@ end
 end
 end
 
-function main(argv::AbstractCPippo = nothing)
+function main(argv = nothing)
 if argv === nothing
 argv = append!([PROGRAM_FILE], ARGS)[2:end]
 end

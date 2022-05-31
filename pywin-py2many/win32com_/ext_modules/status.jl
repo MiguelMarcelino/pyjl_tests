@@ -1,7 +1,7 @@
 using Dates
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using pywin.mfc: dialog
 using pywin.mfc.thread: WinThread
 import threading
@@ -9,7 +9,7 @@ import threading
 import win32con
 
 
-function MakeProgressDlgTemplate(caption::AbstractProgressThread, staticText = "")
+function MakeProgressDlgTemplate(caption, staticText = "")
 style = ((((win32con.DS_MODALFRAME | win32con.WS_POPUP) | win32con.WS_VISIBLE) | win32con.WS_CAPTION) | win32con.WS_SYSMENU) | win32con.DS_SETFONT
 cs = win32con.WS_CHILD | win32con.WS_VISIBLE
 w = 215
@@ -31,9 +31,9 @@ static
 tickincr
 msg::String
 
-            CStatusProgressDialog(title = 100, msg = 1, maxticks = msg, tickincr = MakeProgressDlgTemplate(title, msg), initMsg = maxticks, templ = tickincr, pbar = nothing) = begin
+            CStatusProgressDialog(title, msg = "", maxticks = 100, tickincr = 1, templ = MakeProgressDlgTemplate(title, msg), pbar = nothing) = begin
                 dialog.Dialog.__init__(self, templ)
-                new(title , msg , maxticks , tickincr , initMsg , templ , pbar )
+                new(title, msg , maxticks , tickincr , templ , pbar )
             end
 end
 function OnInitDialog(self::AbstractCStatusProgressDialog)
@@ -103,9 +103,9 @@ title
 maxticks::Int64
 tickincr::Int64
 
-            CThreadedStatusProcessDialog(title = 100, msg = 1, maxticks = title, tickincr = msg, threadid = win32api.GetCurrentThreadId()) = begin
+            CThreadedStatusProcessDialog(title, msg = "", maxticks = 100, tickincr = 1, threadid = win32api.GetCurrentThreadId()) = begin
                 CStatusProgressDialog(title, msg, maxticks, tickincr)
-                new(title , msg , maxticks , tickincr , threadid )
+                new(title, msg , maxticks , tickincr , threadid )
             end
 end
 function OnInitDialog(self::AbstractCThreadedStatusProcessDialog)
@@ -186,9 +186,9 @@ tickincr
 dialog
 createdEvent
 
-            ProgressThread(title = title, msg = msg, maxticks = maxticks, tickincr = tickincr, dialog = nothing, createdEvent = threading.Event()) = begin
+            ProgressThread(title, msg = "", maxticks = 100, tickincr = 1, dialog = nothing, createdEvent = threading.Event()) = begin
                 WinThread.__init__(self)
-                new(title , msg , maxticks , tickincr , dialog , createdEvent )
+                new(title, msg , maxticks , tickincr , dialog , createdEvent )
             end
 end
 function InitInstance(self::AbstractProgressThread)
@@ -209,13 +209,13 @@ function ExitInstance(self::AbstractProgressThread)::Int64
 return 0
 end
 
-function StatusProgressDialog(title::AbstractProgressThread, msg = "", maxticks = 100, parent = nothing)::CStatusProgressDialog
+function StatusProgressDialog(title, msg = "", maxticks = 100, parent = nothing)::CStatusProgressDialog
 d = CStatusProgressDialog(title, msg, maxticks)
 CreateWindow(d, parent)
 return d
 end
 
-function ThreadedStatusProgressDialog(title::AbstractProgressThread, msg = "", maxticks = 100)
+function ThreadedStatusProgressDialog(title, msg = "", maxticks = 100)
 t = ProgressThread(title, msg, maxticks)
 CreateThread(t)
 end_time = Dates.datetime2unix(Dates.now())() + 10

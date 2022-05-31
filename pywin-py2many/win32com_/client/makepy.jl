@@ -7,6 +7,7 @@
 
  =#
 using Getopt
+using Printf
 using PyCall
 win32ui = pyimport("win32ui")
 import win32com_.gen_py
@@ -29,7 +30,7 @@ write(sys.stderr, usageHelp)
 quit(2)
 end
 
-function ShowInfo(spec::AbstractGUIProgress)
+function ShowInfo(spec)
 if !(spec)
 tlbSpec = selecttlb.SelectTlb(excludeFlags = selecttlb.FLAG_HIDDEN)
 if tlbSpec === nothing
@@ -39,8 +40,7 @@ try
 tlb = pythoncom.LoadRegTypeLib(tlbSpec.clsid, tlbSpec.major, tlbSpec.minor, tlbSpec.lcid)
 catch exn
 if exn isa pythoncom.com_error
-write(sys.stderr, "Warning - could not load registered typelib ''
-")
+write(sys.stderr, "Warning - could not load registered typelib \'$(tlbSpec.clsid)\'\n")
 tlb = nothing
 end
 end
@@ -52,23 +52,22 @@ for (tlb, tlbSpec) in infos
 desc = tlbSpec.desc
 if desc === nothing
 if tlb === nothing
-desc = "<Could not load typelib >"
+desc = "<Could not load typelib $(tlbSpec.dll)>"
 else
 desc = GetDocumentation(tlb, -1)[1]
 end
 end
 println(desc)
-println("$(tlbSpec.clsid)$(tlbSpec.lcid)$(tlbSpec.major)$(tlbSpec.minor)")
+@printf(" %s, lcid=%s, major=%s, minor=%s\n", (tlbSpec.clsid, tlbSpec.lcid, tlbSpec.major, tlbSpec.minor))
 println(" >>> # Use these commands in Python code to auto generate .py support")
 println(" >>> from win32com_.client import gencache")
-println("$(tlbSpec.clsid)$(tlbSpec.lcid)$(tlbSpec.major)$(tlbSpec.minor))")
+@printf(" >>> gencache.EnsureModule(\'%s\', %s, %s, %s)\n", (tlbSpec.clsid, tlbSpec.lcid, tlbSpec.major, tlbSpec.minor))
 end
 end
 
 mutable struct SimpleProgress <: AbstractSimpleProgress
 #= A simple progress class prints its output to stderr =#
 verboseLevel
-SimpleProgress(verboseLevel = verboseLevel) = new(verboseLevel )
 end
 function Close(self::AbstractSimpleProgress)
 #= pass =#
@@ -97,7 +96,7 @@ end
 end
 
 function LogBeginGenerate(self::AbstractSimpleProgress, filename)
-VerboseProgress(self, "Generating to ", 1)
+VerboseProgress(self, "Generating to $(filename)", 1)
 end
 
 function LogWarning(self::AbstractSimpleProgress, desc)
@@ -142,7 +141,7 @@ SetText(self.dialog, desc)
 end
 end
 
-function GetTypeLibsForSpec(arg::AbstractGUIProgress)::Vector
+function GetTypeLibsForSpec(arg)::Vector
 #= Given an argument on the command line (either a file name, library
     description, or ProgID of an object) return a list of actual typelibs
     to use. =#
@@ -159,7 +158,7 @@ tlbs = selecttlb.FindTlbsWithDescription(arg)
 if length(tlbs) == 0
 try
 ob = Dispatch(arg)
-tlb, index = GetContainingTypeLib(GetTypeInfo(ob._oleobj_))
+tlb, index = GetContainingTypeLib(ob._oleobj_.GetTypeInfo())
 spec = selecttlb.TypelibSpec(nothing, 0, 0, 0)
 FromTypelib(spec, tlb)
 append(tlbs, spec)
@@ -170,7 +169,7 @@ end
 end
 end
 if length(tlbs) == 0
-println("Could not locate a type library matching ''")
+@printf("Could not locate a type library matching \'%s\'\n", arg)
 end
 for spec in tlbs
 if spec.dll === nothing
@@ -190,15 +189,14 @@ return typelibs
 catch exn
 if exn isa pythoncom.com_error
 t, v, tb = sys.exc_info()
-write(sys.stderr, "$(arg)$(v)
-")
+write(sys.stderr, "Unable to load type library from \'$(arg)\' - $(v)\n")
 tb = nothing
 quit(1)
 end
 end
 end
 
-function GenerateFromTypeLibSpec(typelibInfo::AbstractGUIProgress, file = nothing, verboseLevel = nothing, progressInstance = nothing, bUnicodeToString = nothing, bForDemand = bForDemandDefault, bBuildHidden = 1)
+function GenerateFromTypeLibSpec(typelibInfo, file = nothing, verboseLevel = nothing, progressInstance = nothing, bUnicodeToString = nothing, bForDemand = bForDemandDefault, bBuildHidden = 1)
 @assert(bUnicodeToString === nothing)
 if verboseLevel === nothing
 verboseLevel = 0
@@ -292,7 +290,7 @@ end
 Close(progress)
 end
 
-function GenerateChildFromTypeLibSpec(child::AbstractGUIProgress, typelibInfo, verboseLevel = nothing, progressInstance = nothing, bUnicodeToString = nothing)
+function GenerateChildFromTypeLibSpec(child, typelibInfo, verboseLevel = nothing, progressInstance = nothing, bUnicodeToString = nothing)
 @assert(bUnicodeToString === nothing)
 if verboseLevel === nothing
 verboseLevel = 0

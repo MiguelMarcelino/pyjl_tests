@@ -9,7 +9,7 @@ abstract type AbstractListEnumerator end
 abstract type AbstractListEnumeratorGateway <: AbstractListEnumerator end
 abstract type AbstractCollection end
 abstract type AbstractFileStream end
-function wrap(ob::AbstractFileStream, iid = nothing, usePolicy = nothing, useDispatcher = nothing)
+function wrap(ob, iid = nothing, usePolicy = nothing, useDispatcher = nothing)
 #= Wraps an object in a PyGDispatch gateway.
 
     Returns a client side PyI{iid} interface.
@@ -36,7 +36,7 @@ end
 return ob
 end
 
-function unwrap(ob::AbstractFileStream)
+function unwrap(ob)
 #= Unwraps an interface.
 
     Given an interface which wraps up a Gateway, return the object behind
@@ -64,7 +64,6 @@ _list_
 index
 _public_methods_::Vector{String}
 iid
-ListEnumerator(data = 0, index = pythoncom.IID_IEnumVARIANT, iid = data, _list_ = index, _iid_ = iid, _public_methods_::Vector{String} = ["Next", "Skip", "Reset", "Clone"]) = new(data , index , iid , _list_ , _iid_ , _public_methods_)
 end
 function _query_interface_(self::AbstractListEnumerator, iid)::Int64
 if iid == self._iid_
@@ -115,7 +114,7 @@ Skip(self, count)
 return map(self._wrap, result)
 end
 
-function NewEnum(seq::AbstractFileStream, cls = ListEnumerator, iid = pythoncom.IID_IEnumVARIANT, usePolicy = nothing, useDispatcher = nothing)
+function NewEnum(seq, cls = ListEnumerator, iid = pythoncom.IID_IEnumVARIANT, usePolicy = nothing, useDispatcher = nothing)
 #= Creates a new enumerator COM server.
 
     This function creates a new COM Server that implements the
@@ -138,14 +137,14 @@ data
 _value_
 readOnly::Int64
 
-            Collection(data = 0, readOnly = data, _value_ = Item) = begin
+            Collection(data = nothing, readOnly = 0) = begin
                 if data === nothing
 data = []
 end
 if readOnly
 _public_methods_ = ["Item", "Count"]
 end
-                new(data , readOnly , _value_ )
+                new(data , readOnly )
             end
 end
 function Item(self::AbstractCollection)
@@ -199,7 +198,7 @@ function _NewEnum(self::AbstractCollection)
 return NewEnum(self.data)
 end
 
-function NewCollection(seq::AbstractFileStream, cls = Collection)
+function NewCollection(seq, cls = Collection)
 #= Creates a new COM collection object
 
     This function creates a new COM Server that implements the
@@ -217,7 +216,6 @@ mutable struct FileStream <: AbstractFileStream
 file
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-FileStream(file = file, _com_interfaces_::Vector = [pythoncom.IID_IStream], _public_methods_::Vector{String} = ["Read", "Write", "Clone", "CopyTo", "Seek"]) = new(file , _com_interfaces_, _public_methods_)
 end
 function Read(self::AbstractFileStream, amount)
 return read(self.file, amount)

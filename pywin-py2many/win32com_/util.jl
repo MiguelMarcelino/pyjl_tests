@@ -7,35 +7,38 @@ win32api = pyimport("win32api")
 using ext_modules: pythoncom
 import win32con
 function IIDToInterfaceName(iid)::String
-#= Converts an IID to a string interface name.
+    #= Converts an IID to a string interface name.
 
-    Used primarily for debugging purposes, this allows a cryptic IID to
-    be converted to a useful string name.  This will firstly look for interfaces
-    known (ie, registered) by pythoncom.  If not known, it will look in the
-    registry for a registered interface.
+        Used primarily for debugging purposes, this allows a cryptic IID to
+        be converted to a useful string name.  This will firstly look for interfaces
+        known (ie, registered) by pythoncom.  If not known, it will look in the
+        registry for a registered interface.
 
-    iid -- An IID object.
+        iid -- An IID object.
 
-    Result -- Always a string - either an interface name, or '<Unregistered interface>'
-     =#
-try
-return pythoncom.ServerInterfaces[iid + 1]
-catch exn
-if exn isa KeyError
-try
-try
-return win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, "Interface\")
-catch exn
-if exn isa win32api.error
-#= pass =#
-end
-end
-catch exn
-if exn isa ImportError
-#= pass =#
-end
-end
-return string(iid)
-end
-end
+        Result -- Always a string - either an interface name, or '<Unregistered interface>'
+         =#
+    try
+        return pythoncom.ServerInterfaces[iid+1]
+    catch exn
+        if exn isa KeyError
+            try
+                try
+                    return win32api.RegQueryValue(
+                        win32con.HKEY_CLASSES_ROOT,
+                        "Interface\\$(iid)",
+                    )
+                catch exn
+                    if exn isa win32api.error
+                        #= pass =#
+                    end
+                end
+            catch exn
+                if exn isa ImportError
+                    #= pass =#
+                end
+            end
+            return string(iid)
+        end
+    end
 end

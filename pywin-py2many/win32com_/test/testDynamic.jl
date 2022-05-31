@@ -38,7 +38,7 @@ function write(self::AbstractVeryPermissive)
 if length(args) == 0
 throw(Exception(scode = winerror.DISP_E_BADPARAMCOUNT))
 end
-for arg in args[begin:-1]
+for arg in args[begin:end - 1]
 print("$(string(arg))" )
 end
 println(string(args[end]))
@@ -51,7 +51,7 @@ handle = pythoncom.RegisterActiveObject(ob, iid, 0)
 catch exn
  let details = exn
 if details isa pythoncom.com_error
-println("Warning - could not register the object in the ROT:$(details)")
+println("Warning - could not register the object in the ROT: $(details)")
 handle = nothing
 end
 end
@@ -65,7 +65,7 @@ end
 v = ["Hello", "From", "Python", 1.4]
 client.TestSequence = v
 if v != collect(client.TestSequence)
-throw(error("$(repr(v))$(repr(client.testSequence))"))
+throw(error("Dynamic sequences not working! $(repr(v))/$(repr(client.testSequence))"))
 end
 write(client, "This", "output", "has", "come", "via", "testDynamic.py")
 _FlagAsMethod(client, "NotReallyAMethod")

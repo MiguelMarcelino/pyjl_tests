@@ -13,7 +13,7 @@ function SetupEnvironment()
     HKEY_LOCAL_MACHINE = -2147483646
     KEY_QUERY_VALUE = 1
     try
-        keyName = "SOFTWARE\Python\PythonCore\\PythonPath\win32com_"
+        keyName = "SOFTWARE\\Python\\PythonCore\\$(sys.winver)\\PythonPath\\win32com_"
         key = win32api.RegOpenKey(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE)
     catch exn
         if exn isa (win32api.error, AttributeError)
@@ -90,7 +90,7 @@ if !(__gen_path__)
                 __gen_path__ = joinpath(
                     win32api.GetTempPath(),
                     "gen_py",
-                    "$(sys.version_info[1])$(sys.version_info[2])",
+                    "$(sys.version_info[1]).$(sys.version_info[2])",
                 )
             end
         end

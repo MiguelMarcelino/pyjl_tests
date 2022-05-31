@@ -34,7 +34,7 @@ end
 object = nothing
 end_ = gtrc()
 if (end_ - start) > 5
-fail(self, "$(end_ - start) references!")
+fail(self, "We lost $(end_ - start) references!")
 end
 end
 
@@ -89,7 +89,7 @@ end
 object = nothing
 end_ = gtrc()
 if (end_ - start) > 10
-fail(self, "$(end_ - start) references!")
+fail(self, "We lost $(end_ - start) references!")
 end
 end
 

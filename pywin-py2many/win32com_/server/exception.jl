@@ -36,7 +36,7 @@ desc
 helpContext
 hresult
 
-            COMException(description = nothing, scode = nothing, source = scode || hresult, helpfile = scode, helpContext = description || desc, desc = source, hresult = helpfile, helpcontext = helpContext) = begin
+            COMException(description = description || desc, scode = scode || hresult, source = nothing, helpfile = nothing, helpContext = nothing, desc = nothing, hresult = nothing) = begin
                 if scode && scode != 1
 if scode >= -32768 && scode < 32768
 scode = -2147024896 | (scode & 65535)
@@ -48,15 +48,15 @@ elseif scode && !(description)
 description = pythoncom.GetScodeString(scode)
 end
 pythoncom.com_error.__init__(self, scode, description, nothing, -1)
-                new(description , scode , source , helpfile , helpContext , desc , hresult , helpcontext )
+                new(description , scode , source , helpfile , helpContext , desc , hresult )
             end
 end
 function __repr__(self::AbstractCOMException)
-return "$(self.scode)$(self.description)>"
+return "<COM Exception - scode=$(self.scode), desc=$(self.description)>"
 end
 
 Exception = COMException
-function IsCOMException(t::AbstractCOMException = nothing)::Bool
+function IsCOMException(t = nothing)::Bool
 if t === nothing
 t = sys.exc_info()[1]
 end
@@ -69,7 +69,7 @@ end
 end
 end
 
-function IsCOMServerException(t::AbstractCOMException = nothing)::Int64
+function IsCOMServerException(t = nothing)::Int64
 if t === nothing
 t = sys.exc_info()[1]
 end

@@ -1,6 +1,6 @@
 using PyCall
-datetime = pyimport("datetime")
 pywintypes = pyimport("pywintypes")
+datetime = pyimport("datetime")
 
 
 
@@ -12,9 +12,6 @@ abstract type AbstractTester end
 abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 mutable struct Tester <: AbstractTester
 _public_methods_::Vector{String}
-
-                    Tester(_public_methods_::Vector{String} = ["TestDate"]) =
-                        new(_public_methods_)
 end
 function TestDate(self::AbstractTester, d)
 @assert(isa(d, datetime))

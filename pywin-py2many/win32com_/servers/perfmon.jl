@@ -14,9 +14,6 @@ _reg_clsid_::String
 _reg_desc_::String
 _reg_progid_::String
 _reg_verprogid_::String
-
-                    PerfMonQuery(_public_methods_::Vector{String} = ["Query"], _reg_class_spec_::String = "win32com_.servers.perfmon.PerfMonQuery", _reg_clsid_::String = "{64cef7a0-8ece-11d1-a65a-00aa00125a98}", _reg_desc_::String = "Python Performance Monitor query object", _reg_progid_::String = "Python.PerfmonQuery", _reg_verprogid_::String = "Python.PerfmonQuery.1") =
-                        new(_public_methods_, _reg_class_spec_, _reg_clsid_, _reg_desc_, _reg_progid_, _reg_verprogid_)
 end
 function Query(self::AbstractPerfMonQuery, object, counter, instance = nothing, machine = nothing)
 try

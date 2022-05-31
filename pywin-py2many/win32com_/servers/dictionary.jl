@@ -51,9 +51,6 @@ _reg_desc_::String
 _reg_policy_spec_::String
 _reg_progid_::String
 _reg_verprogid_::String
-
-                    DictionaryPolicy(_obj_, _com_interfaces_::Vector = [], _name_to_dispid_::Dict{String, Any} = Dict("item" => pythoncom.DISPID_VALUE, "_newenum" => pythoncom.DISPID_NEWENUM, "count" => 1), _reg_clsid_::String = "{39b61048-c755-11d0-86fa-00c04fc2e03e}", _reg_desc_::String = "Python Dictionary", _reg_policy_spec_::String = "win32com_.servers.dictionary.DictionaryPolicy", _reg_progid_::String = "Python.Dictionary", _reg_verprogid_::String = "Python.Dictionary.1") =
-                        new(_obj_, _com_interfaces_, _name_to_dispid_, _reg_clsid_, _reg_desc_, _reg_policy_spec_, _reg_progid_, _reg_verprogid_)
 end
 function _CreateInstance_(self::AbstractDictionaryPolicy, clsid, reqIID)
 _wrap_(self, Dict())

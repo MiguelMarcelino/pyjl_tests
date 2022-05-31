@@ -156,7 +156,7 @@ if self.logger !== nothing
 record = join(map(str, args), " ")
 debug(self.logger, record)
 else
-for arg in args[begin:-1]
+for arg in args[begin:end - 1]
 print("$(arg)" )
 end
 println(args[end])
@@ -175,20 +175,18 @@ end
 function _QueryInterface_(self::AbstractDispatcherTrace, iid)
 rc = DispatcherBase._QueryInterface_(self, iid)
 if !(rc)
-_trace_(self, "$(repr(self.policy._obj_))$(IIDToInterfaceName(iid))$(iid))")
+_trace_(self, "in $(repr(self.policy._obj_))._QueryInterface_ with unsupported IID $(IIDToInterfaceName(iid)) ($(iid))")
 end
 return rc
 end
 
 function _GetIDsOfNames_(self::AbstractDispatcherTrace, names, lcid)
-_trace_(self, "$(names)$(lcid)'
-")
+_trace_(self, "in _GetIDsOfNames_ with \'$(names)\' and \'$(lcid)\'\n")
 return DispatcherBase._GetIDsOfNames_(self, names, lcid)
 end
 
 function _GetTypeInfo_(self::AbstractDispatcherTrace, index, lcid)
-_trace_(self, "$(index)$(lcid)
-")
+_trace_(self, "in _GetTypeInfo_ with index=$(index), lcid=$(lcid)\n")
 return DispatcherBase._GetTypeInfo_(self, index, lcid)
 end
 
@@ -208,7 +206,7 @@ return DispatcherBase._GetDispID_(self, name, fdex)
 end
 
 function _InvokeEx_(self::AbstractDispatcherTrace, dispid, lcid, wFlags, args, kwargs, serviceProvider)
-_trace_(self, "$(self.policy._obj_)$(dispid)$(args)$(wFlags)$(lcid)$(serviceProvider)]")
+_trace_(self, "in $(self.policy._obj_)._InvokeEx_-$(dispid)$(args) [$(wFlags),$(lcid),$(serviceProvider)]")
 return DispatcherBase._InvokeEx_(self, dispid, lcid, wFlags, args, kwargs, serviceProvider)
 end
 
@@ -250,7 +248,7 @@ mutable struct DispatcherWin32trace <: AbstractDispatcherWin32trace
                 DispatcherTrace(policyClass, object)
 if logger === nothing
 end
-_trace_("Object with win32trace dispatcher created (object=)")
+_trace_("Object with win32trace dispatcher created (object=$(repr(object)))")
                 new(policyClass, object)
             end
 end
@@ -260,7 +258,7 @@ mutable struct DispatcherOutputDebugString <: AbstractDispatcherOutputDebugStrin
 
 end
 function _trace_(self::AbstractDispatcherOutputDebugString)
-for arg in args[begin:-1]
+for arg in args[begin:end - 1]
 win32api.OutputDebugString(string(arg) * " ")
 end
 win32api.OutputDebugString(string(args[end]) * "\n")
@@ -293,7 +291,7 @@ try
 throw(typ(val))
 catch exn
 if exn isa Exception
-debug = get_option(GetDebugger(win32com_.gen_py.debugger), win32com_.gen_py.debugger.dbgcon.OPT_STOP_EXCEPTIONS)
+debug = get_option(win32com_.gen_py.debugger.GetDebugger(), win32com_.gen_py.debugger.dbgcon.OPT_STOP_EXCEPTIONS)
 end
 debug = 1
 end

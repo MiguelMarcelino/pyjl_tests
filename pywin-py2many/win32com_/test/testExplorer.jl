@@ -72,7 +72,7 @@ time.sleep(0.2)
 end
 end
 
-function TestExplorer(iexplore::AbstractExplorerEvents)
+function TestExplorer(iexplore)
 if !(iexplore.Visible)
 iexplore.Visible = -1
 end

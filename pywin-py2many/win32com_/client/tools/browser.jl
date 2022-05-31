@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 
@@ -14,7 +14,7 @@ myobject
 knownExpandable
 name
 
-            HLIPythonObject(myobject = nothing, name = myobject, knownExpandable = nothing) = begin
+            HLIPythonObject(myobject = nothing, name = nothing, knownExpandable = nothing) = begin
                 hierlist.HierListItem.__init__(self)
 if name
 name = name
@@ -423,7 +423,7 @@ return 0
 end
 
 TypeMap = Dict(type_ => HLIClass, types.FunctionType => HLIFunction, tuple => HLITuple, dict => HLIDict, list => HLIList, types.ModuleType => HLIModule, types.CodeType => HLICode, types.BuiltinFunctionType => HLIBuiltinFunction, types.FrameType => HLIFrame, types.TracebackType => HLITraceback, str => HLIString, int => HLIPythonObject, bool => HLIPythonObject, float => HLIPythonObject)
-function MakeHLI(ob::AbstractBrowserView, name = nothing)
+function MakeHLI(ob, name = nothing)
 try
 cls = TypeMap[type_(ob)]
 catch exn
@@ -443,9 +443,9 @@ object
 title
 edit
 
-            DialogShowObject(object = object, title = title) = begin
+            DialogShowObject(object, title) = begin
                 dialog.Dialog.__init__(self, win32ui.IDD_LARGE_EDIT)
-                new(object , title )
+                new(object, title)
             end
 end
 function OnInitDialog(self::AbstractDialogShowObject)
@@ -455,7 +455,7 @@ try
 strval = string(self.object)
 catch exn
 t, v, tb = sys.exc_info()
-strval = "$(t)$(v)"
+strval = "Exception getting object value\n\n$(t):$(v)"
 tb = nothing
 end
 strval = 
@@ -464,7 +464,7 @@ strval =
 ReplaceSel(self.edit, strval)
 end
 
-function ShowObject(object::AbstractBrowserView, title)
+function ShowObject(object, title)
 dlg = DialogShowObject(object, title)
 DoModal(dlg)
 end
@@ -478,10 +478,10 @@ cs
 dt::Vector
 style
 
-            dynamic_browser(hli_root, hier_list = hierlist.HierListWithItems(hli_root, win32ui.IDB_BROWSER_HIER), cs = (((win32con.WS_CHILD | win32con.WS_VISIBLE) | commctrl.TVS_HASLINES) | commctrl.TVS_LINESATROOT) | commctrl.TVS_HASBUTTONS, dt::Vector = [["Python Object Browser", (0, 0, 200, 200), style, nothing, (8, "MS Sans Serif")], ["SysTreeView32", nothing, win32ui.IDC_LIST1, (0, 0, 200, 200), cs]], style = win32con.WS_OVERLAPPEDWINDOW | win32con.WS_VISIBLE) = begin
+            dynamic_browser(hli_root, hier_list = hierlist.HierListWithItems(hli_root, win32ui.IDB_BROWSER_HIER)) = begin
                 dialog.Dialog.__init__(self, dt)
 HookMessage(on_size, win32con.WM_SIZE)
-                new(hli_root, hier_list , cs , dt, style )
+                new(hli_root, hier_list )
             end
 end
 function OnInitDialog(self::Abstractdynamic_browser)
@@ -505,10 +505,10 @@ function on_size(self::Abstractdynamic_browser, params)
 lparam = params[4]
 w = win32api.LOWORD(lparam)
 h = win32api.HIWORD(lparam)
-MoveWindow(GetDlgItem(self, win32ui.IDC_LIST1), (0, 0, w, h))
+MoveWindow(self.GetDlgItem(win32ui.IDC_LIST1), (0, 0, w, h))
 end
 
-function Browse(ob::AbstractBrowserView = __main__)
+function Browse(ob = __main__)
 #= Browse the argument, or the main dictionary =#
 root = MakeHLI(ob, "root")
 if !IsExpandable(root)
@@ -530,7 +530,7 @@ end
 function OpenObject(self::AbstractBrowserTemplate, root)::BrowserDocument
 for doc in GetDocumentList(self)
 if doc.root == root
-ActivateFrame(GetFirstView(doc))
+ActivateFrame(doc.GetFirstView())
 return doc
 end
 end
@@ -544,10 +544,10 @@ end
 mutable struct BrowserDocument <: AbstractBrowserDocument
 root
 
-            BrowserDocument(template, root = root) = begin
+            BrowserDocument(template, root) = begin
                 docview.Document.__init__(self, template)
 SetTitle("Browser: " + root.name)
-                new(template, root )
+                new(template, root)
             end
 end
 function OnOpenDocument(self::AbstractBrowserDocument, name)::Int64
@@ -574,7 +574,7 @@ template = BrowserTemplate()
 end
 end
 
-function BrowseMDI(ob::AbstractBrowserView = __main__)
+function BrowseMDI(ob = __main__)
 #= Browse an object using an MDI window. =#
 MakeTemplate()
 root = MakeHLI(ob, repr(ob))

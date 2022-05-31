@@ -1,3 +1,4 @@
+using Printf
 using win32com_.server.util: wrap
 using ext_modules: pythoncom
 using util: CheckClean
@@ -6,55 +7,43 @@ abstract type AbstractDummy2 end
 abstract type AbstractDeletgatedDummy end
 abstract type AbstractDummy3 end
 numErrors = 0
-function CheckSameCOMObject(ob1::AbstractDummy3, ob2)::Bool
-addr1 = split(repr(ob1))[7][begin:-1]
-addr2 = split(repr(ob2))[7][begin:-1]
+function CheckSameCOMObject(ob1, ob2)::Bool
+addr1 = split(repr(ob1))[7][begin:end - 1]
+addr2 = split(repr(ob2))[7][begin:end - 1]
 return addr1 == addr2
 end
 
-function CheckObjectIdentity(ob1::AbstractDummy3, ob2)::Bool
+function CheckObjectIdentity(ob1, ob2)::Bool
 u1 = QueryInterface(ob1, pythoncom.IID_IUnknown)
 u2 = QueryInterface(ob2, pythoncom.IID_IUnknown)
 return CheckSameCOMObject(u1, u2)
 end
 
-function FailObjectIdentity(ob1::AbstractDummy3, ob2, when)
+function FailObjectIdentity(ob1, ob2, when)
 if !CheckObjectIdentity(ob1, ob2)
 global numErrors
 numErrors = numErrors + 1
-println("$(when)$(repr(ob1))$(repr(ob2)))")
+@printf("are not identical (%s, %s)\n", (repr(ob1), repr(ob2)))
 end
 end
 
 mutable struct Dummy <: AbstractDummy
 _com_interfaces_::Vector
 _public_methods_::Vector
-
-                    Dummy(_com_interfaces_::Vector = [pythoncom.IID_IPersistStorage], _public_methods_::Vector = []) =
-                        new(_com_interfaces_, _public_methods_)
 end
 
 mutable struct Dummy2 <: AbstractDummy2
 _com_interfaces_::Vector
 _public_methods_::Vector
-
-                    Dummy2(_com_interfaces_::Vector = [pythoncom.IID_IPersistStorage, pythoncom.IID_IExternalConnection], _public_methods_::Vector = []) =
-                        new(_com_interfaces_, _public_methods_)
 end
 
 mutable struct DeletgatedDummy <: AbstractDeletgatedDummy
 _public_methods_::Vector
-
-                    DeletgatedDummy(_public_methods_::Vector = []) =
-                        new(_public_methods_)
 end
 
 mutable struct Dummy3 <: AbstractDummy3
 _com_interfaces_::Vector
 _public_methods_::Vector
-
-                    Dummy3(_com_interfaces_::Vector = [pythoncom.IID_IPersistStorage], _public_methods_::Vector = []) =
-                        new(_com_interfaces_, _public_methods_)
 end
 function _query_interface_(self::AbstractDummy3, iid)
 if iid == pythoncom.IID_IExternalConnection
@@ -98,7 +87,7 @@ TestMultiInterface()
 if numErrors == 0
 println("Worked ok")
 else
-println("There were$(numErrors)errors.")
+println("There were $(numErrors) errors.")
 end
 end
 

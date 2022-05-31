@@ -1,4 +1,5 @@
 using Getopt
+using Printf
 include("GenTestScripts.jl")
 import shutil
 import win32com_.client.gencache
@@ -33,14 +34,14 @@ end
 function CleanGenerated()
 if isdir(win32com_.__gen_path__)
 if verbosity > 1
-println("Deleting files from ")
+@printf("Deleting files from %s\n", win32com_.__gen_path__)
 end
 shutil.rmtree(win32com_.__gen_path__)
 end
 win32com_.client.gencache.__init__()
 end
 
-function RemoveRefCountOutput(data::AbstractPippoTest)::String
+function RemoveRefCountOutput(data)::String
 while true
 last_line_pos = rfind(data, "\n")
 if !re.match("\\[\\d+ refs\\]", data[last_line_pos + 2:end])
@@ -54,27 +55,24 @@ end
 return data
 end
 
-function ExecuteSilentlyIfOK(cmd::AbstractPippoTest, testcase)::String
+function ExecuteSilentlyIfOK(cmd, testcase)::String
 f = os.popen(cmd)
-data = strip(read(f))
+data = strip(f.read())
 rc = close(f)
 if rc
 println(data)
-fail(testcase, "$(cmd)$(rc))")
+fail(testcase, "Executing \'$(cmd)\' failed ($(rc))")
 end
 return RemoveRefCountOutput(data)
 end
 
 mutable struct PyCOMTest <: AbstractPyCOMTest
 no_leak_tests::Bool
-
-                    PyCOMTest(no_leak_tests::Bool = true) =
-                        new(no_leak_tests)
 end
 function testit(self::AbstractPyCOMTest)
 RegisterPythonServer(joinpath(dirname(__file__), "..", "servers", "test_pycomtest.py"), "Python.Test.PyCOMTest")
 fname = joinpath(dirname(this_file), "testPyComTest.py")
-cmd = "$(sys.executable)$(fname)" -q 2>&1"
+cmd = "$(sys.executable) \"$(fname)\" -q 2>&1"
 data = ExecuteSilentlyIfOK(cmd, self)
 end
 
@@ -85,7 +83,7 @@ function testit(self::AbstractPippoTest)
 RegisterPythonServer(pippo_server.__file__, "Python.Test.Pippo")
 python = sys.executable
 fname = joinpath(dirname(this_file), "testPippo.py")
-cmd = "$(python)$(fname)" 2>&1"
+cmd = "$(python) \"$(fname)\" 2>&1"
 ExecuteSilentlyIfOK(cmd, self)
 end
 
@@ -93,7 +91,7 @@ unittest_modules = [split("testIterators testvbscript_regexp testStorage\n      
 unittest_other_modules = [split("win32com_.directsound.test.ds_test\n        "), [], [], []]
 output_checked_programs = [[], [("cscript.exe /nologo //E:vbscript testInterp.vbs", "VBScript test worked OK"), ("cscript.exe /nologo //E:vbscript testDictionary.vbs", "VBScript has successfully tested Python.Dictionary")], [], []]
 custom_test_cases = [[], [PyCOMTest, PippoTest], [], []]
-function get_test_mod_and_func(test_name::AbstractPippoTest, import_failures)::Tuple
+function get_test_mod_and_func(test_name, import_failures)::Tuple
 if find(test_name, ".") > 0
 mod_name, func_name = split(test_name, ".")
 else
@@ -112,7 +110,7 @@ func = func_name === nothing ? (nothing) : (getfield(mod, :func_name))
 return (mod, func)
 end
 
-function make_test_suite(test_level::AbstractPippoTest = 1)
+function make_test_suite(test_level = 1)
 suite = unittest.TestSuite()
 import_failures = []
 loader = TestLoader()
@@ -160,9 +158,9 @@ end
 return (suite, import_failures)
 end
 
-function usage(why::AbstractPippoTest)
+function usage(why)
 println(why)
-println()
+println
 println("win32com_ test suite")
 println("usage: testall [-v] test_level")
 println("  where test_level is an integer 1-3.  Level 1 tests are quick,")
@@ -210,9 +208,9 @@ println("This is a debug build - memory leak tests will also be run.")
 println("These tests may take *many* minutes to run - be patient!")
 println("(running from python.exe will avoid these leak tests)")
 end
-println("$(testLevel)$(countTestCases(suite)) test cases will be run")
+@printf("Executing level %d tests - %d test cases will be run\n", (testLevel, countTestCases(suite)))
 if verbosity == 1 && countTestCases(suite) < 70
-println("|"*countTestCases(suite")
+println("$(|"*countTestCases(suite)")
 end
 end
 testRunner = TestRunner(verbosity = verbosity)
@@ -221,12 +219,12 @@ if import_failures
 writeln(testResult.stream, "*** The following test modules could not be imported ***")
 for (mod_name, (exc_type, exc_val)) in import_failures
 desc = join(traceback.format_exception_only(exc_type, exc_val), "\n")
-write(testResult.stream, "$(mod_name)$(desc)")
+write(testResult.stream, "$(mod_name): $(desc)")
 end
-writeln(testResult.stream, "***  test(s) could not be run ***")
+writeln(testResult.stream, "*** $(length(import_failures)) test(s) could not be run ***")
 end
 if !wasSuccessful(testResult)
-println("repeat("*",20)- unittest tests FAILED")
+println("$(repeat("*",20)) - unittest tests FAILED")
 end
 CheckClean()
 pythoncom.CoUninitialize()

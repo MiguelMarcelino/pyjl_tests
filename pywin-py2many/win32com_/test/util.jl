@@ -1,6 +1,7 @@
+using Printf
 using PyCall
-win32api = pyimport("win32api")
 pywintypes = pyimport("pywintypes")
+win32api = pyimport("win32api")
 using win32com_.shell.shell: IsUserAnAdmin
 
 
@@ -32,15 +33,15 @@ end
 end
 c = _GetInterfaceCount()
 if c
-println("Warning -  com interface objects still alive")
+@printf("Warning - %d com interface objects still alive\n", c)
 end
 c = _GetGatewayCount()
 if c
-println("Warning -  com gateway objects still alive")
+@printf("Warning - %d com gateway objects still alive\n", c)
 end
 end
 
-function RegisterPythonServer(filename::AbstractShellTestCase, progids = nothing, verbose = 0)
+function RegisterPythonServer(filename, progids = nothing, verbose = 0)
 if progids
 if isa(progids, str)
 progids = [progids]
@@ -57,16 +58,16 @@ end
 end
 try
 HKCR = winreg.HKEY_CLASSES_ROOT
-hk = winreg.OpenKey(HKCR, "CLSID\")
+hk = winreg.OpenKey(HKCR, "CLSID\\$(clsid)")
 dll = winreg.QueryValue(hk, "InprocServer32")
 catch exn
 if exn isa WindowsError
 break;
 end
 end
-ok_files = [basename(os.path, pythoncom.__file__), "$(sys.version_info[1])$(sys.version_info[2]).dll"]
+ok_files = [basename(os.path, pythoncom.__file__), "pythoncomloader$(sys.version_info[1])$(sys.version_info[2]).dll"]
 if basename(os.path, dll) ∉ ok_files
-why_not = "$(progid)$(dll))"
+why_not = "$(progid) is registered against a different Python version ($(dll))"
 break;
 end
 end
@@ -82,30 +83,29 @@ is_admin = false
 end
 end
 if !(is_admin)
-msg = " isn't registered, but I'm not an administrator who can register it."
+msg = "$(progids[1]) isn\'t registered, but I\'m not an administrator who can register it."
 if why_not
-msg += "
-(registration check failed as )"
+msg += "\n(registration check failed as $(why_not))"
 end
 throw(pythoncom.com_error(winerror.CO_E_CLASSSTRING, msg, nothing, -1))
 end
-cmd = "$(win32api.GetModuleFileName(0))$(filename)" --unattended > nul 2>&1"
+cmd = "$(win32api.GetModuleFileName(0)) \"$(filename)\" --unattended > nul 2>&1"
 if verbose
-println("Registering engine$(filename)")
+println("Registering engine $(filename)")
 end
 rc = os.system(cmd)
 if rc
 println("Registration command was:")
 println(cmd)
-throw(RuntimeError("Registration of engine '' failed"))
+throw(RuntimeError("Registration of engine \'$(filename)\' failed"))
 end
 end
 
-function ExecuteShellCommand(cmd::AbstractFailed, testcase, expected_output = nothing, tracebacks_ok = 0)
+function ExecuteShellCommand(cmd, testcase, expected_output = nothing, tracebacks_ok = 0)
 output_name = tempfile.mktemp("win32com_test")
-cmd = cmd + " > "" 2>&1"
+cmd = cmd + " > \"$(output_name)\" 2>&1"
 rc = os.system(cmd)
-output = strip(read(readline(output_name)))
+output = strip(readline(output_name).read())
 rm(output_name)
 mutable struct Failed <: AbstractFailed
 
@@ -116,7 +116,7 @@ if rc
 throw(Failed("exit code was " * string(rc)))
 end
 if expected_output !== nothing && output != expected_output
-throw(Failed("$(expected_output)$(output))"))
+throw(Failed("Expected output $(expected_output) (got $(output))"))
 end
 if !(tracebacks_ok) && find(output, "Traceback (most recent call last)") >= 0
 throw(Failed("traceback in program output"))
@@ -125,18 +125,18 @@ return output
 catch exn
  let why = exn
 if why isa Failed
-println("Failed to exec command ''")
-println("Failed as$(why)")
+@printf("Failed to exec command \'%r\'\n", cmd)
+println("Failed as $(why)")
 println("** start of program output **")
 println(output)
 println("** end of program output **")
-fail(testcase, "$(cmd)$(why)")
+fail(testcase, "Executing \'$(cmd)\' failed as $(why)")
 end
 end
 end
 end
 
-function assertRaisesCOM_HRESULT(testcase::AbstractShellTestCase, hresult, func)
+function assertRaisesCOM_HRESULT(testcase, hresult, func)
 try
 func(args..., None = kw)
 catch exn
@@ -148,7 +148,7 @@ end
 end
 end
 end
-fail(testcase, "Excepected COM exception with HRESULT 0x")
+fail(testcase, "Excepected COM exception with HRESULT 0x$(hresult)")
 end
 
 mutable struct CaptureWriter <: AbstractCaptureWriter
@@ -163,15 +163,15 @@ captured::Vector
 end
 function capture(self::AbstractCaptureWriter)
 clear(self)
-self.old_out = sys.stdout
+self.old_out = stdout
 self.old_err = sys.stderr
-sys.stdout = self
+stdout = self
 sys.stderr = self
 end
 
 function release(self::AbstractCaptureWriter)
 if self.old_out
-sys.stdout = self.old_out
+stdout = self.old_out
 self.old_out = nothing
 end
 if self.old_err
@@ -224,7 +224,7 @@ handler.emitted = []
 return (handler.emitted, old_log)
 end
 
-function restore_test_logger(prev_logger::AbstractShellTestCase)
+function restore_test_logger(prev_logger)
 @assert(prev_logger === nothing)
 if prev_logger === nothing
 #Delete Unsupported
@@ -267,10 +267,7 @@ end
 
 function checkOutput(self::Abstract_CapturingFunctionTestCase, output, result)
 if find(output, "Traceback") >= 0
-msg = "Test output contained a traceback
----
-
----"
+msg = "Test output contained a traceback\n---\n$(output)\n---"
 append(result.errors, (self, msg))
 end
 end
@@ -279,9 +276,9 @@ mutable struct ShellTestCase <: AbstractShellTestCase
 __cmd
 __eo
 
-            ShellTestCase(cmd, expected_output, __cmd = cmd, __eo = expected_output) = begin
+            ShellTestCase(cmd, expected_output) = begin
                 unittest.TestCase.__init__(self)
-                new(cmd, expected_output, __cmd , __eo )
+                new(cmd, expected_output)
             end
 end
 function runTest(self::AbstractShellTestCase)

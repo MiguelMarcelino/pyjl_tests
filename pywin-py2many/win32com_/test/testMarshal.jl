@@ -20,6 +20,7 @@ Python.exe needs a good way to mark itself as FreeThreaded - at the moment
 this is a pain in the but!
 
  =#
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 import threading
@@ -117,7 +118,7 @@ end
 elseif rc == (win32event.WAIT_OBJECT_0 + length(events))
 pythoncom.PumpWaitingMessages()
 else
-println("$(pythoncom._GetInterfaceCount())$(pythoncom._GetGatewayCount())")
+@printf("Waiting for thread to stop with interfaces=%d, gateways=%d\n", (pythoncom._GetInterfaceCount(), pythoncom._GetGatewayCount()))
 end
 catch exn
 if exn isa KeyboardInterrupt

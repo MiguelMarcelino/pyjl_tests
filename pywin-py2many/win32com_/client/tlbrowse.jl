@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 
@@ -40,7 +40,7 @@ IDC_PARAMLIST::Int64
 IDC_TYPELIST::Int64
 typefile
 
-            TypeBrowseDialog(typefile = nothing, IDC_LISTVIEW::Int64 = 1003, IDC_MEMBERLIST::Int64 = 1001, IDC_PARAMLIST::Int64 = 1002, IDC_TYPELIST::Int64 = 1000) = begin
+            TypeBrowseDialog(typefile = nothing) = begin
                 TypeBrowseDialog_Parent.__init__(self, GetTemplate())
 try
 if typefile
@@ -56,7 +56,7 @@ end
 end
 HookCommand(CmdTypeListbox, IDC_TYPELIST)
 HookCommand(CmdMemberListbox, IDC_MEMBERLIST)
-                new(typefile , IDC_LISTVIEW, IDC_MEMBERLIST, IDC_PARAMLIST, IDC_TYPELIST)
+                new(typefile )
             end
 end
 function OnAttachedObjectDeath(self::AbstractTypeBrowseDialog)
@@ -170,7 +170,7 @@ attr = GetTypeAttr(refInfo)
 typeKind = attr[6]
 typeFlags = attr[12]
 desc = doc[1]
-desc = desc + "$(flags)$(typeKind)$(typeFlags)"
+desc = desc + ", Flags=0x$(flags), typeKind=0x$(typeKind), typeFlags=0x$(typeFlags)"
 if flags & pythoncom.IMPLTYPEFLAG_FSOURCE
 desc = desc * "(Source)"
 end

@@ -12,7 +12,7 @@ for cs in cses
 val = Properties_(cs, "Caption").Value
 push!(vals, val)
 end
-assertFalse(self, length(vals) < 5, "We only found  processes!")
+assertFalse(self, length(vals) < 5, "We only found $(length(vals)) processes!")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

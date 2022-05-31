@@ -30,7 +30,7 @@ p_val = ReadMultiple(ps, (p[2],))[1]
 if p[2] == storagecon.PIDSI_AUTHOR && p_val == "me" || p[2] == storagecon.PIDSI_COMMENTS && p_val == "comment"
 #= pass =#
 else
-fail(self, "$(p)$(p_val)")
+fail(self, "Uxexpected property $(p)/$(p_val)")
 end
 end
 ps = nothing

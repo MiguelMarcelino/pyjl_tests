@@ -60,7 +60,7 @@ e.seen_events = Dict()
 e.Visible = 1
 book = Add(e.Workbooks)
 book = DispatchWithEvents(book, WorkbookEvents)
-println("Have book$(book)")
+println("Have book $(book)")
 println("Double-click in a few of the Excel cells...")
 println("Press any key when finished with Excel, or wait 10 seconds...")
 if !_WaitForFinish(e, 10)
@@ -101,7 +101,7 @@ quit(1)
 end
 end
 
-function _WaitForFinish(ob::WordEvents, timeout)::Int64
+function _WaitForFinish(ob, timeout)::Int64
 end_ = Dates.datetime2unix(Dates.now())() + timeout
 while true
 if msvcrt.kbhit()
@@ -130,11 +130,11 @@ end
 return 1
 end
 
-function _CheckSeenEvents(o::WordEvents, events)::Int64
+function _CheckSeenEvents(o, events)::Int64
 rc = 1
 for e in events
 if e ∉ o.seen_events
-println("ERROR: Expected event did not trigger$(e)")
+println("ERROR: Expected event did not trigger $(e)")
 rc = 0
 end
 end

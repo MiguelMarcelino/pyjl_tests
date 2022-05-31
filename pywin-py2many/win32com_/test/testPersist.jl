@@ -1,8 +1,8 @@
 using PyCall
+pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
 datetime = pyimport("datetime")
-pywintypes = pyimport("pywintypes")
 using ext_modules: pythoncom
 import win32com_.server.util
 
@@ -31,7 +31,7 @@ data
 mtime
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-LockBytes(data = str2bytes(data), ctime = now, mtime = now, atime = now, _com_interfaces_::Vector = [pythoncom.IID_ILockBytes], _public_methods_::Vector{String} = ["ReadAt", "WriteAt", "Flush", "SetSize", "LockRegion", "UnlockRegion", "Stat"]) = new(data , ctime , mtime , atime , _com_interfaces_, _public_methods_)
+LockBytes(data = str2bytes(data), ctime = now, mtime = now, atime = now) = new(data , ctime , mtime , atime )
 end
 function ReadAt(self::AbstractLockBytes, offset, cb)
 println("ReadAt")
@@ -40,8 +40,8 @@ return result
 end
 
 function WriteAt(self::AbstractLockBytes, offset, data)::Int64
-println("WriteAt " * string(offset")
-println("len " * string(length(data)")
+println("$(WriteAt " * string(offset)")
+println("$(len " * string(length(data))")
 println("data:")
 if length(self.data) >= offset
 newdata = self.data[1:offset] + data
@@ -56,14 +56,14 @@ return length(data)
 end
 
 function Flush(self::AbstractLockBytes, whatsthis = 0)::Int64
-println("Flush" * string(whatsthis")
+println("$(Flush" * string(whatsthis)")
 fname = joinpath(win32api.GetTempPath(), "persist.doc")
 write(readline(fname), self.data)
 return S_OK
 end
 
 function SetSize(self::AbstractLockBytes, size)::Int64
-println("Set Size" * string(size")
+println("$(Set Size" * string(size)")
 if size > length(self.data)
 self.data = self.data + str2bytes(repeat("\0",(size - length(self.data))))
 else
@@ -83,7 +83,7 @@ println("UnlockRegion")
 end
 
 function Stat(self::AbstractLockBytes, statflag)
-println("returning Stat " * string(statflag")
+println("$(returning Stat " * string(statflag)")
 return ("PyMemBytes", storagecon.STGTY_LOCKBYTES, length(self.data), self.mtime, self.ctime, self.atime, (storagecon.STGM_DIRECT | storagecon.STGM_READWRITE) | storagecon.STGM_CREATE, storagecon.STGM_SHARE_EXCLUSIVE, "{00020905-0000-0000-C000-000000000046}", 0, 0)
 end
 
@@ -93,7 +93,7 @@ IStorage
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
 data::String
-OleClientSite(data = "", IPersistStorage = nothing, IStorage = nothing, _com_interfaces_::Vector = [axcontrol.IID_IOleClientSite], _public_methods_::Vector{String} = ["SaveObject", "GetMoniker", "GetContainer", "ShowObject", "OnShowWindow", "RequestNewObjectLayout"]) = new(data , IPersistStorage , IStorage , _com_interfaces_, _public_methods_)
+OleClientSite(data = "", IPersistStorage = nothing, IStorage = nothing) = new(data , IPersistStorage , IStorage )
 end
 function SetIPersistStorage(self::AbstractOleClientSite, IPersistStorage)
 self.IPersistStorage = IPersistStorage
@@ -113,7 +113,7 @@ return S_OK
 end
 
 function GetMoniker(self::AbstractOleClientSite, dwAssign, dwWhichMoniker)
-println("GetMoniker " * string(dwAssign) * " " * string(dwWhichMoniker")
+println("$(GetMoniker " * string(dwAssign) * " " * string(dwWhichMoniker)")
 end
 
 function GetContainer(self::AbstractOleClientSite)
@@ -125,7 +125,7 @@ println("ShowObject")
 end
 
 function OnShowWindow(self::AbstractOleClientSite, fShow)
-println("ShowObject" * string(fShow")
+println("$(ShowObject" * string(fShow)")
 end
 
 function RequestNewObjectLayout(self::AbstractOleClientSite)
@@ -149,8 +149,7 @@ SetIPersistStorage(ocs, dpcom)
 SetIStorage(ocs, stcom)
 wrange = Range(doc)
 for i in 0:9
-InsertAfter(wrange, "Hello from Python 
-")
+InsertAfter(wrange, "Hello from Python $(i)\n")
 end
 paras = doc.Paragraphs
 for i in 0:length(paras) - 1

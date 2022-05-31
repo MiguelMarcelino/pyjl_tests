@@ -15,7 +15,7 @@ dll
 desc
 ver_desc
 flags
-TypelibSpec(clsid = string(clsid), lcid = parse(Int, lcid), major = major, minor = minor, flags = nothing, dll = nothing, desc = nothing, ver_desc = flags) = new(clsid , lcid , major , minor , flags , dll , desc , ver_desc )
+TypelibSpec(clsid, lcid, major = string(clsid), minor = parse(Int, lcid), flags = 0, dll = nothing, desc = nothing, ver_desc = nothing) = new(clsid, lcid, major , minor , flags , dll , desc , ver_desc )
 end
 function __getitem__(self::AbstractTypelibSpec, item)
 if item == 0
@@ -54,7 +54,7 @@ self.dll = dllName
 end
 end
 
-function EnumKeys(root::AbstractTypelibSpec)::Vector
+function EnumKeys(root)::Vector
 index = 0
 ret = []
 while true
@@ -81,7 +81,7 @@ end
 FLAG_RESTRICTED = 1
 FLAG_CONTROL = 2
 FLAG_HIDDEN = 4
-function EnumTlbs(excludeFlags::AbstractTypelibSpec = 0)::Vector
+function EnumTlbs(excludeFlags = 0)::Vector
 #= Return a list of TypelibSpec objects, one for each registered library. =#
 key = win32api.RegOpenKey(win32con.HKEY_CLASSES_ROOT, "Typelib")
 iids = EnumKeys(key)
@@ -119,11 +119,11 @@ continue;
 end
 end
 try
-key4 = win32api.RegOpenKey(key3, "$(lcid)\win32")
+key4 = win32api.RegOpenKey(key3, "$(lcid)\\win32")
 catch exn
 if exn isa win32api.error
 try
-key4 = win32api.RegOpenKey(key3, "$(lcid)\win64")
+key4 = win32api.RegOpenKey(key3, "$(lcid)\\win64")
 catch exn
 if exn isa win32api.error
 continue;
@@ -153,7 +153,7 @@ end
 return results
 end
 
-function FindTlbsWithDescription(desc::AbstractTypelibSpec)::Vector
+function FindTlbsWithDescription(desc)::Vector
 #= Find all installed type libraries with the specified description =#
 ret = []
 items = EnumTlbs()
@@ -165,7 +165,7 @@ end
 return ret
 end
 
-function SelectTlb(title::AbstractTypelibSpec = "Select Library", excludeFlags = 0)::Vector
+function SelectTlb(title = "Select Library", excludeFlags = 0)::Vector
 #= Display a list of all the type libraries, and select one.   Returns None if cancelled =#
 items = EnumTlbs(excludeFlags)
 for i in items

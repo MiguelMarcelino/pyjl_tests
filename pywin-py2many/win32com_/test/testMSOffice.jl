@@ -1,7 +1,7 @@
 using Dates
 using PyCall
-win32api = pyimport("win32api")
 pywintypes = pyimport("pywintypes")
+win32api = pyimport("win32api")
 import win32com_.test.Generated4Test.msword8
 
 import xl5en32
@@ -38,7 +38,7 @@ TestWord7(word)
 end
  let e = exn
 if e isa Exception
-println("Word dynamic tests failed$(e)")
+println("Word dynamic tests failed $(e)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 end
@@ -50,7 +50,7 @@ TestWord8(word)
 catch exn
  let e = exn
 if e isa Exception
-println("Word generated tests failed$(e)")
+println("Word generated tests failed $(e)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 end
@@ -64,8 +64,7 @@ _proc_(word, "AppShow")
 end
 for i in 0:11
 FormatFont(word, Color = i + 1, Points = i + 12)
-Insert(word, "Hello from Python 
-")
+Insert(word, "Hello from Python $(i)\n")
 end
 FileClose(word, 2)
 end
@@ -75,8 +74,7 @@ word.Visible = 1
 doc = Add(word.Documents)
 wrange = Range(doc)
 for i in 0:9
-InsertAfter(wrange, "Hello from Python 
-")
+InsertAfter(wrange, "Hello from Python $(i)\n")
 end
 paras = doc.Paragraphs
 for i in 0:length(paras) - 1
@@ -110,13 +108,13 @@ end
 if parse(Int, xl.Version[1]) >= 8
 Add(xl.Workbooks)
 else
-Add(Workbooks(xl))
+Add(xl.Workbooks())
 end
 Range(xl, "A1:C1").Value = (1, 2, 3)
 Range(xl, "A2:C2").Value = ("x", "y", "z")
 Range(xl, "A3:C3").Value = ("3", "2", "1")
 for i in 0:19
-Cells(xl, i + 1, i + 1).Value = "Hi "
+Cells(xl, i + 1, i + 1).Value = "Hi $(i)"
 end
 if Range(xl, "A1").Value != "Hi 0"
 throw(error("Single cell range failed"))
@@ -140,7 +138,7 @@ Cells(xl, 6, 1).Value = "Python time"
 Cells(xl, 6, 2).Value = pythoncom.MakeTime(Dates.datetime2unix(Dates.now())())
 Cells(xl, 6, 2).NumberFormat = "d/mm/yy h:mm"
 AutoFit(None.EntireColumn)
-Close(Workbooks(xl, 1), 0)
+Close(xl.Workbooks(1), 0)
 Quit(xl)
 end
 
@@ -154,7 +152,7 @@ catch exn
  let e = exn
 if e isa Exception
 worked = false
-println("Excel tests failed$(e)")
+println("Excel tests failed $(e)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 end
@@ -170,7 +168,7 @@ println("Could not import the generated Excel 97 wrapper")
 end
  let e = exn
 if e isa Exception
-println("Generated Excel tests failed$(e)")
+println("Generated Excel tests failed $(e)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 end
@@ -186,7 +184,7 @@ println("Could not import the generated Excel 95 wrapper")
 end
  let e = exn
 if e isa Exception
-println("Excel 95 tests failed$(e)")
+println("Excel 95 tests failed $(e)")
 current_exceptions() != [] ? current_exceptions()[end] : nothing()
 end
 end

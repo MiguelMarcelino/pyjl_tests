@@ -1,3 +1,4 @@
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 import win32con
@@ -23,7 +24,7 @@ end
 end
 
 function DumpFolder(folder, indent = 0)
-println(" "*inden$(folder.Name)")
+println("$( "*inden) $(folder.Name)")
 folders = folder.Folders
 folder = GetFirst(folders)
 while folder
@@ -44,10 +45,10 @@ return
 end
 end
 println(infostores)
-println("There are  infostores")
+@printf("There are %d infostores\n", infostores.Count)
 for i in 0:infostores.Count - 1
 infostore = infostores[i + 2]
-println("Infostore = $(infostore.Name)")
+println("Infostore =  $(infostore.Name)")
 try
 folder = infostore.RootFolder
 catch exn
@@ -79,7 +80,7 @@ function TestUser(session)
 ae = session.CurrentUser
 fields = (hasfield(typeof(ae), :Fields) ? 
                 getfield(ae, :Fields) : [])
-println("User has  fields")
+@printf("User has %d fields\n", length(fields))
 for f in 0:length(fields) - 1
 field = fields[f + 2]
 try
@@ -89,7 +90,7 @@ if exn isa KeyError
 id = field.ID
 end
 end
-println("$(field.Name)$(id)$(field.Value)")
+@printf("%s/%s=%s\n", (field.Name, id, field.Value))
 end
 end
 
@@ -102,7 +103,7 @@ Logon(session, GetDefaultProfileName())
 catch exn
  let details = exn
 if details isa pythoncom.com_error
-println("Could not log on to MAPI:$(details)")
+println("Could not log on to MAPI: $(details)")
 return
 end
 end

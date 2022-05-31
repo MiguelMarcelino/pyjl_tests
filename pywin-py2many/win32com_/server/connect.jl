@@ -3,6 +3,7 @@
   A collection of helpers for server side connection points.
  =#
 using OrderedCollections
+using Printf
 using ext_modules: pythoncom
 using exception: Exception
 import winerror
@@ -17,7 +18,7 @@ connections::Dict
 cookieNo::Int64
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-ConnectableServer(cookieNo = 0, connections = OrderedDict(), _com_interfaces_::Vector = [pythoncom.IID_IConnectionPoint, pythoncom.IID_IConnectionPointContainer], _public_methods_::Vector{String} = append!(IConnectionPointContainer_methods, IConnectionPoint_methods)) = new(cookieNo , connections , _com_interfaces_, _public_methods_)
+ConnectableServer(cookieNo = 0, connections = OrderedDict()) = new(cookieNo , connections )
 end
 function EnumConnections(self::AbstractConnectableServer)
 throw(Exception(winerror.E_NOTIMPL))
@@ -79,5 +80,5 @@ end
 end
 
 function _OnNotifyFail(self::AbstractConnectableServer, interface, details)
-println("Ignoring COM error to connection - ")
+@printf("Ignoring COM error to connection - %s\n", repr(details))
 end

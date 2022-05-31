@@ -13,8 +13,8 @@ function OnWillConnect(self::AbstractADOEvents, str, user, pw, opt, sts, cn)
 end
 
 function OnConnectComplete(self::AbstractADOEvents, error, status, connection)
-println("connection is$(connection)")
-println("Connected to$(Properties(connection, "Data Source"))")
+println("connection is $(connection)")
+println("Connected to $(Properties(connection, "Data Source"))")
 global finished
 finished = 1
 end
@@ -47,9 +47,9 @@ function OnWillExecute(self::AbstractADOEvents, Source, CursorType, LockType, Op
 #= pass =#
 end
 
-function TestConnection(dbname::AbstractADOEvents)
+function TestConnection(dbname)
 c = DispatchWithEvents("ADODB.Connection", ADOEvents)
-dsn = "Driver={Microsoft Access Driver (*.mdb)};Dbq="
+dsn = "Driver={Microsoft Access Driver (*.mdb)};Dbq=$(dbname)"
 user = "system"
 pw = "manager"
 Open(c, dsn, user, pw, constants.adAsyncConnect)

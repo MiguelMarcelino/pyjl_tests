@@ -19,9 +19,6 @@ _reg_clsid_::String
 _reg_progid_::String
 _typelib_guid_::String
 _typelib_version::Tuple{Int64}
-
-                    PyCOMTest(intval, longval, ulongval, _com_interfaces_::Vector{String} = ["IPyCOMTest"], _reg_clsid_::String = "{e743d9cd-cb03-4b04-b516-11d3a81c1597}", _reg_progid_::String = "Python.Test.PyCOMTest", _typelib_guid_::String = "{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", _typelib_version::Tuple{Int64} = (1, 0)) =
-                        new(intval, longval, ulongval, _com_interfaces_, _reg_clsid_, _reg_progid_, _typelib_guid_, _typelib_version)
 end
 function DoubleString(self::AbstractPyCOMTest, str)::Int64
 return str*2
@@ -207,9 +204,6 @@ _reg_clsid_::String
 _reg_progid_::String
 _typelib_guid_::String
 _typelib_version::Tuple{Int64}
-
-                    PyCOMTestMI(_com_interfaces_::Vector{String} = ["IPyCOMTest", pythoncom.IID_IStream, string(pythoncom.IID_IStorage)], _reg_clsid_::String = "{F506E9A1-FB46-4238-A597-FA4EB69787CA}", _reg_progid_::String = "Python.Test.PyCOMTestMI", _typelib_guid_::String = "{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", _typelib_version::Tuple{Int64} = (1, 0)) =
-                        new(_com_interfaces_, _reg_clsid_, _reg_progid_, _typelib_guid_, _typelib_version)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

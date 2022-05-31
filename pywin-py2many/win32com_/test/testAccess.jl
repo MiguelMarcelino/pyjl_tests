@@ -1,3 +1,4 @@
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 include("daodump.jl")
@@ -76,14 +77,14 @@ forms = nothing
 try
 write(sys.stderr, "Creating Access Application...\n")
 a = Dispatch("Access.Application")
-println("Opening database ")
+@printf("Opening database %s\n", dbname)
 OpenCurrentDatabase(a, dbname)
 db = CurrentDb(a)
 daodump.DumpDB(db, 1)
 forms = a.Forms
-println("There are  forms open.")
+@printf("There are %d forms open.\n", length(forms))
 reports = a.Reports
-println("There are  reports open")
+@printf("There are %d reports open\n", length(reports))
 finally
 if !(a === nothing)
 write(sys.stderr, "Closing database\n")
@@ -126,7 +127,7 @@ return
 end
 end
 dbname = CreateTestAccessDatabase()
-println("A test database at '' was created")
+@printf("A test database at \'%s\' was created\n", dbname)
 end
 DumpAccessInfo(dbname)
 end

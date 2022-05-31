@@ -8,7 +8,7 @@ abstract type AbstractDefinition end
 com_error = pythoncom.com_error
 _univgw = pythoncom._univgw
 function RegisterInterfaces(
-    typelibGUID::AbstractDefinition,
+    typelibGUID,
     lcid,
     major,
     minor,
@@ -41,7 +41,7 @@ function RegisterInterfaces(
         for name in interface_names
             type_info, type_comp = BindType(typecomp_lib, name)
             if type_info === nothing
-                throw(ValueError("$(name)' can not be located"))
+                throw(ValueError("The interface \'$(name)\' can not be located"))
             end
             attr = GetTypeAttr(type_info)
             if attr.typekind == pythoncom.TKIND_DISPATCH
@@ -75,7 +75,11 @@ function RegisterInterfaces(
                 iid = mod.NamesToIIDMap[name+1]
             catch exn
                 if exn isa KeyError
-                    throw(ValueError("$(name)' does not exist in this cached typelib"))
+                    throw(
+                        ValueError(
+                            "Interface \'$(name)\' does not exist in this cached typelib",
+                        ),
+                    )
                 end
             end
             sub_mod = gencache.GetModuleForCLSID(iid)
@@ -88,7 +92,7 @@ function RegisterInterfaces(
                 getfield(sub_mod, :name + "_vtables_") : nothing
             )
             if is_dispatch === nothing || method_defs === nothing
-                throw(ValueError("$(name)' is IDispatch only"))
+                throw(ValueError("Interface \'$(name)\' is IDispatch only"))
             end
             _doCreateVTable(iid, name, is_dispatch, method_defs)
             for info in method_defs
@@ -101,13 +105,13 @@ function RegisterInterfaces(
     return ret
 end
 
-function _doCreateVTable(iid::AbstractDefinition, interface_name, is_dispatch, method_defs)
+function _doCreateVTable(iid, interface_name, is_dispatch, method_defs)
     defn = Definition(iid, is_dispatch, method_defs)
     vtbl = CreateVTable(_univgw, defn, is_dispatch)
     RegisterVTable(_univgw, vtbl, iid, interface_name)
 end
 
-function _CalcTypeSize(typeTuple::AbstractDefinition)
+function _CalcTypeSize(typeTuple)
     t = typeTuple[1]
     if t & (pythoncom.VT_BYREF | pythoncom.VT_ARRAY)
         cb = SizeOfVT(_univgw, pythoncom.VT_PTR)[2]
@@ -123,13 +127,8 @@ mutable struct Arg <: AbstractArg
     name
     size
     offset::Int64
-    Arg(
-        arg_info = nothing,
-        name = name,
-        None = arg_info,
-        size = _CalcTypeSize(arg_info),
-        offset = 0,
-    ) = new(arg_info, name, None, size, offset)
+    Arg(arg_info, name = nothing, size = _CalcTypeSize(arg_info), offset = 0) =
+        new(arg_info, name, size, offset)
 end
 
 mutable struct Method <: AbstractMethod
@@ -143,22 +142,21 @@ mutable struct Method <: AbstractMethod
     isEventSink::Int64
 
     Method(
-        method_info = all_names[0],
-        isEventSink = all_names[1:end],
-        None = desc[4],
-        name = desc[2],
-        names = desc[8],
-        invkind = dispid,
-        arg_defs = invkind,
-        ret_def = name,
-        dispid = 0,
-        cbArgs = [],
-        args = cbArgs,
+        method_info,
+        isEventSink = 0,
+        name = all_names[1],
+        names = all_names[2:end],
+        invkind = desc[5],
+        arg_defs = desc[3],
+        ret_def = desc[9],
+        dispid = dispid,
+        cbArgs = 0,
+        args = [],
         _gw_in_args = _GenerateInArgTuple(),
         _gw_out_args = _GenerateOutArgTuple(),
     ) = begin
         if isEventSink && name[begin:2] != "On"
-            name = "On"
+            name = "On$(name)"
         end
         for argDesc in arg_defs
             arg = Arg(argDesc)
@@ -169,7 +167,6 @@ mutable struct Method <: AbstractMethod
         new(
             method_info,
             isEventSink,
-            None,
             name,
             names,
             invkind,
@@ -210,19 +207,12 @@ mutable struct Definition <: AbstractDefinition
     _methods::Vector
     _is_dispatch
 
-    Definition(
-        iid,
-        is_dispatch,
-        method_defs,
-        _iid = iid,
-        _methods = [],
-        _is_dispatch = is_dispatch,
-    ) = begin
+    Definition(iid, is_dispatch, method_defs, _methods = []) = begin
         for info in method_defs
             entry = Method(info)
             _methods.append(entry)
         end
-        new(iid, is_dispatch, method_defs, _iid, _methods, _is_dispatch)
+        new(iid, is_dispatch, method_defs, _methods)
     end
 end
 function iid(self::AbstractDefinition)
@@ -257,7 +247,11 @@ function dispatch(
             hr = retVal[1]
             retVal = retVal[2:end]
         else
-            throw(TypeError("$(length(meth._gw_out_args) + 1)$(length(retVal))"))
+            throw(
+                TypeError(
+                    "Expected $(length(meth._gw_out_args) + 1) return values, got: $(length(retVal))",
+                ),
+            )
         end
     else
         retVal = [retVal]

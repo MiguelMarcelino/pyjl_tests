@@ -19,7 +19,7 @@ end
 
 function testHost(self::AbstractAXScript)
 file = win32api.GetFullPathName(joinpath(win32com_.axscript.__path__[1], "test\\testHost.py"))
-cmd = "$(win32api.GetModuleFileName(0))$(file)""
+cmd = "$(win32api.GetModuleFileName(0)) \"$(file)\""
 if verbose
 println("Testing Python Scripting host")
 end
@@ -28,7 +28,7 @@ end
 
 function testCScript(self::AbstractAXScript)
 file = win32api.GetFullPathName(joinpath(win32com_.axscript.__path__[1], "Demos\\Client\\wsh\\test.pys"))
-cmd = "cscript.exe """
+cmd = "cscript.exe \"$(file)\""
 if verbose
 println("Testing Windows Scripting host with Python script")
 end

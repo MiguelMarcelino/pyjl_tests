@@ -23,15 +23,15 @@ o = win32com_.server.util.wrap(win32com_.server.util.Collection([1, "Two", 3, su
 return win32com_.client.Dispatch(o)
 end
 
-function TestEnumAgainst(o::AbstractTestCase, check)
+function TestEnumAgainst(o, check)
 for i in 0:length(check) - 1
 if o(i) != check[i + 1]
-throw(error("$(repr(o(i)))$(repr(check[i + 1]))"))
+throw(error("Using default method gave the incorrect value - $(repr(o(i)))/$(repr(check[i + 1]))"))
 end
 end
 for i in 0:length(check) - 1
 if Item(o, i) != check[i + 1]
-throw(error("$(repr(o(i)))$(repr(check[i + 1]))"))
+throw(error("Using Item method gave the incorrect value - $(repr(o(i)))/$(repr(check[i + 1]))"))
 end
 end
 cmp = []
@@ -39,7 +39,7 @@ for s in o
 push!(cmp, s)
 end
 if cmp[begin:length(check)] != check
-throw(error("$(repr(cmp[begin:length(check)]))$(repr(check))"))
+throw(error("Result after looping isnt correct - $(repr(cmp[begin:length(check)]))/$(repr(check))"))
 end
 for i in 0:length(check) - 1
 if o[i + 1] != check[i + 1]
@@ -48,7 +48,7 @@ end
 end
 end
 
-function TestEnum(quiet::AbstractTestCase = nothing)
+function TestEnum(quiet = nothing)
 if quiet === nothing
 quiet = !("-v" ∈ append!([PROGRAM_FILE], ARGS))
 end
@@ -90,7 +90,7 @@ catch exn
  let exc = exn
 if exc isa pythoncom.com_error
 if exc.hresult != winerror.DISP_E_BADPARAMCOUNT
-throw(error("$(exc)"))
+throw(error("Expected DISP_E_BADPARAMCOUNT - got $(exc)"))
 end
 end
 end
@@ -102,7 +102,7 @@ catch exn
  let exc = exn
 if exc isa pythoncom.com_error
 if exc.hresult != winerror.DISP_E_TYPEMISMATCH
-throw(error("$(exc)"))
+throw(error("Expected DISP_E_TYPEMISMATCH - got $(exc)"))
 end
 end
 end
@@ -114,7 +114,7 @@ catch exn
  let exc = exn
 if exc isa pythoncom.com_error
 if exc.hresult != winerror.DISP_E_BADINDEX
-throw(error("$(exc)"))
+throw(error("Expected DISP_E_BADINDEX - got $(exc)"))
 end
 end
 end
@@ -149,7 +149,7 @@ catch exn
  let exc = exn
 if exc isa pythoncom.com_error
 if exc.hresult != winerror.DISP_E_BADINDEX
-throw(error("$(exc)"))
+throw(error("Expected DISP_E_BADINDEX - got $(exc)"))
 end
 end
 end

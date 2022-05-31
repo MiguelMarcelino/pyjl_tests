@@ -9,7 +9,7 @@ throw(error("Open method of Netscape failed"))
 end
 while true
 num, str = Read(n, nothing, 0)
-println("Got $(num)$(str)")
+println("Got  $(num) $(str)")
 if num == 0
 break;
 end

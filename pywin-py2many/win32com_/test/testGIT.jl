@@ -20,6 +20,7 @@ Python.exe needs a good way to mark itself as FreeThreaded - at the moment
 this is a pain in the but!
 
  =#
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 import winerror
@@ -66,7 +67,7 @@ interp = GetInterfaceFromGlobal(GIT, cookie, pythoncom.IID_IDispatch)
 interp = win32com_.client.Dispatch(interp)
 TestInterp(interp)
 Exec(interp, "import win32api")
-println("$(myThread)$(Eval(interp, "win32api.GetCurrentThreadId()"))")
+@printf("The test thread id is %d, Python.Interpreter\'s thread ID is %d\n", (myThread, Eval(interp, "win32api.GetCurrentThreadId()")))
 interp = nothing
 pythoncom.CoUninitialize()
 catch exn
@@ -91,7 +92,7 @@ return ret
 end
 
 function test(fn)
-println("The main thread is ")
+@printf("The main thread is %d\n", win32api.GetCurrentThreadId())
 GIT = CreateGIT()
 interp = win32com_.client.Dispatch("Python.Interpreter")
 cookie = RegisterInterfaceInGlobal(GIT, interp._oleobj_, pythoncom.IID_IDispatch)
@@ -108,7 +109,7 @@ end
 elseif rc == (win32event.WAIT_OBJECT_0 + length(events))
 pythoncom.PumpWaitingMessages()
 else
-println("$(pythoncom._GetInterfaceCount())$(pythoncom._GetGatewayCount())")
+@printf("Waiting for thread to stop with interfaces=%d, gateways=%d\n", (pythoncom._GetInterfaceCount(), pythoncom._GetGatewayCount()))
 end
 catch exn
 if exn isa KeyboardInterrupt
@@ -128,7 +129,7 @@ test(BeginThreadsSimpleMarshal)
 win32api.Sleep(500)
 pythoncom.CoUninitialize()
 if pythoncom._GetInterfaceCount() != 0 || pythoncom._GetGatewayCount() != 0
-println("$(pythoncom._GetInterfaceCount())$(pythoncom._GetGatewayCount())")
+@printf("Done with interfaces=%d, gateways=%d\n", (pythoncom._GetInterfaceCount(), pythoncom._GetGatewayCount()))
 else
 println("Done.")
 end

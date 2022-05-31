@@ -6,6 +6,7 @@ necessary to allow the COM framework to respond to a request for a COM object,
 construct the necessary Python object, and dispatch COM events.
 
  =#
+using Printf
 using PyCall
 win32api = pyimport("win32api")
 import win32com_.server
@@ -110,7 +111,7 @@ end
 end
 if !ispath(exeName)
 try
-key = "SOFTWARE\Python\PythonCore\\InstallPath"
+key = "SOFTWARE\\Python\\PythonCore\\$(sys.winver)\\InstallPath"
 path = win32api.RegQueryValue(win32con.HKEY_LOCAL_MACHINE, key)
 exeName = joinpath(path, exeBaseName)
 catch exn
@@ -121,7 +122,7 @@ end
 end
 if !ispath(exeName)
 if mustfind
-throw(RuntimeError("Can not locate the program ''"))
+throw(RuntimeError("Can not locate the program \'$(exeBaseName)\'"))
 end
 return nothing
 end
@@ -146,7 +147,7 @@ try
 os.stat(pyfile)
 catch exn
 if exn isa os.error
-throw(RuntimeError("Can not locate the Python module 'win32com_.server.'"))
+throw(RuntimeError("Can not locate the Python module \'win32com_.server.$(baseName)\'"))
 end
 end
 end
@@ -181,9 +182,9 @@ function RegisterServer(clsid, pythonInstString = nothing, desc = nothing, progI
 if !(pythonInstString) && !(policy)
 throw(TypeError("You must specify either the Python Class or Python Policy which implement the COM object."))
 end
-keyNameRoot = "CLSID\"
+keyNameRoot = "CLSID\\$(string(clsid))"
 _set_string(keyNameRoot, desc)
-_set_string("AppID\", progID)
+_set_string("AppID\\$(clsid)", progID)
 if !(clsctx)
 clsctx = pythoncom.CLSCTX_INPROC_SERVER | pythoncom.CLSCTX_LOCAL_SERVER
 end
@@ -205,7 +206,7 @@ end
 else
 pythoncom_dir = dirname(pythoncom.__file__)
 suffix = "_d" ∈ pythoncom.__file__ ? ("_d") : ("")
-loadername = joinpath(pythoncom_dir, "$(sys.version_info[1])$(sys.version_info[2])$(suffix).dll")
+loadername = joinpath(pythoncom_dir, "pythoncomloader$(sys.version_info[1])$(sys.version_info[2])$(suffix).dll")
 dllName = isfile(loadername) ? (loadername) : (pythoncom.__file__)
 end
 _set_subkeys(keyNameRoot * "\\InprocServer32", Dict(nothing => dllName, "ThreadingModel" => threadingModel))
@@ -220,7 +221,7 @@ else
 exeName = _find_localserver_exe(1)
 exeName = win32api.GetShortPathName(exeName)
 pyfile = _find_localserver_module()
-command = "$(exeName)$(pyfile)$(string(clsid))"
+command = "$(exeName) \"$(pyfile)\" $(string(clsid))"
 end
 _set_string(keyNameRoot * "\\LocalServer32", command)
 else
@@ -291,14 +292,14 @@ function GetUnregisterServerKeys(clsid, progID = nothing, verProgID = nothing, c
 #= Given a server, return a list of of ("key", root), which are keys recursively
     and uncondtionally deleted at unregister or uninstall time.
      =#
-ret = [("CLSID\", win32con.HKEY_CLASSES_ROOT)]
+ret = [("CLSID\\$(string(clsid))", win32con.HKEY_CLASSES_ROOT)]
 if verProgID
 push!(ret, (verProgID, win32con.HKEY_CLASSES_ROOT))
 end
 if progID
 push!(ret, (progID, win32con.HKEY_CLASSES_ROOT))
 end
-push!(ret, ("AppID\", win32con.HKEY_CLASSES_ROOT))
+push!(ret, ("AppID\\$(string(clsid))", win32con.HKEY_CLASSES_ROOT))
 if customKeys
 ret = ret + customKeys
 end
@@ -314,7 +315,7 @@ end
 
 function GetRegisteredServerOption(clsid, optionName)
 #= Given a CLSID for a server and option name, return the option value =#
-keyNameRoot = "$(string(clsid))$(string(optionName))"
+keyNameRoot = "CLSID\\$(string(clsid))\\$(string(optionName))"
 return _get_string(keyNameRoot)
 end
 
@@ -394,14 +395,14 @@ end
 end
 RegisterServer(clsid, spec, desc, progID, verProgID, defIcon, threadingModel, policySpec, catids, options, addPyComCat, dispatcherSpec, clsctx, addnPath)
 if !(quiet)
-println("Registered:$(progID || spec)$(debuggingDesc)")
+println("Registered: $(progID || spec) $(debuggingDesc)")
 end
 if tlb_filename
 tlb_filename = abspath(os.path, tlb_filename)
 typelib = pythoncom.LoadTypeLib(tlb_filename)
 pythoncom.RegisterTypeLib(typelib, tlb_filename)
 if !(quiet)
-println("Registered type library:$(tlb_filename)")
+println("Registered type library: $(tlb_filename)")
 end
 end
 end
@@ -421,7 +422,7 @@ customKeys = _get(cls, "_reg_remove_keys_")
 unregister_typelib = _get(cls, "_reg_typelib_filename_") !== nothing
 UnregisterServer(clsid, progID, verProgID, customKeys)
 if !(quiet)
-println("Unregistered:$(progID || string(clsid))")
+println("Unregistered: $(progID || string(clsid))")
 end
 if unregister_typelib
 tlb_guid = _get(cls, "_typelib_guid_")
@@ -497,15 +498,15 @@ batf = readline(batfile)
 try
 cwd = os.getcwd()
 write(batf, "@echo off")
-write(batf, "set PYTHONPATH=")
+write(batf, "set PYTHONPATH=$(get(os.environ, "PYTHONPATH", ""))")
 write(batf, "$(splitdrive(os.path, cwd)[1])")
-write(batf, "cd """)
-write(batf, "$(win32api.GetShortPathName(exe_to_run))$(new_params)$(outfile)" 2>&1")
+write(batf, "cd \"$(os.getcwd())\"")
+write(batf, "$(win32api.GetShortPathName(exe_to_run)) $(new_params) > \"$(outfile)\" 2>&1")
 finally
 close(batf)
 end
 executable = get(os.environ, "COMSPEC", "cmd.exe")
-rc = ShellExecuteEx(hwnd = hwnd, fMask = shellcon.SEE_MASK_NOCLOSEPROCESS, lpVerb = "runas", lpFile = executable, lpParameters = "/C """, nShow = win32con.SW_SHOW)
+rc = ShellExecuteEx(hwnd = hwnd, fMask = shellcon.SEE_MASK_NOCLOSEPROCESS, lpVerb = "runas", lpFile = executable, lpParameters = "/C \"$(batfile)\"", nShow = win32con.SW_SHOW)
 hproc = rc["hProcess"]
 win32event.WaitForSingleObject(hproc, win32event.INFINITE)
 exit_code = win32process.GetExitCodeProcess(hproc)
@@ -516,7 +517,7 @@ finally
 close(outf)
 end
 if exit_code
-println("Error: registration failed (exit code ).")
+@printf("Error: registration failed (exit code %s).\n", exit_code)
 end
 print("$(output)" )
 finally
@@ -526,7 +527,7 @@ rm(f)
 catch exn
  let exc = exn
 if exc isa os.error
-println("$(f)$(exc)")
+@printf("Failed to remove tempfile \'%s\': %s\n", (f, exc))
 end
 end
 end
@@ -569,7 +570,7 @@ end
 
 if !(pythoncom.frozen)
 try
-win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, "Component Categories\")
+win32api.RegQueryValue(win32con.HKEY_CLASSES_ROOT, "Component Categories\\$(CATID_PythonCOMServer)")
 catch exn
 if exn isa win32api.error
 try

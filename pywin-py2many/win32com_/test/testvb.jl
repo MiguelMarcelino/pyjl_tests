@@ -15,9 +15,6 @@ useDispatcher = nothing
 error = RuntimeError
 mutable struct TestObject <: AbstractTestObject
 _public_methods_::Vector{String}
-
-                    TestObject(_public_methods_::Vector{String} = ["CallbackVoidOneByRef", "CallbackResultOneByRef", "CallbackVoidTwoByRef", "CallbackString", "CallbackResultOneByRefButReturnNone", "CallbackVoidOneByRefButReturnNone", "CallbackArrayResult", "CallbackArrayResultOneArrayByRef", "CallbackArrayResultWrongSize"]) =
-                        new(_public_methods_)
 end
 function CallbackVoidOneByRef(self::AbstractTestObject, intVal)::Int64
 return intVal + 1
@@ -44,7 +41,7 @@ return ret
 end
 
 function CallbackArrayResultWrongSize(self::AbstractTestObject, arrayVal)::Vector
-return collect(arrayVal[begin:-1])
+return collect(arrayVal[begin:end - 1])
 end
 
 function CallbackArrayResultOneArrayByRef(self::AbstractTestObject, arrayVal)
@@ -63,7 +60,7 @@ function CallbackVoidOneByRefButReturnNone(self::AbstractTestObject, intVal)
 return
 end
 
-function TestVB(vbtest::AbstractTestObject, bUseGenerated)
+function TestVB(vbtest, bUseGenerated)
 vbtest.LongProperty = -1
 if vbtest.LongProperty != -1
 throw(error("Could not set the long property correctly."))
@@ -90,7 +87,7 @@ throw(error("Could not set the variant string property correctly."))
 end
 vbtest.VariantProperty = (1.0, 2.0, 3.0)
 if vbtest.VariantProperty != (1.0, 2.0, 3.0)
-throw(error("$(vbtest.VariantProperty)'."))
+throw(error("Could not set the variant property to an array of floats correctly - \'$(vbtest.VariantProperty)\'."))
 end
 TestArrays(vbtest, bUseGenerated)
 TestStructs(vbtest)
@@ -128,8 +125,8 @@ end
 end
 end
 
-function _DoTestCollection(vbtest::AbstractTestObject, col_name, expected)
-function _getcount(ob::AbstractTestObject)
+function _DoTestCollection(vbtest, col_name, expected)
+function _getcount(ob)
 r = getfield(ob, :Count)
 if type_(r) != type_(0)
 return r()
@@ -143,14 +140,14 @@ for item in c
 push!(check, item)
 end
 if check != collect(expected)
-throw(error("$(col_name)$(expected)$(check))"))
+throw(error("Collection $(col_name) didn\'t have $(expected) (had $(check))"))
 end
 check = []
 for item in c
 push!(check, item)
 end
 if check != collect(expected)
-throw(error("$(col_name)$(expected)$(check))"))
+throw(error("Collection 2nd time around $(col_name) didn\'t have $(expected) (had $(check))"))
 end
 i = (x for x in getfield(vbtest, :col_name))
 check = []
@@ -158,18 +155,18 @@ for item in i
 push!(check, item)
 end
 if check != collect(expected)
-throw(error("$(col_name)$(expected)$(check))"))
+throw(error("Collection iterator $(col_name) didn\'t have $(expected) 2nd time around (had $(check))"))
 end
 check = []
 for item in i
 push!(check, item)
 end
 if check != []
-throw(error("$(col_name)$(check))"))
+throw(error("2nd time around Collection iterator $(col_name) wasn\'t empty (had $(check))"))
 end
 c = getfield(vbtest, :col_name)
 if length(c) != _getcount(c)
-throw(error("$(col_name)$(length(c))$(_getcount(c)))"))
+throw(error("Collection $(col_name) __len__($(length(c))) wasn\'t==Count($(_getcount(c)))"))
 end
 c = getfield(vbtest, :col_name)
 check = []
@@ -177,7 +174,7 @@ for i in 0:_getcount(c) - 1
 push!(check, c[i + 1])
 end
 if check != collect(expected)
-throw(error("$(col_name)$(expected)$(check))"))
+throw(error("Collection $(col_name) didn\'t have $(expected) (had $(check))"))
 end
 c = _NewEnum(getfield(vbtest, :col_name))
 check = []
@@ -189,11 +186,11 @@ end
 push!(check, n[1])
 end
 if check != collect(expected)
-throw(error("$(col_name)$(expected)$(check))"))
+throw(error("Collection $(col_name) didn\'t have $(expected) (had $(check))"))
 end
 end
 
-function TestCollections(vbtest::AbstractTestObject)
+function TestCollections(vbtest)
 _DoTestCollection(vbtest, "CollectionProperty", [1, "Two", "3"])
 if vbtest.CollectionProperty[1] != 1
 throw(error("The CollectionProperty[0] element was not the default value"))
@@ -205,11 +202,11 @@ Add(vbtest.EnumerableCollectionProperty, "3")
 _DoTestCollection(vbtest, "EnumerableCollectionProperty", [1, "Two", "3"])
 end
 
-function _DoTestArray(vbtest::AbstractTestObject, data, expected_exception = nothing)
+function _DoTestArray(vbtest, data, expected_exception = nothing)
 try
 vbtest.ArrayProperty = data
 if expected_exception !== nothing
-throw(error("Expected ''"))
+throw(error("Expected \'$(expected_exception)\'"))
 end
 catch exn
 if exn isa expected_exception
@@ -218,11 +215,11 @@ end
 end
 got = vbtest.ArrayProperty
 if got != data
-throw(error("$(got)$(data)"))
+throw(error("Could not set the array data correctly - got $(got), expected $(data)"))
 end
 end
 
-function TestArrays(vbtest::AbstractTestObject, bUseGenerated)
+function TestArrays(vbtest, bUseGenerated)
 _DoTestArray(vbtest, ())
 _DoTestArray(vbtest, ((), ()))
 _DoTestArray(vbtest, tuple(1:99))
@@ -281,7 +278,7 @@ end
 println("Array tests passed")
 end
 
-function TestStructs(vbtest::AbstractTestObject)
+function TestStructs(vbtest)
 try
 vbtest.IntProperty = "One"
 throw(error("Should have failed by now"))
@@ -400,16 +397,16 @@ if exc isa AttributeError
 end
 end
 end
-expected = "$(s.int_val)$(s.str_val)$(s.ob_val)$(s.sub_val))"
+expected = "com_struct(int_val=$(s.int_val), str_val=$(s.str_val), ob_val=$(s.ob_val), sub_val=$(s.sub_val))"
 if repr(s) != expected
-println("Expected repr:$(expected)")
-println("Actual repr  :$(repr(s))")
+println("Expected repr: $(expected)")
+println("Actual repr  : $(repr(s))")
 throw(RuntimeError("repr() of record object failed"))
 end
 println("Struct/Record tests passed")
 end
 
-function TestVBInterface(ob::AbstractTestObject)
+function TestVBInterface(ob)
 t = GetInterfaceTester(ob, 2)
 if getn(t) != 2
 throw(error("Initial value wrong"))
@@ -420,7 +417,7 @@ throw(error("New value wrong"))
 end
 end
 
-function TestObjectSemantics(ob::AbstractTestObject)
+function TestObjectSemantics(ob)
 @assert(ob == ob._oleobj_)
 @assert(!(ob != ob._oleobj_))
 @assert(ob._oleobj_ == ob)

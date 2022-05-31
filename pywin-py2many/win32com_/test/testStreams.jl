@@ -12,7 +12,7 @@ data
 dirty::Int64
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-Persists(data = str2bytes("abcdefg"), dirty = 1, _com_interfaces_::Vector = [pythoncom.IID_IPersistStreamInit], _public_methods_::Vector{String} = ["GetClassID", "IsDirty", "Load", "Save", "GetSizeMax", "InitNew"]) = new(data , dirty , _com_interfaces_, _public_methods_)
+Persists(data = str2bytes("abcdefg"), dirty = 1) = new(data , dirty )
 end
 function GetClassID(self::AbstractPersists)
 return pythoncom.IID_NULL
@@ -46,7 +46,7 @@ data
 index::Int64
 _com_interfaces_::Vector
 _public_methods_::Vector{String}
-Stream(data = data, index = 0, _com_interfaces_::Vector = [pythoncom.IID_IStream], _public_methods_::Vector{String} = ["Read", "Write", "Seek"]) = new(data , index , _com_interfaces_, _public_methods_)
+Stream(data, index = 0) = new(data, index )
 end
 function Read(self::AbstractStream, amount)
 result = self.data[self.index + 1:self.index + amount]
@@ -101,7 +101,7 @@ got = Read(read_stream, length(data))
 assertEqual(self, data, got)
 Seek(read_stream, 1, pythoncom.STREAM_SEEK_SET)
 got = Read(read_stream, length(data) - 2)
-assertEqual(self, data[2:-1], got)
+assertEqual(self, data[1:end - 1], got)
 end
 
 function testit(self::AbstractStreamTest)

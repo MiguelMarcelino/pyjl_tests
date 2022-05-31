@@ -12,6 +12,7 @@
  interface
  =#
 using OrderedCollections
+using Printf
 
 
 abstract type Abstracterror_not_found <: Exception end
@@ -64,7 +65,7 @@ arg
 builtinIndirection
 declaredIndirection
 gatewayMode::Int64
-ArgFormatter(arg = arg, builtinIndirection = builtinIndirection, declaredIndirection = declaredIndirection, gatewayMode = 0) = new(arg , builtinIndirection , declaredIndirection , gatewayMode )
+ArgFormatter(arg, builtinIndirection, declaredIndirection = 0, gatewayMode = 0) = new(arg, builtinIndirection, declaredIndirection , gatewayMode )
 end
 function _IndirectPrefix(self::AbstractArgFormatter, indirectionFrom, indirectionTo)::String
 #= Given the indirection level I was declared at (0=Normal, 1=*, 2=**)
@@ -83,7 +84,7 @@ return "&"
 elseif dif == 1
 return "*"
 else
-return "$(dif))"
+return "?? ($(dif))"
 throw(error_not_supported("Can\'t indirect this far - please fix me :-)"))
 end
 end
@@ -123,14 +124,13 @@ function GetInterfaceCppObjectInfo(self::AbstractArgFormatter)
 
         Result is a tuple of (variableName, [DeclareType|None|""])
          =#
-return (GetIndirectedArgName(self, self.builtinIndirection, self.arg.indirectionLevel + self.builtinIndirection), "$(GetUnconstType(self))$(self.arg.name)")
+return (GetIndirectedArgName(self, self.builtinIndirection, self.arg.indirectionLevel + self.builtinIndirection), "$(GetUnconstType(self)) $(self.arg.name)")
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatter)::String
 #= Return cleanup code for C++ args passed to the interface method. =#
 if DEBUG != 0
-return "/* GetInterfaceArgCleanup output goes here:  */
-"
+return "/* GetInterfaceArgCleanup output goes here: $(self.arg.name) */\n"
 else
 return ""
 end
@@ -140,8 +140,7 @@ function GetInterfaceArgCleanupGIL(self::AbstractArgFormatter)::String
 #= Return cleanup code for C++ args passed to the interface
         method that must be executed with the GIL held =#
 if DEBUG != 0
-return "/* GetInterfaceArgCleanup (GIL held) output goes here:  */
-"
+return "/* GetInterfaceArgCleanup (GIL held) output goes here: $(self.arg.name) */\n"
 else
 return ""
 end
@@ -157,7 +156,7 @@ end
 
 function _GetDeclaredIndirection(self::AbstractArgFormatter)
 return self.arg.indirectionLevel
-println("declared:$(self.arg.name)$(self.gatewayMode)")
+println("declared: $(self.arg.name) $(self.gatewayMode)")
 if self.gatewayMode != 0
 return self.arg.indirectionLevel
 else
@@ -168,8 +167,7 @@ end
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatter)::String
 #= Declare the variable used as the PyArg_ParseTuple param for a gateway =#
 if DEBUG != 0
-return "/* Declare ParseArgTupleInputConverter goes here:  */
-"
+return "/* Declare ParseArgTupleInputConverter goes here: $(self.arg.name) */\n"
 else
 return ""
 end
@@ -178,8 +176,7 @@ end
 function GetParsePostCode(self::AbstractArgFormatter)::String
 #= Get a string of C++ code to be executed after (ie, to finalise) the PyArg_ParseTuple conversion =#
 if DEBUG != 0
-return "/* GetParsePostCode code goes here:  */
-"
+return "/* GetParsePostCode code goes here: $(self.arg.name) */\n"
 else
 return ""
 end
@@ -188,8 +185,7 @@ end
 function GetBuildForInterfacePreCode(self::AbstractArgFormatter)::String
 #= Get a string of C++ code to be executed before (ie, to initialise) the Py_BuildValue conversion for Interfaces =#
 if DEBUG != 0
-return "/* GetBuildForInterfacePreCode goes here:  */
-"
+return "/* GetBuildForInterfacePreCode goes here: $(self.arg.name) */\n"
 else
 return ""
 end
@@ -200,8 +196,7 @@ function GetBuildForGatewayPreCode(self::AbstractArgFormatter)::String
 s = GetBuildForInterfacePreCode(self)
 if DEBUG != 0
 if s[begin:4] == "/* G"
-s = "/* GetBuildForGatewayPreCode goes here:  */
-"
+s = "/* GetBuildForGatewayPreCode goes here: $(self.arg.name) */\n"
 end
 end
 return s
@@ -210,8 +205,7 @@ end
 function GetBuildForInterfacePostCode(self::AbstractArgFormatter)::String
 #= Get a string of C++ code to be executed after (ie, to finalise) the Py_BuildValue conversion for Interfaces =#
 if DEBUG != 0
-return "/* GetBuildForInterfacePostCode goes here:  */
-"
+return "/* GetBuildForInterfacePostCode goes here: $(self.arg.name) */\n"
 end
 return ""
 end
@@ -221,15 +215,14 @@ function GetBuildForGatewayPostCode(self::AbstractArgFormatter)::String
 s = GetBuildForInterfacePostCode(self)
 if DEBUG != 0
 if s[begin:4] == "/* G"
-s = "/* GetBuildForGatewayPostCode goes here:  */
-"
+s = "/* GetBuildForGatewayPostCode goes here: $(self.arg.name) */\n"
 end
 end
 return s
 end
 
 function GetAutoduckString(self::AbstractArgFormatter)
-return "$(_GetPythonTypeDesc(self))$(self.arg.name)$(self.arg.name)"
+return "// @pyparm $(_GetPythonTypeDesc(self))|$(self.arg.name)||Description for $(self.arg.name)"
 end
 
 function _GetPythonTypeDesc(self::AbstractArgFormatter)
@@ -251,8 +244,7 @@ return "f"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterFloat)::String
-return "	double dbl;
-"
+return "\tdouble dbl$(self.arg.name);\n"
 end
 
 function GetParseTupleArg(self::AbstractArgFormatterFloat)::String
@@ -272,7 +264,7 @@ return (("\tdbl" + self.arg.name) * " = " + self.arg.name) * ";\n"
 end
 
 function GetBuildForGatewayPreCode(self::AbstractArgFormatterFloat)::String
-return (("	dbl = " + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)) + self.arg.name) * ";\n"
+return (("\tdbl$(self.arg.name) = " + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)) + self.arg.name) * ";\n"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterFloat)::String
@@ -281,8 +273,7 @@ if self.gatewayMode
 s = s + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)
 end
 s = s + self.arg.name
-s = s * " = (float)dbl;
-"
+s = s * " = (float)dbl$(self.arg.name);\n"
 return s
 end
 
@@ -295,8 +286,7 @@ return "i"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterShort)::String
-return "	INT i;
-"
+return "\tINT i$(self.arg.name);\n"
 end
 
 function GetParseTupleArg(self::AbstractArgFormatterShort)::String
@@ -316,7 +306,7 @@ return (("\ti" + self.arg.name) * " = " + self.arg.name) * ";\n"
 end
 
 function GetBuildForGatewayPreCode(self::AbstractArgFormatterShort)::String
-return (("	i = " + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)) + self.arg.name) * ";\n"
+return (("\ti$(self.arg.name) = " + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)) + self.arg.name) * ";\n"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterShort)::String
@@ -325,8 +315,7 @@ if self.gatewayMode
 s = s + _IndirectPrefix(self, _GetDeclaredIndirection(self), 0)
 end
 s = s + self.arg.name
-s = s * " = i;
-"
+s = s * " = i$(self.arg.name);\n"
 return s
 end
 
@@ -338,8 +327,7 @@ return "O"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterLONG_PTR)::String
-return "	PyObject *ob;
-"
+return "\tPyObject *ob$(self.arg.name);\n"
 end
 
 function GetParseTupleArg(self::AbstractArgFormatterLONG_PTR)::String
@@ -355,29 +343,24 @@ return "ob" + self.arg.name
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterLONG_PTR)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterLONG_PTR)::String
-return "	PyObject *ob;
-"
+return "\tPyObject *ob$(self.arg.name);\n"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterLONG_PTR)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyWinLong_AsULONG_PTR(ob$(self.arg.name), (ULONG_PTR *)$(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterLONG_PTR)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = PyWinObject_FromULONG_PTR($(notdirected));\n"
 end
 
 function GetBuildForGatewayPostCode(self::AbstractArgFormatterLONG_PTR)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 mutable struct ArgFormatterPythonCOM <: AbstractArgFormatterPythonCOM
@@ -389,8 +372,7 @@ return "O"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterPythonCOM)::String
-return "	PyObject *ob;
-"
+return "\tPyObject *ob$(self.arg.name);\n"
 end
 
 function GetParseTupleArg(self::AbstractArgFormatterPythonCOM)::String
@@ -398,7 +380,7 @@ return "&ob" + self.arg.name
 end
 
 function _GetPythonTypeDesc(self::AbstractArgFormatterPythonCOM)::String
-return "<o Py>"
+return "<o Py$(self.arg.type)>"
 end
 
 function GetBuildValueArg(self::AbstractArgFormatterPythonCOM)::String
@@ -406,13 +388,11 @@ return "ob" + self.arg.name
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterPythonCOM)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 function DeclareParseArgTupleInputConverter(self::AbstractArgFormatterPythonCOM)::String
-return "	PyObject *ob;
-"
+return "\tPyObject *ob$(self.arg.name);\n"
 end
 
 mutable struct ArgFormatterBSTR <: AbstractArgFormatterBSTR
@@ -423,24 +403,20 @@ return "<o unicode>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterBSTR)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyWinObject_AsBstr(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterBSTR)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = MakeBstrToObj($(notdirected));\n"
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterBSTR)::Any
-return "$(self.arg.name));
-" + ArgFormatterPythonCOM.GetBuildForInterfacePostCode(self)
+return "\tSysFreeString($(self.arg.name));\n" + ArgFormatterPythonCOM.GetBuildForInterfacePostCode(self)
 end
 
 function GetBuildForGatewayPostCode(self::AbstractArgFormatterBSTR)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 mutable struct ArgFormatterOLECHAR <: AbstractArgFormatterOLECHAR
@@ -459,29 +435,24 @@ end
 end
 
 function GetParsePostCode(self::AbstractArgFormatterOLECHAR)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyWinObject_AsBstr(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatterOLECHAR)::String
-return "	SysFreeString();
-"
+return "\tSysFreeString($(GetIndirectedArgName(self, nothing, 1)));\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterOLECHAR)
 notdirected = GetIndirectedArgName(self, self.builtinIndirection, 1)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = MakeOLECHARToObj($(notdirected));\n"
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterOLECHAR)::Any
-return "$(self.arg.name));
-" + ArgFormatterPythonCOM.GetBuildForInterfacePostCode(self)
+return "\tCoTaskMemFree($(self.arg.name));\n" + ArgFormatterPythonCOM.GetBuildForInterfacePostCode(self)
 end
 
 function GetBuildForGatewayPostCode(self::AbstractArgFormatterOLECHAR)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 mutable struct ArgFormatterTCHAR <: AbstractArgFormatterTCHAR
@@ -500,19 +471,16 @@ end
 end
 
 function GetParsePostCode(self::AbstractArgFormatterTCHAR)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyWinObject_AsTCHAR(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 2)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatterTCHAR)::String
-return "	PyWinObject_FreeTCHAR();
-"
+return "\tPyWinObject_FreeTCHAR($(GetIndirectedArgName(self, nothing, 1)));\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterTCHAR)
 notdirected = GetIndirectedArgName(self, self.builtinIndirection, 1)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = PyWinObject_FromTCHAR($(notdirected));\n"
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterTCHAR)::String
@@ -520,8 +488,7 @@ return "// ??? - TCHAR post code\n"
 end
 
 function GetBuildForGatewayPostCode(self::AbstractArgFormatterTCHAR)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 mutable struct ArgFormatterIID <: AbstractArgFormatterIID
@@ -532,18 +499,16 @@ return "<o PyIID>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterIID)
-return "$(self.arg.name)$(self.arg.name))) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyWinObject_AsIID(ob$(self.arg.name), &$(self.arg.name))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterIID)
 notdirected = GetIndirectedArgName(self, nothing, 0)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = PyWinObject_FromIID($(notdirected));\n"
 end
 
 function GetInterfaceCppObjectInfo(self::AbstractArgFormatterIID)
-return (self.arg.name, "IID ")
+return (self.arg.name, "IID $(self.arg.name)")
 end
 
 mutable struct ArgFormatterTime <: AbstractArgFormatterTime
@@ -553,7 +518,7 @@ declaredIndirection::Int64
 
             ArgFormatterTime(arg, builtinIndirection, declaredIndirection = 0) = begin
                 if arg.indirectionLevel == 0 && arg.unc_type[begin:2] == "LP"
-arg.unc_type = arg.unc_type[2:end]
+arg.unc_type = arg.unc_type[3:end]
 arg.indirectionLevel = arg.indirectionLevel + 1
 builtinIndirection = 0
 end
@@ -566,21 +531,18 @@ return "<o PyDateTime>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterTime)
-return "$(self.arg.name)$(self.arg.name)$(GetIndirectedArgName(self, self.builtinIndirection, 1)))) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyTime_Check(ob$(self.arg.name))) {\n\t\tPyErr_SetString(PyExc_TypeError, \"The argument must be a PyTime object\");\n\t\tbPythonIsHappy = FALSE;\n\t}\n\tif (!((PyTime *)ob$(self.arg.name))->GetTime($(GetIndirectedArgName(self, self.builtinIndirection, 1)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterTime)
 notdirected = GetIndirectedArgName(self, self.builtinIndirection, 0)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = new PyTime($(notdirected));\n"
 end
 
 function GetBuildForInterfacePostCode(self::AbstractArgFormatterTime)::String
 ret = ""
 if (self.builtinIndirection + self.arg.indirectionLevel) > 1
-ret = "	CoTaskMemFree();
-"
+ret = "\tCoTaskMemFree($(self.arg.name));\n"
 end
 return ret + ArgFormatterPythonCOM.GetBuildForInterfacePostCode(self)
 end
@@ -593,37 +555,32 @@ return "<o STATSTG>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterSTATSTG)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1)), 0/*flags*/)) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyCom_PyObjectAsSTATSTG(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 1)), 0/*flags*/)) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterSTATSTG)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1))$(notdirected)$(notdirected)).pwcsName);
-"
+return "\tob$(self.arg.name) = PyCom_PyObjectFromSTATSTG($(GetIndirectedArgName(self, nothing, 1)));\n\t// STATSTG doco says our responsibility to free\n\tif (($(notdirected)).pwcsName) CoTaskMemFree(($(notdirected)).pwcsName);\n"
 end
 
 mutable struct ArgFormatterGeneric <: AbstractArgFormatterGeneric
 arg
 end
 function _GetPythonTypeDesc(self::AbstractArgFormatterGeneric)::String
-return "<o >"
+return "<o $(self.arg.type)>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterGeneric)
-return "$(self.arg.type)$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1))) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyObject_As$(self.arg.type)(ob$(self.arg.name), &$(GetIndirectedArgName(self, nothing, 1))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatterGeneric)
-return "$(self.arg.type)$(self.arg.name));
-"
+return "\tPyObject_Free$(self.arg.type)($(self.arg.name));\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterGeneric)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(self.arg.type)$(GetIndirectedArgName(self, nothing, 1)));
-"
+return "\tob$(self.arg.name) = PyObject_From$(self.arg.type)($(GetIndirectedArgName(self, nothing, 1)));\n"
 end
 
 mutable struct ArgFormatterIDLIST <: AbstractArgFormatterIDLIST
@@ -634,19 +591,16 @@ return "<o PyIDL>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterIDLIST)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1)))) bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyObject_AsPIDL(ob$(self.arg.name), &$(GetIndirectedArgName(self, nothing, 1)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatterIDLIST)
-return "$(self.arg.name));
-"
+return "\tPyObject_FreePIDL($(self.arg.name));\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterIDLIST)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1)));
-"
+return "\tob$(self.arg.name) = PyObject_FromPIDL($(GetIndirectedArgName(self, nothing, 1)));\n"
 end
 
 mutable struct ArgFormatterHANDLE <: AbstractArgFormatterHANDLE
@@ -657,14 +611,12 @@ return "<o PyHANDLE>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterHANDLE)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1)), FALSE) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyWinObject_AsHANDLE(ob$(self.arg.name), &$(GetIndirectedArgName(self, nothing, 1)), FALSE) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterHANDLE)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 0)));
-"
+return "\tob$(self.arg.name) = PyWinObject_FromHANDLE($(GetIndirectedArgName(self, nothing, 0)));\n"
 end
 
 mutable struct ArgFormatterLARGE_INTEGER <: AbstractArgFormatterLARGE_INTEGER
@@ -675,18 +627,16 @@ return "LARGE_INTEGER"
 end
 
 function _GetPythonTypeDesc(self::AbstractArgFormatterLARGE_INTEGER)::String
-return "<o >"
+return "<o $(GetKeyName(self))>"
 end
 
 function GetParsePostCode(self::AbstractArgFormatterLARGE_INTEGER)
-return "$(GetKeyName(self))$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1)))) bPythonIsHappy = FALSE;
-"
+return "\tif (!PyWinObject_As$(GetKeyName(self))(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 1)))) bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterLARGE_INTEGER)
 notdirected = GetIndirectedArgName(self, nothing, 0)
-return "$(self.arg.name)$(GetKeyName(self))$(notdirected));
-"
+return "\tob$(self.arg.name) = PyWinObject_From$(GetKeyName(self))($(notdirected));\n"
 end
 
 mutable struct ArgFormatterULARGE_INTEGER <: AbstractArgFormatterULARGE_INTEGER
@@ -701,7 +651,7 @@ arg
 gatewayMode
 end
 function GetInterfaceCppObjectInfo(self::AbstractArgFormatterInterface)::Tuple
-return (GetIndirectedArgName(self, 1, self.arg.indirectionLevel), "$(GetUnconstType(self))$(self.arg.name)")
+return (GetIndirectedArgName(self, 1, self.arg.indirectionLevel), "$(GetUnconstType(self)) * $(self.arg.name)")
 end
 
 function GetParsePostCode(self::AbstractArgFormatterInterface)
@@ -710,45 +660,36 @@ sArg = GetIndirectedArgName(self, nothing, 2)
 else
 sArg = GetIndirectedArgName(self, 1, 2)
 end
-return "$(self.arg.name)$(self.arg.type)$(sArg), TRUE /* bNoneOK */))
-		 bPythonIsHappy = FALSE;
-"
+return "\tif (bPythonIsHappy && !PyCom_InterfaceFromPyInstanceOrObject(ob$(self.arg.name), IID_$(self.arg.type), (void **)$(sArg), TRUE /* bNoneOK */))\n\t\t bPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForInterfacePreCode(self::AbstractArgFormatterInterface)
-return "$(self.arg.name)$(self.arg.name)$(self.arg.type), FALSE);
-"
+return "\tob$(self.arg.name) = PyCom_PyObjectFromIUnknown($(self.arg.name), IID_$(self.arg.type), FALSE);\n"
 end
 
 function GetBuildForGatewayPreCode(self::AbstractArgFormatterInterface)
 sPrefix = _IndirectPrefix(self, _GetDeclaredIndirection(self), 1)
-return "$(self.arg.name)$(sPrefix)$(self.arg.name)$(self.arg.type), TRUE);
-"
+return "\tob$(self.arg.name) = PyCom_PyObjectFromIUnknown($(sPrefix)$(self.arg.name), IID_$(self.arg.type), TRUE);\n"
 end
 
 function GetInterfaceArgCleanup(self::AbstractArgFormatterInterface)
-return "$(self.arg.name)$(self.arg.name)->Release();
-"
+return "\tif ($(self.arg.name)) $(self.arg.name)->Release();\n"
 end
 
 mutable struct ArgFormatterVARIANT <: AbstractArgFormatterVARIANT
 arg
 end
 function GetParsePostCode(self::AbstractArgFormatterVARIANT)
-return "$(self.arg.name)$(GetIndirectedArgName(self, nothing, 1))) )
-		bPythonIsHappy = FALSE;
-"
+return "\tif ( !PyCom_VariantFromPyObject(ob$(self.arg.name), $(GetIndirectedArgName(self, nothing, 1))) )\n\t\tbPythonIsHappy = FALSE;\n"
 end
 
 function GetBuildForGatewayPreCode(self::AbstractArgFormatterVARIANT)
 notdirected = GetIndirectedArgName(self, nothing, 1)
-return "$(self.arg.name)$(notdirected));
-"
+return "\tob$(self.arg.name) = PyCom_PyObjectFromVariant($(notdirected));\n"
 end
 
 function GetBuildForGatewayPostCode(self::AbstractArgFormatterVARIANT)::String
-return "	Py_XDECREF(ob);
-"
+return "\tPy_XDECREF(ob$(self.arg.name));\n"
 end
 
 ConvertSimpleTypes = OrderedDict("BOOL" => ("BOOL", "int", "i"), "UINT" => ("UINT", "int", "i"), "BYTE" => ("BYTE", "int", "i"), "INT" => ("INT", "int", "i"), "DWORD" => ("DWORD", "int", "l"), "HRESULT" => ("HRESULT", "int", "l"), "ULONG" => ("ULONG", "int", "l"), "LONG" => ("LONG", "int", "l"), "int" => ("int", "int", "i"), "long" => ("long", "int", "l"), "DISPID" => ("DISPID", "long", "l"), "APPBREAKFLAGS" => ("int", "int", "i"), "BREAKRESUMEACTION" => ("int", "int", "i"), "ERRORRESUMEACTION" => ("int", "int", "i"), "BREAKREASON" => ("int", "int", "i"), "BREAKPOINT_STATE" => ("int", "int", "i"), "BREAKRESUME_ACTION" => ("int", "int", "i"), "SOURCE_TEXT_ATTR" => ("int", "int", "i"), "TEXT_DOC_ATTR" => ("int", "int", "i"), "QUERYOPTION" => ("int", "int", "i"), "PARSEACTION" => ("int", "int", "i"))
@@ -768,7 +709,7 @@ AllConverters = Dict("const OLECHAR" => (ArgFormatterOLECHAR, 0, 1), "WCHAR" => 
 for key in keys(ConvertSimpleTypes)
 AllConverters[key] = (ArgFormatterSimple, 0)
 end
-function make_arg_converter(arg::AbstractInterface)::ArgFormatterInterface
+function make_arg_converter(arg)::ArgFormatterInterface
 try
 clz = AllConverters[arg.type][0]
 bin = AllConverters[arg.type][1]
@@ -782,7 +723,7 @@ if exn isa KeyError
 if arg.type[1] == "I"
 return ArgFormatterInterface(arg, 0, 1)
 end
-throw(error_not_supported("$(arg.type)$(arg.name)) is unknown."))
+throw(error_not_supported("The type \'$(arg.type)\' ($(arg.name)) is unknown."))
 end
 end
 end
@@ -804,7 +745,7 @@ raw_type
 type_
 unc_type
 regex
-Argument(good_interface_names = good_interface_names, inout = nothing, const_ = 0, arrayDecl = 0, regex = re.compile("/\\* \\[([^\\]]*.*?)] \\*/[ \\t](.*[* ]+)(\\w+)(\\[ *])?[\\),]")) = new(good_interface_names , inout , const_ , arrayDecl , regex )
+Argument(good_interface_names, inout = nothing, const_ = 0, arrayDecl = 0) = new(good_interface_names, inout , const_ , arrayDecl )
 end
 function BuildFromFile(self::AbstractArgument, file)
 #= Parse and build my data from a file
@@ -819,8 +760,8 @@ if !(mo)
 throw(error_not_found)
 end
 self.name = group(mo, 3)
-self.inout = split(group(mo, 1), "][")
-typ = strip(group(mo, 2))
+self.inout = split(mo.group(1), "][")
+typ = strip(mo.group(2))
 self.raw_type = typ
 self.indirectionLevel = 0
 if group(mo, 4)
@@ -854,7 +795,7 @@ else
 self.unc_type = self.type
 end
 if VERBOSE != 0
-println("$(self.name)$(self.type)$(repeat("*",self.indirectionLevel))$(self.inout))")
+@printf("\t   Arg %s of type %s%s (%s)\n", (self.name, self.type, repeat("*",self.indirectionLevel), self.inout))
 end
 end
 
@@ -869,7 +810,7 @@ return typ ∈ self.inout
 end
 
 function GetRawDeclaration(self::AbstractArgument)
-ret = "$(self.raw_type)$(self.name)"
+ret = "$(self.raw_type) $(self.name)"
 if self.arrayDecl != 0
 ret = ret * "[]"
 end
@@ -888,7 +829,7 @@ good_interface_names
 name
 result
 regex
-Method(good_interface_names = good_interface_names, name = nothing, args = [], regex = re.compile("virtual (/\\*.*?\\*/ )?(.*?) (.*?) (.*?)\\(\\w?")) = new(good_interface_names , name , args , regex )
+Method(good_interface_names, name = nothing, args = []) = new(good_interface_names, name , args )
 end
 function BuildFromFile(self::AbstractMethod, file)
 #= Parse and build my data from a file
@@ -908,9 +849,9 @@ if self.result != "HRESULT"
 if self.result == "DWORD"
 println("Warning: Old style interface detected - compilation errors likely!")
 else
-println("Method  - Only HRESULT return types are supported.")
+@printf("Method %s - Only HRESULT return types are supported.\n", self.name)
 end
-println("$(self.result)$(self.name)(")
+@printf("\t Method %s %s(\n", (self.result, self.name))
 end
 while true
 arg = Argument(self.good_interface_names)
@@ -936,11 +877,11 @@ methods::Vector
 name
 regex
 
-            Interface(mo, methods = [], name = mo.group(2), base = mo.group(3), regex = re.compile("(interface|) ([^ ]*) : public (.*)\$")) = begin
+            Interface(mo, methods = [], name = mo.group(2), base = mo.group(3)) = begin
                 if VERBOSE
-println("$(name)$(base)")
+@printf("Interface %s : public %s\n", (name, base))
 end
-                new(mo, methods , name , base , regex )
+                new(mo, methods , name , base )
             end
 end
 function BuildMethods(self::AbstractInterface, file)
@@ -960,7 +901,7 @@ end
 end
 end
 
-function find_interface(interfaceName::AbstractInterface, file)
+function find_interface(interfaceName, file)
 #= Find and return an interface in a file
 
     Given an interface name and file, search for the specified interface.
@@ -989,7 +930,7 @@ end
 throw(error_not_found)
 end
 
-function parse_interface_info(interfaceName::AbstractInterface, file)
+function parse_interface_info(interfaceName, file)
 #= Find, parse and return an interface in a file
 
     Given an interface name and file, search for the specified interface.
@@ -1015,11 +956,11 @@ close(f)
 end
 end
 
-function test_regex(r::AbstractInterface, text)
+function test_regex(r, text)
 res = search(r, text, 0)
 if res == -1
 println("** Not found")
 else
-println("$(res)$(group(r, 1))$(group(r, 2))$(group(r, 3))$(group(r, 4))")
+@printf("%d\n%s\n%s\n%s\n%s\n", (res, group(r, 1), group(r, 2), group(r, 3), group(r, 4)))
 end
 end

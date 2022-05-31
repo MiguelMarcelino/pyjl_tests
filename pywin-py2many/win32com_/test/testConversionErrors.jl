@@ -8,9 +8,6 @@ abstract type AbstractBadConversions end
 abstract type AbstractTestCase <: win32com_.test.util.TestCase end
 mutable struct Tester <: AbstractTester
 _public_methods_::Vector{String}
-
-                    Tester(_public_methods_::Vector{String} = ["TestValue"]) =
-                        new(_public_methods_)
 end
 function TestValue(self::AbstractTester, v)
 #= pass =#

@@ -11,7 +11,7 @@ abstract type AbstractTestDataObject end
 abstract type AbstractClipboardTester end
 IDataObject_Methods = split("GetData GetDataHere QueryGetData\n                         GetCanonicalFormatEtc SetData EnumFormatEtc\n                         DAdvise DUnadvise EnumDAdvise")
 num_do_objects = 0
-function WrapCOMObject(ob::AbstractClipboardTester, iid = nothing)
+function WrapCOMObject(ob, iid = nothing)
 return wrap(ob, iid = iid, useDispatcher = 0)
 end
 
@@ -21,14 +21,14 @@ supported_fe::Vector
 _com_interfaces_::Vector
 _public_methods_
 
-            TestDataObject(bytesval = bytesval, supported_fe = [], _com_interfaces_::Vector = [pythoncom.IID_IDataObject], _public_methods_ = IDataObject_Methods) = begin
+            TestDataObject(bytesval, supported_fe = []) = begin
                 global num_do_objects
 num_do_objects += 1
 for cf in (win32con.CF_TEXT, win32con.CF_UNICODETEXT)
 fe = (cf, nothing, pythoncom.DVASPECT_CONTENT, -1, pythoncom.TYMED_HGLOBAL)
 supported_fe.append(fe)
 end
-                new(bytesval , supported_fe , _com_interfaces_, _public_methods_ )
+                new(bytesval, supported_fe )
             end
 end
 function __del__(self::AbstractTestDataObject)

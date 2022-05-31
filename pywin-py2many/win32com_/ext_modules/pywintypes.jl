@@ -18,7 +18,7 @@ break;
 end
 end
 if has_break != true
-throw(ImportError("$(modname)$(sys.path)"))
+throw(ImportError("Module \'$(modname)\' isn\'t in frozen sys.path $(sys.path)"))
 end
 else
 found = _win32sysloader.GetModuleFilename(filename)
@@ -48,7 +48,7 @@ found = maybe
 end
 end
 if found === nothing
-throw(ImportError("$(modname)$(filename))"))
+throw(ImportError("No system module \'$(modname)\' ($(filename))"))
 end
 end
 old_mod = sys.modules[modname + 1]

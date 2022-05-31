@@ -26,7 +26,7 @@ hexdigits = digits * "abcdef" * "ABCDEF"
 octdigits = "01234567"
 punctuation = "!\"#\$%&\'()*+,-./:;<=>?@[\\]^_`{|}~"
 printable = digits * ascii_letters * punctuation * whitespace
-function capwords(s::AbstractFormatter, sep = nothing)
+function capwords(s, sep = nothing)
 #= capwords(s [,sep]) -> string
 
     Split the argument into words using split, capitalize each
@@ -51,7 +51,6 @@ braceidpattern
 delimiter::String
 flags
 idpattern::String
-Template(template = template, braceidpattern = nothing, delimiter::String = "\$", flags = _re.IGNORECASE, idpattern::String = "(?a:[_a-z][_a-z0-9]*)") = new(template , braceidpattern , delimiter, flags , idpattern)
 end
 function __init_subclass__(cls::AbstractTemplate)
 __init_subclass__(super())
@@ -73,10 +72,10 @@ if !(lines)
 colno = 1
 lineno = 1
 else
-colno = i - length(join(lines[begin:-1], ""))
+colno = i - length(join(lines[begin:end - 1], ""))
 lineno = length(lines)
 end
-throw(ValueError("$(lineno)$(colno)"))
+throw(ValueError("Invalid placeholder in string: line $(lineno), col $(colno)"))
 end
 
 function substitute()

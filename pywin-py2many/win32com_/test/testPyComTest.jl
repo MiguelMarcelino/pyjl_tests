@@ -1,9 +1,9 @@
 using OrderedCollections
 using PyCall
 using Random
+pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
 datetime = pyimport("datetime")
-pywintypes = pyimport("pywintypes")
 import win32com_.client.dynamic
 using win32com_.client.gencache: EnsureDispatch
 using win32com_.client.CLSIDToClass: GetClass
@@ -43,14 +43,14 @@ end
 using win32com_: universal
 universal.RegisterInterfaces("{6BCDCB60-5605-11D0-AE5F-CADD4C000000}", 0, 1, 1)
 verbose = 0
-function check_get_set(func::AbstractTester, arg)
+function check_get_set(func, arg)
 got = func(arg)
 if got != arg
-throw(error("$(func)$(arg)$(got)"))
+throw(error("$(func) failed - expected $(arg), got $(got)"))
 end
 end
 
-function check_get_set_raises(exc::AbstractTester, func, arg)
+function check_get_set_raises(exc, func, arg)
 try
 got = func(arg)
 catch exn
@@ -67,11 +67,11 @@ if verbose != 0
 for arg in args
 print("$(arg)" )
 end
-println()
+println
 end
 end
 
-function TestApplyResult(fn::AbstractTester, args, result)
+function TestApplyResult(fn, args, result)
 try
 fnName = split(string(fn))[2]
 catch exn
@@ -81,18 +81,18 @@ progress("Testing ", fnName)
 pref = "function " + fnName
 rc = fn(args...)
 if rc != result
-throw(error("$(pref)$(result)$(rc)"))
+throw(error("$(pref) failed - result not $(result) but $(rc)"))
 end
 end
 
-function TestConstant(constName::AbstractTester, pyConst)
+function TestConstant(constName, pyConst)
 try
 comConst = getfield(constants, :constName)
 catch exn
-throw(error("$(constName) missing"))
+throw(error("Constant $(constName) missing"))
 end
 if comConst != pyConst
-throw(error("$(constName)$(comConst)$(pyConst)"))
+throw(error("Constant value wrong for $(constName) - got $(comConst), wanted $(pyConst)"))
 end
 end
 
@@ -129,7 +129,7 @@ if !(self.fireds)
 println("ERROR: Nothing was received!")
 end
 for (firedId, no) in items(self.fireds)
-progress("$(firedId)$(no) times")
+progress("ID $(firedId) fired $(no) times")
 end
 end
 
@@ -166,22 +166,22 @@ if !(self.fireds)
 println("ERROR: Nothing was received!")
 end
 for (firedId, no) in items(self.fireds)
-progress("$(firedId)$(no) times")
+progress("ID $(firedId) fired $(no) times")
 end
 end
 
-function TestCommon(o::AbstractTester, is_generated)
+function TestCommon(o, is_generated)
 progress("Getting counter")
 counter = GetSimpleCounter(o)
 TestCounter(counter, is_generated)
 progress("Checking default args")
 rc = TestOptionals(o)
-if rc[begin:-1] != ("def", 0, 1) || abs(rc[end] - 3.14) > 0.01
+if rc[begin:end - 1] != ("def", 0, 1) || abs(rc[end] - 3.14) > 0.01
 println(rc)
 throw(error("Did not get the optional values correctly"))
 end
 rc = TestOptionals(o, "Hi", 2, 3, 1.1)
-if rc[begin:-1] != ("Hi", 2, 3) || abs(rc[end] - 1.1) > 0.01
+if rc[begin:end - 1] != ("Hi", 2, 3) || abs(rc[end] - 1.1) > 0.01
 println(rc)
 throw(error("Did not get the specified optional values correctly"))
 end
@@ -202,7 +202,7 @@ expected_class = o.__class__
 expected_class = (hasfield(typeof(expected_class), :default_interface) ? 
                 getfield(expected_class, :default_interface) : expected_class)
 if !isa(GetSetDispatch(o, o), expected_class)
-throw(error("$(GetSetDispatch(o, o))"))
+throw(error("GetSetDispatch failed: $(GetSetDispatch(o, o))"))
 end
 progress("Checking getting/passing IDispatch of known type")
 expected_class = o.__class__
@@ -256,17 +256,17 @@ TestApplyResult(o.SetBinSafeArray, (str2memory("foo\0bar"),), 7)
 progress("Checking properties")
 o.LongProp = 3
 if o.LongProp != 3 || o.IntProp != 3
-throw(error("$(o.LongProp)$(o.IntProp)"))
+throw(error("Property value wrong - got $(o.LongProp)/$(o.IntProp)"))
 end
 o.LongProp = -3
 o.IntProp = -3
 if o.LongProp != -3 || o.IntProp != -3
-throw(error("$(o.LongProp)$(o.IntProp)"))
+throw(error("Property value wrong - got $(o.LongProp)/$(o.IntProp)"))
 end
 check = 3*10^9
 o.ULongProp = check
 if o.ULongProp != check
-throw(error("$(o.ULongProp)$(check))"))
+throw(error("Property value wrong - got $(o.ULongProp) (expected $(check))"))
 end
 TestApplyResult(o.Test, ("Unused", 99), 1)
 TestApplyResult(o.Test, ("Unused", -1), 1)
@@ -290,12 +290,12 @@ TestApplyResult(o.EarliestDate, (now, later), now)
 progress("Checking currency")
 pythoncom.__future_currency__ = 1
 if o.CurrencyProp != 0
-throw(error("$(o.CurrencyProp)"))
+throw(error("Expecting 0, got $(o.CurrencyProp)"))
 end
 for val in ("1234.5678", "1234.56", "1234")
 o.CurrencyProp = decimal.Decimal(val)
 if o.CurrencyProp != decimal.Decimal(val)
-throw(error("$(val)$(o.CurrencyProp)"))
+throw(error("$(val) got $(o.CurrencyProp)"))
 end
 end
 v1 = decimal.Decimal("1234.5678")
@@ -307,7 +307,7 @@ progress("Checking win32com_.client.VARIANT")
 TestPyVariant(o, is_generated)
 end
 
-function TestTrickyTypesWithVariants(o::AbstractTester, is_generated)
+function TestTrickyTypesWithVariants(o, is_generated)
 if is_generated
 got = TestByRefVariant(o, 2)
 else
@@ -417,7 +417,7 @@ coclass = GetClass("{B88DD310-BAE8-11D0-AE86-76F2C1000000}")()
 TestCounter(coclass, true)
 i1, i2 = GetMultipleInterfaces(o)
 if !isa(i1, DispatchBaseClass) || !isa(i2, DispatchBaseClass)
-throw(error("$(i1)$(i2)'"))
+throw(error("GetMultipleInterfaces did not return instances - got \'$(i1)\', \'$(i2)\'"))
 end
 #Delete Unsupported
 del(i1)
@@ -484,7 +484,7 @@ TestEvents(o, handler)
 progress("Finished generated .py test.")
 end
 
-function TestEvents(o::AbstractTester, handler)
+function TestEvents(o, handler)
 sessions = []
 _Init(handler)
 try
@@ -502,7 +502,7 @@ close(handler)
 end
 end
 
-function _TestPyVariant(o::AbstractTester, is_generated, val, checker = nothing)
+function _TestPyVariant(o, is_generated, val, checker = nothing)
 if is_generated
 vt, got = GetVariantAndType(o, val)
 else
@@ -527,10 +527,10 @@ end
 @assert(check == got)
 end
 
-function _TestPyVariantFails(o::AbstractTester, is_generated, val, exc)
+function _TestPyVariantFails(o, is_generated, val, exc)
 try
 _TestPyVariant(o, is_generated, val)
-throw(error("$(val)$(exc)"))
+throw(error("Setting $(val) didn\'t raise $(exc)"))
 catch exn
 if exn isa exc
 #= pass =#
@@ -538,12 +538,12 @@ end
 end
 end
 
-function TestPyVariant(o::AbstractTester, is_generated)
+function TestPyVariant(o, is_generated)
 _TestPyVariant(o, is_generated, VARIANT(pythoncom.VT_UI1, 1))
 _TestPyVariant(o, is_generated, VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_UI4, [1, 2, 3]))
 _TestPyVariant(o, is_generated, VARIANT(pythoncom.VT_BSTR, "hello"))
 _TestPyVariant(o, is_generated, VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_BSTR, ["hello", "there"]))
-function check_dispatch(got::AbstractTester)
+function check_dispatch(got)
 @assert(isa(got._oleobj_, pythoncom.TypeIIDs[pythoncom.IID_IDispatch + 1]))
 end
 
@@ -554,7 +554,7 @@ _TestPyVariant(o, is_generated, v)
 _TestPyVariantFails(o, is_generated, VARIANT(pythoncom.VT_UI1, "foo"), ValueError)
 end
 
-function TestCounter(counter::AbstractTester, bIsGenerated)
+function TestCounter(counter, bIsGenerated)
 progress("Testing counter", repr(counter))
 for i in 0:49
 num = Int(rand()()*length(counter))
@@ -565,11 +565,11 @@ else
 ret = counter[num + 1]
 end
 if ret != (num + 1)
-throw(error("$(num)$(repr(ret))"))
+throw(error("Random access into element $(num) failed - return was $(repr(ret))"))
 end
 catch exn
 if exn isa IndexError
-throw(error("** IndexError accessing collection element "))
+throw(error("** IndexError accessing collection element $(num)"))
 end
 end
 end
@@ -622,18 +622,18 @@ for item in counter
 num = num + 1
 end
 if num != 10
-throw(error("*** Unexpected number of loop iterations - got  ***"))
+throw(error("*** Unexpected number of loop iterations - got $(num) ***"))
 end
 progress("Finished testing counter")
 end
 
-function TestLocalVTable(ob::AbstractTester)
+function TestLocalVTable(ob)
 if DoubleString(ob, "foo") != "foofoo"
 throw(error("couldn\'t foofoo"))
 end
 end
 
-function TestVTable(clsctx::AbstractTester = pythoncom.CLSCTX_ALL)
+function TestVTable(clsctx = pythoncom.CLSCTX_ALL)
 ob = Dispatch(win32com_.client, "Python.Test.PyCOMTest")
 TestLocalVTable(ob)
 tester = Dispatch(win32com_.client, "PyCOMTest.PyCOMTest")
@@ -680,7 +680,7 @@ end
 end
 end
 
-function TestQueryInterface(long_lived_server::AbstractTester = 0, iterations = 5)
+function TestQueryInterface(long_lived_server = 0, iterations = 5)
 tester = Dispatch(win32com_.client, "PyCOMTest.PyCOMTest")
 if long_lived_server
 t0 = Dispatch(win32com_.client, "Python.Test.PyCOMTest", clsctx = pythoncom.CLSCTX_LOCAL_SERVER)
@@ -697,14 +697,14 @@ mutable struct Tester <: AbstractTester
 end
 function testVTableInProc(self::AbstractTester)
 for i in 0:2
-progress("Testing VTables in-process #...")
+progress("Testing VTables in-process #$((i + 1))...")
 TestVTable(pythoncom.CLSCTX_INPROC_SERVER)
 end
 end
 
 function testVTableLocalServer(self::AbstractTester)
 for i in 0:2
-progress("Testing VTables out-of-process #...")
+progress("Testing VTables out-of-process #$((i + 1))...")
 TestVTable(pythoncom.CLSCTX_LOCAL_SERVER)
 end
 end

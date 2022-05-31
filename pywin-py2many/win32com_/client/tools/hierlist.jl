@@ -1,6 +1,6 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 
 import win32con
@@ -12,7 +12,7 @@ abstract type AbstractHierDialog <: dialog.Dialog end
 abstract type AbstractHierList <: object.Object end
 abstract type AbstractHierListWithItems <: AbstractHierList end
 abstract type AbstractHierListItem end
-function GetItemText(item::AbstractHierListItem)
+function GetItemText(item)
 if type_(item) == type_(()) || type_(item) == type_([])
 use = item[1]
 else
@@ -33,9 +33,9 @@ bitmapID
 childListBoxID
 dll
 
-            HierDialog(title = win32ui.IDD_TREE, hierList = nothing, bitmapID = win32ui.IDC_LIST1, dlgID = hierList, dll = dlgID, childListBoxID = title) = begin
+            HierDialog(title, hierList, bitmapID = win32ui.IDB_HIERFOLDERS, dlgID = win32ui.IDD_TREE, dll = nothing, childListBoxID = win32ui.IDC_LIST1) = begin
                 dialog.Dialog.__init__(self, dlgID, dll)
-                new(title , hierList , bitmapID , dlgID , dll , childListBoxID )
+                new(title, hierList, bitmapID , dlgID , dll , childListBoxID )
             end
 end
 function OnInitDialog(self::AbstractHierDialog)
@@ -57,7 +57,7 @@ notify_parent
 OnTreeItemExpanding
 OnTreeItemSelChanged
 OnTreeItemDoubleClick
-HierList(root = nothing, bitmapID = bitmapID, listBoxId = root, bitmapMask = listBoxId, listControl = Dict(), itemHandleMap = Dict(), filledItemHandlesMap = bitmapMask) = new(root , bitmapID , listBoxId , bitmapMask , listControl , itemHandleMap , filledItemHandlesMap )
+HierList(root, bitmapID = win32ui.IDB_HIERFOLDERS, listBoxId = nothing, bitmapMask = nothing, listControl = nothing, itemHandleMap = Dict(), filledItemHandlesMap = Dict()) = new(root, bitmapID , listBoxId , bitmapMask , listControl , itemHandleMap , filledItemHandlesMap )
 end
 function __getattr__(self::AbstractHierList, attr)
 try

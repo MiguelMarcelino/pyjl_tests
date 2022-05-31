@@ -1,3 +1,4 @@
+using Printf
 
 import tempfile
 
@@ -16,8 +17,8 @@ f = open(output_name)
 try
 got = read(f)
 if got != expected_output
-println("$(expected_output)")
-println("$(got)")
+@printf("ERROR: XSLT expected output of %r\n", (expected_output,))
+@printf("but got %r\n", (got,))
 end
 finally
 close(f)

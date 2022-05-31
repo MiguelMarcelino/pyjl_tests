@@ -109,7 +109,6 @@ end
 mutable struct SomeObject <: AbstractSomeObject
 data
 _public_methods_::Vector{String}
-SomeObject(data = data, _public_methods_::Vector{String} = ["GetCollection"]) = new(data , _public_methods_)
 end
 function GetCollection(self::AbstractSomeObject)
 return win32com_.server.util.NewCollection(self.data)
