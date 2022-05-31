@@ -4,7 +4,7 @@ using PyCall
 win32api = pyimport("win32api")
 import win32com.gen_py.dialogs.list
 import pythoncom
-import win32com_.ext_modules.win32con as win32con
+include("../ext_modules/win32con.jl")
 abstract type AbstractTypelibSpec end
 mutable struct TypelibSpec <: AbstractTypelibSpec
     clsid::String

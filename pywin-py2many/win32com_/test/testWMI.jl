@@ -1,5 +1,5 @@
 using win32com_.client: GetObject
-import win32com_.test.util
+include("util.jl")
 
 abstract type AbstractSimple <: win32com_.test.util.TestCase end
 mutable struct Simple <: AbstractSimple

@@ -5,8 +5,8 @@ Please see policy.py for a discussion on dispatchers and policies
 import win32traceutil
 using ext_modules: pythoncom, traceback, win32api
 
-using win32com_.server.exception: IsCOMServerException
-using win32com_.util: IIDToInterfaceName
+include("exception.jl")
+include("win32com_/util.jl")
 import win32com_
 mutable struct DispatcherBase <: AbstractDispatcherBase
     #= The base class for all Dispatchers.

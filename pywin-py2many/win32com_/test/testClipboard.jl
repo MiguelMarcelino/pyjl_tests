@@ -5,8 +5,8 @@ using ext_modules: pythoncom
 import win32con
 import winerror
 import win32clipboard
-using win32com_.server.util: NewEnum, wrap
-using win32com_.server.exception: COMException
+include("../server/util.jl")
+include("../server/exception.jl")
 abstract type AbstractTestDataObject end
 abstract type AbstractClipboardTester end
 IDataObject_Methods = split(

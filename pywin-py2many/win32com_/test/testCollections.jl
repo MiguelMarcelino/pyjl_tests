@@ -1,8 +1,8 @@
 using PyCall
 pywintypes = pyimport("pywintypes")
 
-import win32com_.server.util
-import win32com_.test.util
+include("../server/util.jl")
+include("util.jl")
 import win32com_.client
 
 using ext_modules: pythoncom

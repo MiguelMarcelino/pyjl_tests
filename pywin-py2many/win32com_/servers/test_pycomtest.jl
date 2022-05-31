@@ -1,10 +1,10 @@
-import win32com_.server.register
+include("../server/register.jl")
 using win32com_: universal
-using win32com_.server.exception: COMException
+include("../server/exception.jl")
 using win32com_.client: gencache
 import winerror
 using win32com_.client: constants
-using win32com_.server.util: wrap
+include("../server/util.jl")
 using ext_modules: pythoncom
 abstract type AbstractPyCOMTest end
 abstract type AbstractPyCOMTestMI <: AbstractPyCOMTest end

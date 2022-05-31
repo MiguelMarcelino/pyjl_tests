@@ -1,6 +1,6 @@
 using ext_modules: pythoncom
 
-import win32com_.test.util
+include("util.jl")
 import winerror
 abstract type AbstractTestROT <: win32com_.test.util.TestCase end
 mutable struct TestROT <: AbstractTestROT

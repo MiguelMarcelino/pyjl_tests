@@ -24,11 +24,11 @@
  =#
 using Printf
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 using ext_modules: pythoncom
-import win32com_.ext_modules.win32con as win32con
+include("../ext_modules/win32con.jl")
 using win32com_.client: util
 using win32com_.client.tools: browser
 mutable struct HLIRoot <: AbstractHLIRoot

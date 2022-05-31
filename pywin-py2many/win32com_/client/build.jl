@@ -14,12 +14,12 @@ using StringEncodings
 pywintypes = pyimport("pywintypes")
 datetime = pyimport("datetime")
 
-import win32com_.ext_modules.string as string
+include("../ext_modules/string.jl")
 
 using ext_modules: pythoncom
 
-using win32com_.ext_modules.keyword: iskeyword
-import win32com_.ext_modules.winerror as winerror
+include("../ext_modules/keyword.jl")
+include("../ext_modules/winerror.jl")
 abstract type AbstractNotSupportedException <: Exception end
 abstract type AbstractMapEntry end
 abstract type AbstractOleItem end

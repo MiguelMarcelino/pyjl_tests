@@ -19,13 +19,13 @@ using OrderedCollections
 using Printf
 using PyCall
 pywintypes = pyimport("pywintypes")
-import win32com_.client.util
+include("util.jl")
 include("util.jl")
 
 using ext_modules: pythoncom
 
 include("build.jl")
-import win32com_.ext_modules.winerror as winerror
+include("../ext_modules/winerror.jl")
 import win32com_.client
 abstract type AbstractCDispatch end
 abstract type AbstractFactory end

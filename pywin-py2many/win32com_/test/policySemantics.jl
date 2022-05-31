@@ -1,9 +1,9 @@
-import win32com_.server.dispatcher
-import win32com_.server.util
+include("../server/dispatcher.jl")
+include("../server/util.jl")
 import win32com_.client
 using ext_modules: pythoncom
 import winerror
-import win32com_.test.util
+include("util.jl")
 
 abstract type AbstractError <: Exception end
 abstract type AbstractPythonSemanticClass end

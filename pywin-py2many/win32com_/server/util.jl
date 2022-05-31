@@ -1,6 +1,6 @@
 #=  General Server side utilities 
  =#
-import win32com_.server.dispatcher
+include("dispatcher.jl")
 using ext_modules: pythoncom
 include("policy.jl")
 import winerror

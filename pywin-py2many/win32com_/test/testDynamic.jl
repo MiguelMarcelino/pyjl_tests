@@ -1,9 +1,9 @@
-import win32com_.server.util
-import win32com_.server.policy
-import win32com_.client.dynamic
+include("../server/util.jl")
+include("../server/policy.jl")
+include("../client/dynamic.jl")
 using ext_modules: pythoncom
 import winerror
-using win32com_.server.exception: Exception
+include("../server/exception.jl")
 abstract type AbstractVeryPermissive end
 error = "testDynamic error"
 iid = pythoncom.MakeIID("{b48969a0-784b-11d0-ae71-d23f56000000}")

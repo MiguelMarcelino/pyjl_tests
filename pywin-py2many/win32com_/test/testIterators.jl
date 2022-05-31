@@ -1,8 +1,8 @@
 
-using win32com_.client.gencache: EnsureDispatch
+include("../client/gencache.jl")
 using win32com_.client: Dispatch
-import win32com_.server.util
-import win32com_.test.util
+include("../server/util.jl")
+include("util.jl")
 using ext_modules: pythoncom
 abstract type Abstract_BaseTestCase <: win32com_.test.util.TestCase end
 abstract type AbstractVBTestCase <: Abstract_BaseTestCase end

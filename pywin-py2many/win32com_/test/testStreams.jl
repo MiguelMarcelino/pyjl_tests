@@ -1,6 +1,6 @@
 using ext_modules: pythoncom
-import win32com_.server.util
-import win32com_.test.util
+include("../server/util.jl")
+include("util.jl")
 
 using pywin32_testutil: str2bytes
 abstract type AbstractPersists end

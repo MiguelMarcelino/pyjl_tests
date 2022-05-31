@@ -1,10 +1,10 @@
 import win32com_.demos.connect
-using win32com_.test.util: RegisterPythonServer
+include("util.jl")
 using win32com_.servers: interp
 using ext_modules: pythoncom
-import win32com_.client.dynamic
+include("../client/dynamic.jl")
 import winerror
-import win32com_.test.util
+include("util.jl")
 
 abstract type AbstractInterpCase <: win32com_.test.util.TestCase end
 abstract type AbstractConnectionsTestCase <: win32com_.test.util.TestCase end

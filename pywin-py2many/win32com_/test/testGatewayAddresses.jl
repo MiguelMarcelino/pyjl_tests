@@ -1,5 +1,5 @@
 using Printf
-using win32com_.server.util: wrap
+include("../server/util.jl")
 using ext_modules: pythoncom
 using util: CheckClean
 abstract type AbstractDummy end

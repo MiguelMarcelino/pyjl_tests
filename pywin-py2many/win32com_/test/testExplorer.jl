@@ -2,7 +2,7 @@ using PyCall
 win32api = pyimport("win32api")
 using win32com_.client: gencache
 
-import win32com_.client.dynamic
+include("../client/dynamic.jl")
 using win32com_.client: Dispatch
 
 import win32con
@@ -10,7 +10,7 @@ import winerror
 import glob
 using ext_modules: pythoncom
 
-using win32com_.test.util: CheckClean
+include("util.jl")
 abstract type AbstractExplorerEvents end
 bVisibleEventFired = 0
 HRESULTS_IN_AUTOMATION = [-2125463506, winerror.MK_E_UNAVAILABLE]

@@ -1,10 +1,10 @@
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 
 using ext_modules: pythoncom
 using win32com_.gen_py.mfc: dialog
-import win32com_.ext_modules.win32con as win32con
+include("../ext_modules/win32con.jl")
 using tools: commctrl
 abstract type AbstractTLBrowserException <: Exception end
 abstract type AbstractTypeBrowseDialog <: TypeBrowseDialog_Parent end

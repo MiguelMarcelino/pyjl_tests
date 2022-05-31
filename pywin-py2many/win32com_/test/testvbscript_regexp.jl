@@ -1,7 +1,7 @@
 
-using win32com_.client.gencache: EnsureDispatch
-using win32com_.client.dynamic: DumbDispatch
-import win32com_.test.util
+include("../client/gencache.jl")
+include("../client/dynamic.jl")
+include("util.jl")
 abstract type AbstractRegexTest <: win32com_.test.util.TestCase end
 mutable struct RegexTest <: AbstractRegexTest
 end

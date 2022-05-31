@@ -1,11 +1,11 @@
 using PyCall
 pywintypes = pyimport("pywintypes")
 datetime = pyimport("datetime")
-import win32com_.servers.dictionary
-using win32com_.test.util: RegisterPythonServer
+include("../servers/dictionary.jl")
+include("util.jl")
 
-import win32com_.server.util
-import win32com_.test.util
+include("../server/util.jl")
+include("util.jl")
 import win32com_.client
 
 using ext_modules: pythoncom

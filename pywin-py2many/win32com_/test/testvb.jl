@@ -3,9 +3,9 @@ import copy
 import winerror
 using ext_modules: pythoncom
 import win32com_.client
-import win32com_.client.gencache
-import win32com_.client.dynamic
-using win32com_.server.util: NewCollection, wrap
+include("../client/gencache.jl")
+include("../client/dynamic.jl")
+include("../server/util.jl")
 using win32com_.test: util
 using pywin32_testutil: str2memory
 

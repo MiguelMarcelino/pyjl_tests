@@ -1,19 +1,19 @@
 using PyCall
 pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
-win32ui = pyimport("win32ui")
 datetime = pyimport("datetime")
+win32ui = pyimport("win32ui")
 using ext_modules: pythoncom
-import win32com_.server.util
+include("../server/util.jl")
 
 import win32com_
 import string
-import win32com_.client.dynamic
+include("../client/dynamic.jl")
 import win32com_.client
 using win32com_.axcontrol: axcontrol
 
 using win32com_: storagecon
-using win32com_.test.util: CheckClean
+include("util.jl")
 
 using pywin32_testutil: str2bytes
 S_OK = 0

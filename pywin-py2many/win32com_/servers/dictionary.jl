@@ -32,10 +32,10 @@ the dictionary's keys. This allows for the following type of VB code:
  =#
 using PyCall
 pywintypes = pyimport("pywintypes")
-using win32com_.server.register: UseCommandLine
+include("../server/register.jl")
 using ext_modules: pythoncom
 using win32com_.server: util, policy
-using win32com_.server.exception: COMException
+include("../server/exception.jl")
 import winerror
 
 using pythoncom: DISPATCH_METHOD, DISPATCH_PROPERTYGET

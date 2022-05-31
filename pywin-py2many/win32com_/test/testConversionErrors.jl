@@ -1,7 +1,7 @@
 
 import win32com_.client
-import win32com_.test.util
-import win32com_.server.util
+include("util.jl")
+include("../server/util.jl")
 abstract type AbstractTester end
 abstract type AbstractTestException <: Exception end
 abstract type AbstractBadConversions end

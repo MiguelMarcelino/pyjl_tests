@@ -18,8 +18,8 @@ using ext_modules: pythoncom
 
 using win32com_.shell: shell
 using win32com_.shell.shellcon: *
-using win32com_.storagecon: *
-import win32com_.test.util
+include("win32com_/storagecon.jl")
+include("util.jl")
 abstract type AbstractShellTester <: win32com_.test.util.TestCase end
 abstract type AbstractPIDLTester <: win32com_.test.util.TestCase end
 abstract type AbstractFILEGROUPDESCRIPTORTester <: win32com_.test.util.TestCase end

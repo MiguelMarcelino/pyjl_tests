@@ -1,7 +1,7 @@
 using Dates
 using PyCall
-win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
+win32api = pyimport("win32api")
 using pywin.mfc: dialog
 using pywin.mfc.thread: WinThread
 import threading

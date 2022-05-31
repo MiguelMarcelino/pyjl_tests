@@ -7,8 +7,8 @@ import win32com_.test.Generated4Test.msword8
 import xl5en32
 import win32com_
 import string
-import win32com_.client.dynamic
-using win32com_.test.util: CheckClean
+include("../client/dynamic.jl")
+include("util.jl")
 using ext_modules: pythoncom
 using win32com_.client: gencache
 

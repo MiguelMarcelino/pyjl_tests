@@ -4,7 +4,7 @@ win32api = pyimport("win32api")
 
 import glob
 
-import win32com_.test.util
+include("util.jl")
 using win32com_.client: makepy, selecttlb, gencache
 using ext_modules: pythoncom
 import winerror

@@ -2,7 +2,7 @@ using Printf
 
 import tempfile
 
-import win32com_.test.util
+include("util.jl")
 abstract type AbstractXSLT <: win32com_.test.util.TestCase end
 expected_output = "The jscript test worked.\nThe Python test worked"
 mutable struct XSLT <: AbstractXSLT

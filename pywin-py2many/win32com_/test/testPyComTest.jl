@@ -4,9 +4,9 @@ using Random
 pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
 datetime = pyimport("datetime")
-import win32com_.client.dynamic
-using win32com_.client.gencache: EnsureDispatch
-using win32com_.client.CLSIDToClass: GetClass
+include("../client/dynamic.jl")
+include("../client/gencache.jl")
+include("../client/CLSIDToClass.jl")
 
 import _thread
 
@@ -15,10 +15,10 @@ import pythoncom
 
 import winerror
 import win32com_
-import win32com_.client.connect
-using win32com_.test.util: CheckClean
+include("../client/connect.jl")
+include("util.jl")
 using win32com_.client: constants, DispatchBaseClass, CastTo, VARIANT
-using win32com_.test.util: RegisterPythonServer
+include("util.jl")
 using pywin32_testutil: str2memory
 
 import decimal

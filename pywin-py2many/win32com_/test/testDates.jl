@@ -3,8 +3,8 @@ pywintypes = pyimport("pywintypes")
 datetime = pyimport("datetime")
 
 import win32com_.client
-import win32com_.test.util
-import win32com_.server.util
+include("util.jl")
+include("../server/util.jl")
 using win32timezone: TimeZoneInfo
 abstract type AbstractTester end
 abstract type AbstractTestCase <: win32com_.test.util.TestCase end

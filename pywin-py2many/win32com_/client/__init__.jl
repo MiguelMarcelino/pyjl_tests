@@ -2,7 +2,7 @@ using PyCall
 pywintypes = pyimport("pywintypes")
 
 import gencache
-import win32com_.ext_modules.winerror as winerror
+include("../ext_modules/winerror.jl")
 using ext_modules: pythoncom
 include("dynamic.jl")
 include("gencache.jl")

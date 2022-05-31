@@ -45,7 +45,7 @@
     to Python/COM
 
  =#
-import win32com_.makegw.makegwenum
+include("makegwenum.jl")
 
 include("makegwparse.jl")
 function make_framework_support(

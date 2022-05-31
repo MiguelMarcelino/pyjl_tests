@@ -1,6 +1,6 @@
 using win32com_: storagecon
 using ext_modules: pythoncom, os, win32api
-import win32com_.test.util
+include("util.jl")
 
 abstract type AbstractTestEnum <: win32com_.test.util.TestCase end
 mutable struct TestEnum <: AbstractTestEnum

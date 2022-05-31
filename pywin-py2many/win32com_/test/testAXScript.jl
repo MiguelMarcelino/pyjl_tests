@@ -1,11 +1,11 @@
 using PyCall
 win32api = pyimport("win32api")
-using win32com_.test.util: RegisterPythonServer
+include("util.jl")
 
 import win32com_.axscript
 import win32com_.axscript.client
 
-import win32com_.test.util
+include("util.jl")
 abstract type AbstractAXScript <: win32com_.test.util.TestCase end
 verbose = "-v" ∈ append!([PROGRAM_FILE], ARGS)
 mutable struct AXScript <: AbstractAXScript

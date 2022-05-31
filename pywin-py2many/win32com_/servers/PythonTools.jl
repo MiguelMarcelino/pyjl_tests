@@ -1,5 +1,5 @@
 using importlib: reload
-using win32com_.server.register: RegisterServer, UnregisterServer
+include("../server/register.jl")
 
 abstract type AbstractTools end
 mutable struct Tools <: AbstractTools

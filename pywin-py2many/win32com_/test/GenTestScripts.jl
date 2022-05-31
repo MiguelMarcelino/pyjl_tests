@@ -2,7 +2,7 @@ using PyCall
 win32api = pyimport("win32api")
 
 import win32com_
-import win32com_.client.makepy
+include("../client/makepy.jl")
 import win32com_.test
 using ext_modules: pythoncom
 

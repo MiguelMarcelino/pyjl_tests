@@ -1,11 +1,11 @@
 import win32com_
-using win32com_.test.util: CheckClean
+include("util.jl")
 using ext_modules: pythoncom
-using win32com_.server.exception: COMException
-using win32com_.server.util: wrap
+include("../server/exception.jl")
+include("../server/util.jl")
 using win32com_.client: Dispatch
 import winerror
-using win32com_.test.util: CaptureWriter
+include("util.jl")
 mutable struct error <: Abstracterror
     com_exception
 

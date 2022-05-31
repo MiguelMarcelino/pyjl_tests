@@ -1,10 +1,10 @@
 using Test
-using win32com_.test.util: RegisterPythonServer
+include("util.jl")
 using win32com_.test: pippo_server
 
 using ext_modules: pythoncom
 using win32com_.client: Dispatch
-using win32com_.client.gencache: EnsureDispatch
+include("../client/gencache.jl")
 abstract type AbstractPippoTester end
 mutable struct PippoTester <: AbstractPippoTester
     object

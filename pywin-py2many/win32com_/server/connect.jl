@@ -8,7 +8,7 @@ using ext_modules: pythoncom
 using exception: Exception
 import winerror
 using win32com_: olectl
-import win32com_.server.util
+include("util.jl")
 abstract type AbstractConnectableServer end
 IConnectionPointContainer_methods = ["EnumConnectionPoints", "FindConnectionPoint"]
 IConnectionPoint_methods = [

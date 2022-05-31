@@ -1,11 +1,11 @@
 using Printf
 using distutils.dep_util: newer
-import win32com_.server.register
+include("../server/register.jl")
 
 using ext_modules: pythoncom
 import win32com_
 import winerror
-using win32com_.server.util: wrap
+include("../server/util.jl")
 abstract type AbstractCPippo end
 mutable struct CPippo <: AbstractCPippo
     MyProp1::Int64

@@ -1,4 +1,4 @@
-import win32com_.client.build
+include("win32com_/client/build.jl")
 
 using ext_modules: pythoncom
 using win32com_.client: gencache

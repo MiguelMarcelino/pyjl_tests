@@ -2,7 +2,7 @@ using Getopt
 using Printf
 include("GenTestScripts.jl")
 import shutil
-import win32com_.client.gencache
+include("../client/gencache.jl")
 using win32com_.test: pippo_server
 import string
 import getopt
@@ -20,14 +20,7 @@ abstract type AbstractPyCOMTest <: TestCase end
 abstract type AbstractPippoTest <: TestCase end
 using ext_modules: pythoncom
 import win32com_.client
-using win32com_.test.util:
-    CheckClean,
-    TestCase,
-    CapturingFunctionTestCase,
-    ShellTestCase,
-    TestLoader,
-    TestRunner,
-    RegisterPythonServer
+include("util.jl")
 verbosity = 1
 function GenerateAndRunOldStyle()
     GenTestScripts.GenerateAll()

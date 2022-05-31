@@ -1,7 +1,7 @@
 #= Utilities for working with Connections =#
 using win32com_.server: dispatcher
 using ext_modules: pythoncom
-import win32com_.server.util
+include("../server/util.jl")
 abstract type AbstractSimpleConnection end
 mutable struct SimpleConnection <: AbstractSimpleConnection
     #= A simple, single connection object =#

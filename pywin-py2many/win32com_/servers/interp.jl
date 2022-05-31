@@ -10,8 +10,8 @@
   from Python.exe.  Then, from Visual Basic, use "CreateObject('Python.Interpreter')",
   and call its methods!
  =#
-import win32com_.server.register
-using win32com_.server.exception: Exception
+include("../server/register.jl")
+include("../server/exception.jl")
 import winerror
 abstract type AbstractInterpreter end
 mutable struct Interpreter <: AbstractInterpreter

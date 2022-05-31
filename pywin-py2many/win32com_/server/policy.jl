@@ -70,7 +70,7 @@ using OrderedCollections
 using PyCall
 pywintypes = pyimport("pywintypes")
 win32api = pyimport("win32api")
-using win32com_.util: IIDToInterfaceName
+include("win32com_/util.jl")
 using win32com_: universal
 import win32com_.client
 __author__ = "Greg Stein and Mark Hammond"
