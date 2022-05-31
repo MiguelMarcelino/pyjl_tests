@@ -45,7 +45,7 @@ function repeatFasta(src::String, n::Int64)
         println(s[i+1:i+width])
     end
     if (n % width) != 0
-        println(s[length(s)-n%width+1:end])
+        println(s[length(s):end])
     end
 end
 

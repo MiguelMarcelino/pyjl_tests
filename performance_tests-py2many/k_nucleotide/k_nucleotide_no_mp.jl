@@ -1,9 +1,8 @@
 using Distributed
-using StringEncodings
 
 abstract type Abstractlean_call end
 lean_buffer = Dict()
-function lean_args(sequence::Abstractlean_call, reading_frames, i, j)
+function lean_args(sequence, reading_frames, i, j)
     global lean_buffer
     lean_key = length(lean_buffer)
     lean_buffer[lean_key] = sequence
@@ -12,7 +11,6 @@ end
 
 mutable struct lean_call <: Abstractlean_call
     func
-    lean_call(func = func) = new(func)
 end
 function __call__(self::Abstractlean_call, lean_key, reading_frames, i, j)::Vector
     global lean_buffer
@@ -130,7 +128,7 @@ function read_sequence(file::IOBuffer, header, translation)::Vector{Int8}
     )
 end
 
-function lookup_frequency(results::Abstractlean_call, frame, bits)
+function lookup_frequency(results, frame, bits)
     n = 1
     frequency = 0
     for (_, n, frequencies) in filter((r) -> r[1] == frame, results)
@@ -139,13 +137,7 @@ function lookup_frequency(results::Abstractlean_call, frame, bits)
     return (frequency, n > 0 ? (n) : (1))
 end
 
-function display(
-    results::Abstractlean_call,
-    display_list,
-    sort = false,
-    relative = false,
-    end_ = "\n",
-)
+function display(results, display_list, sort = false, relative = false, end_ = "\n")
     lines = [
         (k_nucleotide, lookup_frequency(results, frame, bits)) for
         (k_nucleotide, frame, bits) in display_list
@@ -175,7 +167,7 @@ function main()
         b"a" => b"\x03",
     )
     function str_to_bits(text::String)::Int64
-        buffer = replace!(collect(encode(text, "latin1")), translation...)
+        buffer = replace!(collect(text.encode("latin1")), translation...)
         bits = 0
         for k = 0:length(buffer)-1
             bits = bits * 4 + buffer[k+1]
@@ -183,7 +175,7 @@ function main()
         return bits
     end
 
-    function display_list(k_nucleotides::Abstractlean_call)
+    function display_list(k_nucleotides)
         return [(n, length(n), str_to_bits(convert(String, n))) for n in k_nucleotides]
     end
 

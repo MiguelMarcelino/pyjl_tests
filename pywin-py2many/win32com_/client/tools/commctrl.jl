@@ -1540,9 +1540,9 @@ FSB_FLAT_MODE = 2
 FSB_ENCARTA_MODE = 1
 FSB_REGULAR_MODE = 0
 function INDEXTOOVERLAYMASK(i)::Int64
-    return i << 8
+return i << 8
 end
 
 function INDEXTOSTATEIMAGEMASK(i)::Int64
-    return i << 12
+return i << 12
 end

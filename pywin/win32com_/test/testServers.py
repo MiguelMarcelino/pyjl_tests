@@ -1,4 +1,5 @@
-from ext_modules import pythoncom, win32com_.client.dynamic, sys
+from ext_modules import pythoncom
+import  win32com_.client.dynamic
 import winerror
 import win32com_.test.util
 import unittest

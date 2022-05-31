@@ -19,10 +19,10 @@ mutable struct Network <: AbstractNetwork
     biases
     weights
     Network(
-        sizes = length(sizes),
-        num_layers = sizes,
-        biases = [randn(y, 1) for y in sizes[1:end]],
-        weights = [randn(y, x) for (x, y) in zip(sizes[begin:-1], sizes[1:end])],
+        sizes,
+        num_layers = length(sizes),
+        biases = [randn(y, 1) for y in sizes[2:end]],
+        weights = [randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])],
     ) = new(sizes, num_layers, biases, weights)
 end
 function feedforward(self::AbstractNetwork, a)
@@ -122,7 +122,7 @@ function evaluate(self::AbstractNetwork, test_data)
             network's output is assumed to be the index of whichever
             neuron in the final layer has the highest activation. =#
     test_results = [(argmax(feedforward(self, x)), y) for (x, y) in test_data]
-    return sum((parse(Int, x == y) for (x, y) in test_results))
+    return sum((Int(x == y) for (x, y) in test_results))
 end
 
 function cost_derivative(self::AbstractNetwork, output_activations, y)::Any
@@ -131,12 +131,12 @@ function cost_derivative(self::AbstractNetwork, output_activations, y)::Any
     return output_activations - y
 end
 
-function sigmoid(z::AbstractNetwork)::Float64
+function sigmoid(z)::Float64
     #= The sigmoid function. =#
     return 1.0 / (1.0 + [ℯ^i for i in -(z)])
 end
 
-function sigmoid_prime(z::AbstractNetwork)::Float64
+function sigmoid_prime(z)::Float64
     #= Derivative of the sigmoid function. =#
     return sigmoid(z) * (1 - sigmoid(z))
 end

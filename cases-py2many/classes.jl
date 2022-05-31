@@ -18,7 +18,6 @@ end
 
 mutable struct Person <: AbstractPerson
     name::String
-    Person(name::String = name) = new(name)
 end
 function get_name(self::AbstractPerson)::String
     return self.name
@@ -28,11 +27,6 @@ mutable struct Student <: AbstractStudent
     name::String
     student_number::Int64
     domain::String
-    Student(
-        name::String = "school.student.pt",
-        student_number::Int64 = name,
-        domain::String = student_number,
-    ) = new(name, student_number, domain)
 end
 function get_name(self::AbstractStudent)
     return "$(self.name) - $(self.student_number)"
@@ -43,16 +37,13 @@ mutable struct Student2 <: AbstractStudent2
     student_number::Int64
     domain::String
 
-    Student2(
-        name::String = "school.student.pt",
-        student_number::Int64 = student_number,
-        domain::String = name,
-    ) = begin
-        if student_number < 0
-            throw(ValueError("Student number must be a positive number"))
+    Student2(name::String, student_number::Int64, domain::String = "school.student.pt") =
+        begin
+            if student_number < 0
+                throw(ValueError("Student number must be a positive number"))
+            end
+            new(name, student_number, domain)
         end
-        new(name, student_number, domain)
-    end
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

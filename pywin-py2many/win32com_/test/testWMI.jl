@@ -3,15 +3,16 @@ import win32com_.test.util
 
 abstract type AbstractSimple <: win32com_.test.util.TestCase end
 mutable struct Simple <: AbstractSimple
+
 end
-function testit(self::Simple)
-    cses = InstancesOf(GetObject("WinMgMts:"), "Win32_Process")
-    vals = []
-    for cs in cses
-        val = Properties_(cs, "Caption").Value
-        push!(vals, val)
-    end
-    assertFalse(self, length(vals) < 5, "We only found %d processes!" % length(vals))
+function testit(self::AbstractSimple)
+cses = InstancesOf(GetObject("WinMgMts:"), "Win32_Process")
+vals = []
+for cs in cses
+val = Properties_(cs, "Caption").Value
+push!(vals, val)
+end
+assertFalse(self, length(vals) < 5, "We only found  processes!")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

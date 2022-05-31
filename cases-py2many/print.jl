@@ -10,7 +10,7 @@ function show()
     println(c ? ("True") : ("False"))
     name = "test"
     val = true
-    write(sys.stdout, "$(name)_vtables_dispatch_ = $(val)")
+    write(sys.stdout, "$(name)$(val)")
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

@@ -8,7 +8,7 @@ function typing_test()::Int64
 end
 
 function calendar_test()
-    return isoformat(utcnow(dt.datetime))
+    return isoformat(dt.datetime.utcnow())
 end
 
 function date_to_json(objDate::dt.datetime)::js
@@ -21,7 +21,7 @@ function date_to_json(objDate::dt.datetime)::js
         "minute" => objDate.minute,
         "second" => objDate.second,
         "microsecond" => objDate.microsecond,
-        "tz" => (tzname(objDate.tzinfo, objDate), total_seconds(utcoffset(objDate))),
+        "tz" => (tzname(objDate.tzinfo, objDate), total_seconds(objDate.utcoffset())),
     )
 end
 

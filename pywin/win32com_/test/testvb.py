@@ -5,7 +5,8 @@
 
 import sys
 import winerror
-from ext_modules import pythoncom, win32com_.client, win32com_.client.dynamic, win32com_.client.gencache
+from ext_modules import pythoncom
+import win32com_.client, win32com_.client.gencache, win32com_.client.dynamic
 from win32com_.server.util import NewCollection, wrap
 from win32com_.test import util
 from pywin32_testutil import str2memory

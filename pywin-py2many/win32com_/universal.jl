@@ -1,12 +1,14 @@
-using PyCall
-pythoncom = pyimport("pythoncom")
 import win32com_.client.build
 
+using ext_modules: pythoncom
 using win32com_.client: gencache
+abstract type AbstractArg end
+abstract type AbstractMethod end
+abstract type AbstractDefinition end
 com_error = pythoncom.com_error
 _univgw = pythoncom._univgw
 function RegisterInterfaces(
-    typelibGUID,
+    typelibGUID::AbstractDefinition,
     lcid,
     major,
     minor,
@@ -14,14 +16,14 @@ function RegisterInterfaces(
 )::Vector
     ret = []
     try
-        mod = GetModuleForTypelib(typelibGUID, lcid, major, minor)
+        mod = gencache.GetModuleForTypelib(typelibGUID, lcid, major, minor)
     catch exn
         if exn isa ImportError
             mod = nothing
         end
     end
     if mod === nothing
-        tlb = LoadRegTypeLib(typelibGUID, major, minor, lcid)
+        tlb = pythoncom.LoadRegTypeLib(typelibGUID, major, minor, lcid)
         typecomp_lib = GetTypeComp(tlb)
         if interface_names === nothing
             interface_names = []
@@ -39,7 +41,7 @@ function RegisterInterfaces(
         for name in interface_names
             type_info, type_comp = BindType(typecomp_lib, name)
             if type_info === nothing
-                throw(ValueError("The interface \'%s\' can not be located" % (name,)))
+                throw(ValueError("$(name)' can not be located"))
             end
             attr = GetTypeAttr(type_info)
             if attr.typekind == pythoncom.TKIND_DISPATCH
@@ -47,7 +49,11 @@ function RegisterInterfaces(
                 type_info = GetRefTypeInfo(type_info, refhtype)
                 attr = GetTypeAttr(type_info)
             end
-            item = VTableItem(type_info, attr, GetDocumentation(type_info, -1))
+            item = win32com_.client.build.VTableItem(
+                type_info,
+                attr,
+                GetDocumentation(type_info, -1),
+            )
             _doCreateVTable(
                 item.clsid,
                 item.python_name,
@@ -69,25 +75,20 @@ function RegisterInterfaces(
                 iid = mod.NamesToIIDMap[name+1]
             catch exn
                 if exn isa KeyError
-                    throw(
-                        ValueError(
-                            "Interface \'%s\' does not exist in this cached typelib" %
-                            (name,),
-                        ),
-                    )
+                    throw(ValueError("$(name)' does not exist in this cached typelib"))
                 end
             end
-            sub_mod = GetModuleForCLSID(iid)
+            sub_mod = gencache.GetModuleForCLSID(iid)
             is_dispatch = (
-                hasfield(typeof(sub_mod), :name + _vtables_dispatch_) ?
-                getfield(sub_mod, :name + _vtables_dispatch_) : nothing
+                hasfield(typeof(sub_mod), :name + "_vtables_dispatch_") ?
+                getfield(sub_mod, :name + "_vtables_dispatch_") : nothing
             )
             method_defs = (
-                hasfield(typeof(sub_mod), :name + _vtables_) ?
-                getfield(sub_mod, :name + _vtables_) : nothing
+                hasfield(typeof(sub_mod), :name + "_vtables_") ?
+                getfield(sub_mod, :name + "_vtables_") : nothing
             )
             if is_dispatch === nothing || method_defs === nothing
-                throw(ValueError("Interface \'%s\' is IDispatch only" % (name,)))
+                throw(ValueError("$(name)' is IDispatch only"))
             end
             _doCreateVTable(iid, name, is_dispatch, method_defs)
             for info in method_defs
@@ -100,13 +101,13 @@ function RegisterInterfaces(
     return ret
 end
 
-function _doCreateVTable(iid, interface_name, is_dispatch, method_defs)
+function _doCreateVTable(iid::AbstractDefinition, interface_name, is_dispatch, method_defs)
     defn = Definition(iid, is_dispatch, method_defs)
     vtbl = CreateVTable(_univgw, defn, is_dispatch)
     RegisterVTable(_univgw, vtbl, iid, interface_name)
 end
 
-function _CalcTypeSize(typeTuple)
+function _CalcTypeSize(typeTuple::AbstractDefinition)
     t = typeTuple[1]
     if t & (pythoncom.VT_BYREF | pythoncom.VT_ARRAY)
         cb = SizeOfVT(_univgw, pythoncom.VT_PTR)[2]
@@ -122,6 +123,13 @@ mutable struct Arg <: AbstractArg
     name
     size
     offset::Int64
+    Arg(
+        arg_info = nothing,
+        name = name,
+        None = arg_info,
+        size = _CalcTypeSize(arg_info),
+        offset = 0,
+    ) = new(arg_info, name, None, size, offset)
 end
 
 mutable struct Method <: AbstractMethod
@@ -134,9 +142,23 @@ mutable struct Method <: AbstractMethod
     name
     isEventSink::Int64
 
-    Method(method_info, isEventSink = 0) = begin
+    Method(
+        method_info = all_names[0],
+        isEventSink = all_names[1:end],
+        None = desc[4],
+        name = desc[2],
+        names = desc[8],
+        invkind = dispid,
+        arg_defs = invkind,
+        ret_def = name,
+        dispid = 0,
+        cbArgs = [],
+        args = cbArgs,
+        _gw_in_args = _GenerateInArgTuple(),
+        _gw_out_args = _GenerateOutArgTuple(),
+    ) = begin
         if isEventSink && name[begin:2] != "On"
-            name = "On%s" % name
+            name = "On"
         end
         for argDesc in arg_defs
             arg = Arg(argDesc)
@@ -144,10 +166,24 @@ mutable struct Method <: AbstractMethod
             cbArgs = cbArgs + arg.size
             args.append(arg)
         end
-        new(method_info, isEventSink)
+        new(
+            method_info,
+            isEventSink,
+            None,
+            name,
+            names,
+            invkind,
+            arg_defs,
+            ret_def,
+            dispid,
+            cbArgs,
+            args,
+            _gw_in_args,
+            _gw_out_args,
+        )
     end
 end
-function _GenerateInArgTuple(self::Method)::Tuple
+function _GenerateInArgTuple(self::AbstractMethod)::Tuple
     l = []
     for arg in self.args
         if arg.inOut & pythoncom.PARAMFLAG_FIN || arg.inOut == 0
@@ -157,7 +193,7 @@ function _GenerateInArgTuple(self::Method)::Tuple
     return tuple(l)
 end
 
-function _GenerateOutArgTuple(self::Method)::Tuple
+function _GenerateOutArgTuple(self::AbstractMethod)::Tuple
     l = []
     for arg in self.args
         if arg.inOut & pythoncom.PARAMFLAG_FOUT ||
@@ -174,28 +210,35 @@ mutable struct Definition <: AbstractDefinition
     _methods::Vector
     _is_dispatch
 
-    Definition(iid, is_dispatch, method_defs) = begin
+    Definition(
+        iid,
+        is_dispatch,
+        method_defs,
+        _iid = iid,
+        _methods = [],
+        _is_dispatch = is_dispatch,
+    ) = begin
         for info in method_defs
             entry = Method(info)
             _methods.append(entry)
         end
-        new(iid, is_dispatch, method_defs)
+        new(iid, is_dispatch, method_defs, _iid, _methods, _is_dispatch)
     end
 end
-function iid(self::Definition)
+function iid(self::AbstractDefinition)
     return self._iid
 end
 
-function vtbl_argsizes(self::Definition)
+function vtbl_argsizes(self::AbstractDefinition)
     return [m.cbArgs for m in self._methods]
 end
 
-function vtbl_argcounts(self::Definition)
+function vtbl_argcounts(self::AbstractDefinition)
     return [length(m.args) for m in self._methods]
 end
 
 function dispatch(
-    self::Definition,
+    self::AbstractDefinition,
     ob,
     index,
     argPtr,
@@ -214,12 +257,7 @@ function dispatch(
             hr = retVal[1]
             retVal = retVal[2:end]
         else
-            throw(
-                TypeError(
-                    "Expected %s return values, got: %s" %
-                    (length(meth._gw_out_args) + 1, length(retVal)),
-                ),
-            )
+            throw(TypeError("$(length(meth._gw_out_args) + 1)$(length(retVal))"))
         end
     else
         retVal = [retVal]

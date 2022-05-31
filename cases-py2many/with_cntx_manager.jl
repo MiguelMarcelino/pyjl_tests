@@ -5,7 +5,6 @@ mutable struct FileOp <: AbstractFileOp
     file_name
     method
     file
-    FileOp(file_name = file_name, method = method) = new(file_name, method)
 end
 function __enter__(self::AbstractFileOp)
     self.file = open(self.file_name, self.method)

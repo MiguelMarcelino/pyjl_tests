@@ -2,419 +2,403 @@ using PyCall
 win32api = pyimport("win32api")
 win32ui = pyimport("win32ui")
 
+
 import win32con
+
 
 using win32com_.gen_py.mfc: object, window, docview, dialog
 import commctrl
 abstract type AbstractHierDialog <: dialog.Dialog end
 abstract type AbstractHierList <: object.Object end
 abstract type AbstractHierListWithItems <: AbstractHierList end
-function GetItemText(item)
-    if type_(item) == type_(()) || type_(item) == type_([])
-        use = item[1]
-    else
-        use = item
-    end
-    if type_(use) == type_("")
-        return use
-    else
-        return repr(item)
-    end
+abstract type AbstractHierListItem end
+function GetItemText(item::AbstractHierListItem)
+if type_(item) == type_(()) || type_(item) == type_([])
+use = item[1]
+else
+use = item
+end
+if type_(use) == type_("")
+return use
+else
+return repr(item)
+end
 end
 
 mutable struct HierDialog <: AbstractHierDialog
-    dlgID
-    hierList
-    title
-    bitmapID
-    childListBoxID
-    dll
+dlgID
+hierList
+title
+bitmapID
+childListBoxID
+dll
 
-    HierDialog(
-        title,
-        hierList,
-        bitmapID = win32ui.IDB_HIERFOLDERS,
-        dlgID = win32ui.IDD_TREE,
-        dll = nothing,
-        childListBoxID = win32ui.IDC_LIST1,
-    ) = begin
-        dialog.Dialog.__init__(self, dlgID, dll)
-        new(title, hierList, bitmapID, dlgID, dll, childListBoxID)
-    end
+            HierDialog(title = win32ui.IDD_TREE, hierList = nothing, bitmapID = win32ui.IDC_LIST1, dlgID = hierList, dll = dlgID, childListBoxID = title) = begin
+                dialog.Dialog.__init__(self, dlgID, dll)
+                new(title , hierList , bitmapID , dlgID , dll , childListBoxID )
+            end
 end
-function OnInitDialog(self::HierDialog)
-    SetWindowText(self, self.title)
-    HierInit(self.hierList, self)
-    return OnInitDialog(dialog.Dialog)
+function OnInitDialog(self::AbstractHierDialog)
+SetWindowText(self, self.title)
+HierInit(self.hierList, self)
+return OnInitDialog(dialog.Dialog)
 end
 
 mutable struct HierList <: AbstractHierList
-    listControl
-    bitmapID
-    root
-    listBoxId
-    itemHandleMap::Dict
-    filledItemHandlesMap::Dict
-    bitmapMask
-    imageList
-    notify_parent
-    OnTreeItemExpanding
-    OnTreeItemSelChanged
-    OnTreeItemDoubleClick
+listControl
+bitmapID
+root
+listBoxId
+itemHandleMap::Dict
+filledItemHandlesMap::Dict
+bitmapMask
+imageList
+notify_parent
+OnTreeItemExpanding
+OnTreeItemSelChanged
+OnTreeItemDoubleClick
+HierList(root = nothing, bitmapID = bitmapID, listBoxId = root, bitmapMask = listBoxId, listControl = Dict(), itemHandleMap = Dict(), filledItemHandlesMap = bitmapMask) = new(root , bitmapID , listBoxId , bitmapMask , listControl , itemHandleMap , filledItemHandlesMap )
 end
-function __getattr__(self::HierList, attr)
-    try
-        return getfield(self.listControl, :attr)
-    catch exn
-        if exn isa AttributeError
-            return __getattr__(object.Object, self)
-        end
-    end
+function __getattr__(self::AbstractHierList, attr)
+try
+return getfield(self.listControl, :attr)
+catch exn
+if exn isa AttributeError
+return __getattr__(object.Object, self)
 end
-
-function ItemFromHandle(self::HierList, handle)::Dict
-    return self.itemHandleMap[handle]
+end
 end
 
-function SetStyle(self::HierList, newStyle)
-    hwnd = GetSafeHwnd(self.listControl)
-    style = GetWindowLong(hwnd, win32con.GWL_STYLE)
-    SetWindowLong(hwnd, win32con.GWL_STYLE, style | newStyle)
+function ItemFromHandle(self::AbstractHierList, handle)::Dict
+return self.itemHandleMap[handle]
 end
 
-function HierInit(self::HierList, parent, listControl = nothing)
-    if self.bitmapMask === nothing
-        bitmapMask = RGB(0, 0, 255)
-    else
-        bitmapMask = self.bitmapMask
-    end
-    self.imageList = CreateImageList(self.bitmapID, 16, 0, bitmapMask)
-    if listControl === nothing
-        if self.listBoxId === nothing
-            self.listBoxId = win32ui.IDC_LIST1
-        end
-        self.listControl = GetDlgItem(parent, self.listBoxId)
-    else
-        self.listControl = listControl
-        lbid = GetDlgCtrlID(listControl)
-        @assert(self.listBoxId === nothing || self.listBoxId == lbid)
-        self.listBoxId = lbid
-    end
-    SetImageList(self.listControl, self.imageList, commctrl.LVSIL_NORMAL)
-    if sys.version_info[1] < 3
-        HookNotify(parent, self.OnTreeItemExpanding, commctrl.TVN_ITEMEXPANDINGA)
-        HookNotify(parent, self.OnTreeItemSelChanged, commctrl.TVN_SELCHANGEDA)
-    else
-        HookNotify(parent, self.OnTreeItemExpanding, commctrl.TVN_ITEMEXPANDINGW)
-        HookNotify(parent, self.OnTreeItemSelChanged, commctrl.TVN_SELCHANGEDW)
-    end
-    HookNotify(parent, self.OnTreeItemDoubleClick, commctrl.NM_DBLCLK)
-    self.notify_parent = parent
-    if self.root
-        AcceptRoot(self, self.root)
-    end
+function SetStyle(self::AbstractHierList, newStyle)
+hwnd = GetSafeHwnd(self.listControl)
+style = win32api.GetWindowLong(hwnd, win32con.GWL_STYLE)
+win32api.SetWindowLong(hwnd, win32con.GWL_STYLE, style | newStyle)
 end
 
-function DeleteAllItems(self::HierList)
-    DeleteAllItems(self.listControl)
-    self.root = nothing
-    self.itemHandleMap = Dict()
-    self.filledItemHandlesMap = Dict()
+function HierInit(self::AbstractHierList, parent, listControl = nothing)
+if self.bitmapMask === nothing
+bitmapMask = RGB(0, 0, 255)
+else
+bitmapMask = self.bitmapMask
+end
+self.imageList = win32ui.CreateImageList(self.bitmapID, 16, 0, bitmapMask)
+if listControl === nothing
+if self.listBoxId === nothing
+self.listBoxId = win32ui.IDC_LIST1
+end
+self.listControl = GetDlgItem(parent, self.listBoxId)
+else
+self.listControl = listControl
+lbid = GetDlgCtrlID(listControl)
+@assert(self.listBoxId === nothing || self.listBoxId == lbid)
+self.listBoxId = lbid
+end
+SetImageList(self.listControl, self.imageList, commctrl.LVSIL_NORMAL)
+if sys.version_info[1] < 3
+HookNotify(parent, self.OnTreeItemExpanding, commctrl.TVN_ITEMEXPANDINGA)
+HookNotify(parent, self.OnTreeItemSelChanged, commctrl.TVN_SELCHANGEDA)
+else
+HookNotify(parent, self.OnTreeItemExpanding, commctrl.TVN_ITEMEXPANDINGW)
+HookNotify(parent, self.OnTreeItemSelChanged, commctrl.TVN_SELCHANGEDW)
+end
+HookNotify(parent, self.OnTreeItemDoubleClick, commctrl.NM_DBLCLK)
+self.notify_parent = parent
+if self.root
+AcceptRoot(self, self.root)
+end
 end
 
-function HierTerm(self::HierList)
-    parent = self.notify_parent
-    if sys.version_info[1] < 3
-        HookNotify(parent, nothing, commctrl.TVN_ITEMEXPANDINGA)
-        HookNotify(parent, nothing, commctrl.TVN_SELCHANGEDA)
-    else
-        HookNotify(parent, nothing, commctrl.TVN_ITEMEXPANDINGW)
-        HookNotify(parent, nothing, commctrl.TVN_SELCHANGEDW)
-    end
-    HookNotify(parent, nothing, commctrl.NM_DBLCLK)
-    DeleteAllItems(self)
-    self.listControl = nothing
-    self.notify_parent = nothing
+function DeleteAllItems(self::AbstractHierList)
+DeleteAllItems(self.listControl)
+self.root = nothing
+self.itemHandleMap = Dict()
+self.filledItemHandlesMap = Dict()
 end
 
-function OnTreeItemDoubleClick(self::HierList, info, extra)::Int64
-    hwndFrom, idFrom, code = info
-    if idFrom !== self.listBoxId
-        return nothing
-    end
-    item = self.itemHandleMap[GetSelectedItem(self.listControl)]
-    TakeDefaultAction(self, item)
-    return 1
+function HierTerm(self::AbstractHierList)
+parent = self.notify_parent
+if sys.version_info[1] < 3
+HookNotify(parent, nothing, commctrl.TVN_ITEMEXPANDINGA)
+HookNotify(parent, nothing, commctrl.TVN_SELCHANGEDA)
+else
+HookNotify(parent, nothing, commctrl.TVN_ITEMEXPANDINGW)
+HookNotify(parent, nothing, commctrl.TVN_SELCHANGEDW)
+end
+HookNotify(parent, nothing, commctrl.NM_DBLCLK)
+DeleteAllItems(self)
+self.listControl = nothing
+self.notify_parent = nothing
 end
 
-function OnTreeItemExpanding(self::HierList, info, extra)::Int64
-    hwndFrom, idFrom, code = info
-    if idFrom !== self.listBoxId
-        return nothing
-    end
-    action, itemOld, itemNew, pt = extra
-    itemHandle = itemNew[1]
-    if itemHandle ∉ self.filledItemHandlesMap
-        item = self.itemHandleMap[itemHandle]
-        AddSubList(self, itemHandle, GetSubList(self, item))
-        self.filledItemHandlesMap[itemHandle] = nothing
-    end
-    return 0
+function OnTreeItemDoubleClick(self::AbstractHierList, info, extra)::Int64
+hwndFrom, idFrom, code = info
+if idFrom != self.listBoxId
+return nothing
+end
+item = self.itemHandleMap[GetSelectedItem(self.listControl)]
+TakeDefaultAction(self, item)
+return 1
 end
 
-function OnTreeItemSelChanged(self::HierList, info, extra)::Int64
-    hwndFrom, idFrom, code = info
-    if idFrom !== self.listBoxId
-        return nothing
-    end
-    action, itemOld, itemNew, pt = extra
-    itemHandle = itemNew[1]
-    item = self.itemHandleMap[itemHandle]
-    PerformItemSelected(self, item)
-    return 1
+function OnTreeItemExpanding(self::AbstractHierList, info, extra)::Int64
+hwndFrom, idFrom, code = info
+if idFrom != self.listBoxId
+return nothing
+end
+action, itemOld, itemNew, pt = extra
+itemHandle = itemNew[1]
+if itemHandle ∉ self.filledItemHandlesMap
+item = self.itemHandleMap[itemHandle]
+AddSubList(self, itemHandle, GetSubList(self, item))
+self.filledItemHandlesMap[itemHandle] = nothing
+end
+return 0
 end
 
-function AddSubList(self::HierList, parentHandle, subItems)
-    for item in subItems
-        AddItem(self, parentHandle, item)
-    end
+function OnTreeItemSelChanged(self::AbstractHierList, info, extra)::Int64
+hwndFrom, idFrom, code = info
+if idFrom != self.listBoxId
+return nothing
+end
+action, itemOld, itemNew, pt = extra
+itemHandle = itemNew[1]
+item = self.itemHandleMap[itemHandle]
+PerformItemSelected(self, item)
+return 1
 end
 
-function AddItem(self::HierList, parentHandle, item, hInsertAfter = commctrl.TVI_LAST)
-    text = GetText(self, item)
-    if IsExpandable(self, item)
-        cItems = 1
-    else
-        cItems = 0
-    end
-    bitmapCol = GetBitmapColumn(self, item)
-    bitmapSel = GetSelectedBitmapColumn(self, item)
-    if bitmapSel === nothing
-        bitmapSel = bitmapCol
-    end
-    hitem = InsertItem(
-        self.listControl,
-        parentHandle,
-        hInsertAfter,
-        (nothing, nothing, nothing, text, bitmapCol, bitmapSel, cItems, 0),
-    )
-    self.itemHandleMap[hitem] = item
-    return hitem
+function AddSubList(self::AbstractHierList, parentHandle, subItems)
+for item in subItems
+AddItem(self, parentHandle, item)
+end
 end
 
-function _GetChildHandles(self::HierList, handle)::Vector
-    ret = []
-    try
-        handle = GetChildItem(self.listControl, handle)
-        while true
-            push!(ret, handle)
-            handle = GetNextItem(self.listControl, handle, commctrl.TVGN_NEXT)
-        end
-    catch exn
-        if exn isa win32ui.error
-            #= pass =#
-        end
-    end
-    return ret
+function AddItem(self::AbstractHierList, parentHandle, item, hInsertAfter = commctrl.TVI_LAST)
+text = GetText(self, item)
+if IsExpandable(self, item)
+cItems = 1
+else
+cItems = 0
+end
+bitmapCol = GetBitmapColumn(self, item)
+bitmapSel = GetSelectedBitmapColumn(self, item)
+if bitmapSel === nothing
+bitmapSel = bitmapCol
+end
+hitem = InsertItem(self.listControl, parentHandle, hInsertAfter, (nothing, nothing, nothing, text, bitmapCol, bitmapSel, cItems, 0))
+self.itemHandleMap[hitem] = item
+return hitem
 end
 
-function ItemFromHandle(self::HierList, handle)::Dict
-    return self.itemHandleMap[handle]
+function _GetChildHandles(self::AbstractHierList, handle)::Vector
+ret = []
+try
+handle = GetChildItem(self.listControl, handle)
+while true
+push!(ret, handle)
+handle = GetNextItem(self.listControl, handle, commctrl.TVGN_NEXT)
+end
+catch exn
+if exn isa win32ui.error
+#= pass =#
+end
+end
+return ret
 end
 
-function Refresh(self::HierList, hparent = nothing)
-    if hparent === nothing
-        hparent = commctrl.TVI_ROOT
-    end
-    if hparent ∉ self.filledItemHandlesMap
-        return
-    end
-    root_item = self.itemHandleMap[hparent]
-    old_handles = _GetChildHandles(self, hparent)
-    old_items = collect(map(self.ItemFromHandle, old_handles))
-    new_items = GetSubList(self, root_item)
-    inew = 0
-    hAfter = commctrl.TVI_FIRST
-    for iold = 0:length(old_items)-1
-        inewlook = inew
-        matched = 0
-        while inewlook < length(new_items)
-            if old_items[iold+1] == new_items[inewlook+1]
-                matched = 1
-                has_break = true
-                break
-            end
-            inewlook = inewlook + 1
-        end
-        if matched != 0
-            for i = inew:inewlook-1
-                hAfter = AddItem(self, hparent, new_items[i+1], hAfter)
-            end
-            inew = inewlook + 1
-            hold = old_handles[iold+1]
-            if hold ∈ self.filledItemHandlesMap
-                Refresh(self, hold)
-            end
-        else
-            hdelete = old_handles[iold+1]
-            for hchild in _GetChildHandles(self, hdelete)
-                delete!(self.itemHandleMap, hchild)
-                if hchild ∈ self.filledItemHandlesMap
-                    delete!(self.filledItemHandlesMap, hchild)
-                end
-            end
-            DeleteItem(self.listControl, hdelete)
-        end
-        hAfter = old_handles[iold+1]
-    end
-    for newItem in new_items[inew+1:end]
-        AddItem(self, hparent, newItem)
-    end
+function ItemFromHandle(self::AbstractHierList, handle)::Dict
+return self.itemHandleMap[handle]
 end
 
-function AcceptRoot(self::HierList, root)
-    DeleteAllItems(self.listControl)
-    self.itemHandleMap = Dict(commctrl.TVI_ROOT => root)
-    self.filledItemHandlesMap = Dict(commctrl.TVI_ROOT => root)
-    subItems = GetSubList(self, root)
-    AddSubList(self, 0, subItems)
+function Refresh(self::AbstractHierList, hparent = nothing)
+if hparent === nothing
+hparent = commctrl.TVI_ROOT
+end
+if hparent ∉ self.filledItemHandlesMap
+return
+end
+root_item = self.itemHandleMap[hparent]
+old_handles = _GetChildHandles(self, hparent)
+old_items = collect(map(self.ItemFromHandle, old_handles))
+new_items = GetSubList(self, root_item)
+inew = 0
+hAfter = commctrl.TVI_FIRST
+for iold in 0:length(old_items) - 1
+inewlook = inew
+matched = 0
+while inewlook < length(new_items)
+if old_items[iold + 1] == new_items[inewlook + 1]
+matched = 1
+break;
+end
+inewlook = inewlook + 1
+end
+if matched != 0
+for i in inew:inewlook - 1
+hAfter = AddItem(self, hparent, new_items[i + 1], hAfter)
+end
+inew = inewlook + 1
+hold = old_handles[iold + 1]
+if hold ∈ self.filledItemHandlesMap
+Refresh(self, hold)
+end
+else
+hdelete = old_handles[iold + 1]
+for hchild in _GetChildHandles(self, hdelete)
+delete!(self.itemHandleMap, hchild)
+if hchild ∈ self.filledItemHandlesMap
+delete!(self.filledItemHandlesMap, hchild)
+end
+end
+DeleteItem(self.listControl, hdelete)
+end
+hAfter = old_handles[iold + 1]
+end
+for newItem in new_items[inew + 1:end]
+AddItem(self, hparent, newItem)
+end
 end
 
-function GetBitmapColumn(self::HierList, item)::Int64
-    if IsExpandable(self, item)
-        return 0
-    else
-        return 4
-    end
+function AcceptRoot(self::AbstractHierList, root)
+DeleteAllItems(self.listControl)
+self.itemHandleMap = Dict(commctrl.TVI_ROOT => root)
+self.filledItemHandlesMap = Dict(commctrl.TVI_ROOT => root)
+subItems = GetSubList(self, root)
+AddSubList(self, 0, subItems)
 end
 
-function GetSelectedBitmapColumn(self::HierList, item)
-    return nothing
+function GetBitmapColumn(self::AbstractHierList, item)::Int64
+if IsExpandable(self, item)
+return 0
+else
+return 4
+end
 end
 
-function GetSelectedBitmapColumn(self::HierList, item)::Int64
-    return 0
+function GetSelectedBitmapColumn(self::AbstractHierList, item)
+return nothing
 end
 
-function CheckChangedChildren(self::HierList)
-    return CheckChangedChildren(self.listControl)
+function GetSelectedBitmapColumn(self::AbstractHierList, item)::Int64
+return 0
 end
 
-function GetText(self::HierList, item)
-    return GetItemText(item)
+function CheckChangedChildren(self::AbstractHierList)
+return CheckChangedChildren(self.listControl)
 end
 
-function PerformItemSelected(self::HierList, item)
-    try
-        SetStatusText("Selected " + GetText(self, item))
-    catch exn
-        if exn isa win32ui.error
-            #= pass =#
-        end
-    end
+function GetText(self::AbstractHierList, item)
+return GetItemText(item)
 end
 
-function TakeDefaultAction(self::HierList, item)
-    MessageBox("Got item " + GetText(self, item))
+function PerformItemSelected(self::AbstractHierList, item)
+try
+win32ui.SetStatusText("Selected " + GetText(self, item))
+catch exn
+if exn isa win32ui.error
+#= pass =#
+end
+end
+end
+
+function TakeDefaultAction(self::AbstractHierList, item)
+win32ui.MessageBox("Got item " + GetText(self, item))
 end
 
 mutable struct HierListWithItems <: AbstractHierListWithItems
-    bitmapID
-    bitmapMask
-    listBoxID
+bitmapID
+bitmapMask
+listBoxID
 
-    HierListWithItems(
-        root,
-        bitmapID = win32ui.IDB_HIERFOLDERS,
-        listBoxID = nothing,
-        bitmapMask = nothing,
-    ) = begin
-        HierList(root, bitmapID, listBoxID, bitmapMask)
-        new(root, bitmapID, listBoxID, bitmapMask)
-    end
+            HierListWithItems(root, bitmapID = win32ui.IDB_HIERFOLDERS, listBoxID = nothing, bitmapMask = nothing) = begin
+                HierList(root, bitmapID, listBoxID, bitmapMask)
+                new(root, bitmapID , listBoxID , bitmapMask )
+            end
 end
-function DelegateCall(self::HierListWithItems, fn)
-    return fn()
+function DelegateCall(self::AbstractHierListWithItems, fn)
+return fn()
 end
 
-function GetBitmapColumn(self::HierListWithItems, item)
-    rc = DelegateCall(self, item.GetBitmapColumn)
-    if rc === nothing
-        rc = HierList.GetBitmapColumn(self, item)
-    end
-    return rc
+function GetBitmapColumn(self::AbstractHierListWithItems, item)
+rc = DelegateCall(self, item.GetBitmapColumn)
+if rc === nothing
+rc = HierList.GetBitmapColumn(self, item)
+end
+return rc
 end
 
-function GetSelectedBitmapColumn(self::HierListWithItems, item)
-    return DelegateCall(self, item.GetSelectedBitmapColumn)
+function GetSelectedBitmapColumn(self::AbstractHierListWithItems, item)
+return DelegateCall(self, item.GetSelectedBitmapColumn)
 end
 
-function IsExpandable(self::HierListWithItems, item)
-    return DelegateCall(self, item.IsExpandable)
+function IsExpandable(self::AbstractHierListWithItems, item)
+return DelegateCall(self, item.IsExpandable)
 end
 
-function GetText(self::HierListWithItems, item)
-    return DelegateCall(self, item.GetText)
+function GetText(self::AbstractHierListWithItems, item)
+return DelegateCall(self, item.GetText)
 end
 
-function GetSubList(self::HierListWithItems, item)
-    return DelegateCall(self, item.GetSubList)
+function GetSubList(self::AbstractHierListWithItems, item)
+return DelegateCall(self, item.GetSubList)
 end
 
-function PerformItemSelected(self::HierListWithItems, item)
-    func = (
-        hasfield(typeof(item), :PerformItemSelected) ?
-        getfield(item, :PerformItemSelected) : nothing
-    )
-    if func === nothing
-        return HierList.PerformItemSelected(self, item)
-    else
-        return DelegateCall(self, func)
-    end
+function PerformItemSelected(self::AbstractHierListWithItems, item)
+func = (hasfield(typeof(item), :PerformItemSelected) ? 
+                getfield(item, :PerformItemSelected) : nothing)
+if func === nothing
+return HierList.PerformItemSelected(self, item)
+else
+return DelegateCall(self, func)
+end
 end
 
-function TakeDefaultAction(self::HierListWithItems, item)
-    func = (
-        hasfield(typeof(item), :TakeDefaultAction) ?
-        getfield(item, :TakeDefaultAction) : nothing
-    )
-    if func === nothing
-        return HierList.TakeDefaultAction(self, item)
-    else
-        return DelegateCall(self, func)
-    end
+function TakeDefaultAction(self::AbstractHierListWithItems, item)
+func = (hasfield(typeof(item), :TakeDefaultAction) ? 
+                getfield(item, :TakeDefaultAction) : nothing)
+if func === nothing
+return HierList.TakeDefaultAction(self, item)
+else
+return DelegateCall(self, func)
+end
 end
 
 mutable struct HierListItem <: AbstractHierListItem
-    HierListItem() = begin
-        #= pass =#
-        new()
-    end
+
+
+            HierListItem() = begin
+                #= pass =#
+                new()
+            end
 end
-function GetText(self::HierListItem)
-    #= pass =#
+function GetText(self::AbstractHierListItem)
+#= pass =#
 end
 
-function GetSubList(self::HierListItem)
-    #= pass =#
+function GetSubList(self::AbstractHierListItem)
+#= pass =#
 end
 
-function IsExpandable(self::HierListItem)
-    #= pass =#
+function IsExpandable(self::AbstractHierListItem)
+#= pass =#
 end
 
-function GetBitmapColumn(self::HierListItem)
-    return nothing
+function GetBitmapColumn(self::AbstractHierListItem)
+return nothing
 end
 
-function GetSelectedBitmapColumn(self::HierListItem)
-    return nothing
+function GetSelectedBitmapColumn(self::AbstractHierListItem)
+return nothing
 end
 
-function __lt__(self::HierListItem, other)::Bool
-    return id(self) < id(other)
+function __lt__(self::AbstractHierListItem, other)::Bool
+return id(self) < id(other)
 end
 
-function __eq__(self::HierListItem, other)::Bool
-    return false
+function __eq__(self::AbstractHierListItem, other)::Bool
+return false
 end
