@@ -152,7 +152,7 @@ function display(results, display_list, sort = false, relative = false, end_ = "
             println("$(frequency)\t$(k_nucleotide)")
         end
     end
-    println(end_ = end_)
+    print("")
 end
 
 function main()

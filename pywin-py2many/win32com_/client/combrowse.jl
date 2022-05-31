@@ -24,8 +24,8 @@
  =#
 using Printf
 using PyCall
-win32ui = pyimport("win32ui")
 win32api = pyimport("win32api")
+win32ui = pyimport("win32ui")
 
 using ext_modules: pythoncom
 import win32com_.ext_modules.win32con as win32con

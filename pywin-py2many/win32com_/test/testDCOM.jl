@@ -8,25 +8,28 @@ import win32com_.client
 import string
 
 function test(serverName)
-if string.lower(serverName) == string.lower(win32api.GetComputerName())
-println("You must specify a remote server name, not the local machine!")
-return
-end
-clsctx = pythoncom.CLSCTX_SERVER & ~(pythoncom.CLSCTX_INPROC_SERVER)
-ob = win32com_.client.DispatchEx("Python.Interpreter", serverName, clsctx = clsctx)
-Exec(ob, "import win32api")
-actualName = Eval(ob, "win32api.GetComputerName()")
-if string.lower(serverName) != string.lower(actualName)
-@printf("Error: The object created on server \'%s\' reported its name as \'%s\'\n", (serverName, actualName))
-else
-@printf("Object created and tested OK on server \'%s\'\n", serverName)
-end
+    if string.lower(serverName) == string.lower(win32api.GetComputerName())
+        println("You must specify a remote server name, not the local machine!")
+        return
+    end
+    clsctx = pythoncom.CLSCTX_SERVER & ~(pythoncom.CLSCTX_INPROC_SERVER)
+    ob = win32com_.client.DispatchEx("Python.Interpreter", serverName, clsctx = clsctx)
+    Exec(ob, "import win32api")
+    actualName = Eval(ob, "win32api.GetComputerName()")
+    if string.lower(serverName) != string.lower(actualName)
+        @printf(
+            "Error: The object created on server \'%s\' reported its name as \'%s\'\n",
+            (serverName, actualName)
+        )
+    else
+        @printf("Object created and tested OK on server \'%s\'\n", serverName)
+    end
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-if length(append!([PROGRAM_FILE], ARGS)) == 2
-test(append!([PROGRAM_FILE], ARGS)[2])
-else
-println(usage)
-end
+    if length(append!([PROGRAM_FILE], ARGS)) == 2
+        test(append!([PROGRAM_FILE], ARGS)[2])
+    else
+        println(usage)
+    end
 end

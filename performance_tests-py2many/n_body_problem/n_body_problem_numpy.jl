@@ -1,3 +1,4 @@
+using Printf
 
 function combinations(l)
     result = []
@@ -88,7 +89,7 @@ function report_energy(bodies = SYSTEM, pairs = PAIRS, e = 0.0)
     for (r1, r2, r3, vx, vy, vz, m) in bodies
         e += m * ((vx * vx + vy * vy) + vz * vz) / 2.0
     end
-    println("9f")
+    @printf("%.9f\n", e)
 end
 
 function offset_momentum(ref, bodies = SYSTEM, px = 0.0, py = 0.0, pz = 0.0)
@@ -114,5 +115,5 @@ if abspath(PROGRAM_FILE) == @__FILE__
     start = perf_counter()
     main(500000)
     end_ = perf_counter()
-    println("__sub__(end_, start)")
+    println("$(__sub__(end_, start))")
 end

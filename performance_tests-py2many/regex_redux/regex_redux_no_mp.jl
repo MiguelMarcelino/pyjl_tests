@@ -6,7 +6,7 @@ end
 
 function main()
     global seq
-    seq = read(stdin, String)
+    seq = read(stdin, String)()
     ilen = length(seq)
     seq = replace(seq, r">.*\n|\n" => s"")
     clen = length(seq)
@@ -22,7 +22,7 @@ function main()
         "agggtaa[cgt]|[acg]ttaccct",
     )
     for f in zip(variants, map(var_find, variants))
-        println("$(f[1])$(f[2])")
+        println("$(f[1]) $(f[2])")
     end
     subst = OrderedDict(
         "tHa[Nt]" => "<4>",
@@ -34,7 +34,7 @@ function main()
     for (f, r) in collect(subst)
         seq = replace(seq, Regex(f) => SubstitutionString(r))
     end
-    println()
+    println
     println(ilen)
     println(clen)
     println(length(seq))

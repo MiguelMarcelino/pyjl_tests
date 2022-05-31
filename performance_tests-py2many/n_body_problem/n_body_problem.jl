@@ -1,3 +1,4 @@
+using Printf
 
 function combinations(l)::Vector
     result = []
@@ -88,7 +89,7 @@ function report_energy(bodies = SYSTEM, pairs = PAIRS, e = 0.0)
     for (r, (vx, vy, vz), m) in bodies
         e += m * ((vx * vx + vy * vy) + vz * vz) / 2.0
     end
-    println("9f")
+    @printf("%.9f\n", e)
 end
 
 function offset_momentum(ref, bodies = SYSTEM, px = 0.0, py = 0.0, pz = 0.0)

@@ -1,3 +1,4 @@
+using Printf
 
 function extract_Digit(nth)::Any
     global tmp1, tmp2, acc, den, num
@@ -46,7 +47,7 @@ function main()
         print("$(Char(48 + d))")
         i += 1
         if (i % 10) == 0
-            println("	:")
+            @printf("\t:%d\n", i)
         end
         eliminate_Digit(d)
     end

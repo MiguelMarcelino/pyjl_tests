@@ -1,24 +1,26 @@
 import logging
 import warnings
-filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-import numpy as np
+
 import tensorflow as tf
 import cv2
 using retinaface.model: retinaface_model
 using retinaface.commons: preprocess, postprocess
 tf_version = parse(Int, split(tf.__version__, ".")[1])
 if tf_version == 2
-    setLevel(get_logger(tf), logging.ERROR)
+    setLevel(tf.get_logger(), logging.ERROR)
 end
 function build_model()
     global model
     if !("model" ∈ globals())
         model = function_(
             tf,
-            build_model(),
-            (TensorSpec(tf, [nothing, nothing, nothing, 3], np.float32),),
+            retinaface_model.build_model(),
+            input_signature = (
+                tf.TensorSpec(shape = [nothing, nothing, nothing, 3], dtype = np.float32),
+            ),
         )
     end
     return model
@@ -26,10 +28,10 @@ end
 
 function get_image(img_path)
     if type_(img_path) == str
-        if !isfile(os.path, img_path)
+        if !isfile(img_path)
             throw(ValueError("Input image file path (", img_path, ") does not exist."))
         end
-        img = imread(img_path)
+        img = cv2.imread(img_path)
     elseif isa(img_path, np.ndarray)
         img = copy(img_path)
     else
@@ -58,38 +60,34 @@ function detect_faces(
     decay4 = 0.5
     _feat_stride_fpn = [32, 16, 8]
     _anchors_fpn = Dict(
-        "stride32" => array(
-            np,
-            [[-248.0, -248.0, 263.0, 263.0], [-120.0, -120.0, 135.0, 135.0]],
-            np.float32,
-        ),
-        "stride16" => array(
-            np,
-            [[-56.0, -56.0, 71.0, 71.0], [-24.0, -24.0, 39.0, 39.0]],
-            np.float32,
-        ),
+        "stride32" => Vector{Float64}([
+            [-248.0, -248.0, 263.0, 263.0],
+            [-120.0, -120.0, 135.0, 135.0],
+        ]),
+        "stride16" =>
+            Vector{Float64}([[-56.0, -56.0, 71.0, 71.0], [-24.0, -24.0, 39.0, 39.0]]),
         "stride8" =>
-            array(np, [[-8.0, -8.0, 23.0, 23.0], [0.0, 0.0, 15.0, 15.0]], np.float32),
+            Vector{Float64}([[-8.0, -8.0, 23.0, 23.0], [0.0, 0.0, 15.0, 15.0]]),
     )
     _num_anchors = Dict("stride32" => 2, "stride16" => 2, "stride8" => 2)
     proposals_list = []
     scores_list = []
     landmarks_list = []
-    im_tensor, im_info, im_scale = preprocess_image(img, allow_upscaling)
+    im_tensor, im_info, im_scale = preprocess.preprocess_image(img, allow_upscaling)
     net_out = model(im_tensor)
     net_out = [numpy(elt) for elt in net_out]
     sym_idx = 0
     for (_idx, s) in enumerate(_feat_stride_fpn)
-        _key = "stride%s" % s
+        _key = "stride$(s)"
         scores = net_out[sym_idx+1]
         scores =
-            scores[(begin:end, begin:end, begin:end, _num_anchors["stride%s"%s]+1:end)+1]
+            scores[(begin:end, begin:end, begin:end, _num_anchors["stride$(s)"]+1:end)+1]
         bbox_deltas = net_out[sym_idx+2]
         height, width = (bbox_deltas.shape[2], bbox_deltas.shape[3])
-        A = _num_anchors["stride%s"%s]
+        A = _num_anchors["stride$(s)"]
         K = height * width
-        anchors_fpn = _anchors_fpn["stride%s"%s]
-        anchors = anchors_plane(height, width, s, anchors_fpn)
+        anchors_fpn = _anchors_fpn["stride$(s)"]
+        anchors = postprocess.anchors_plane(height, width, s, anchors_fpn)
         anchors = reshape(anchors, (K * A, 4))
         scores = reshape(scores, (-1, 1))
         bbox_stds = [1.0, 1.0, 1.0, 1.0]
@@ -104,8 +102,8 @@ function detect_faces(
             bbox_deltas[(begin:end, end:4:3)+1] * bbox_stds[3]
         bbox_deltas[(begin:end, end:4:4)+1] =
             bbox_deltas[(begin:end, end:4:4)+1] * bbox_stds[4]
-        proposals = bbox_pred(anchors, bbox_deltas)
-        proposals = clip_boxes(proposals, im_info[begin:2])
+        proposals = postprocess.bbox_pred(anchors, bbox_deltas)
+        proposals = postprocess.clip_boxes(proposals, im_info[begin:2])
         if s == 4 && decay4 < 1.0
             scores *= decay4
         end
@@ -119,7 +117,7 @@ function detect_faces(
         landmark_deltas = net_out[sym_idx+3]
         landmark_pred_len = landmark_deltas.shape[4] ÷ A
         landmark_deltas = reshape(landmark_deltas, (-1, 5, landmark_pred_len ÷ 5))
-        landmarks = landmark_pred(anchors, landmark_deltas)
+        landmarks = postprocess.landmark_pred(anchors, landmark_deltas)
         landmarks = landmarks[(order, begin:end)+1]
         landmarks[(begin:end, begin:end, 1:2)+1] /= im_scale
         push!(landmarks_list, landmarks)
@@ -127,8 +125,8 @@ function detect_faces(
     end
     proposals = vstack(np, proposals_list)
     if proposals.shape[1] == 0
-        landmarks = zeros(np, (0, 5, 2))
-        return (zeros(np, (0, 5)), landmarks)
+        landmarks = zeros(Float64, (0, 5, 2))
+        return (zeros(Float64, (0, 5)), landmarks)
     end
     scores = vstack(np, scores_list)
     scores_ravel = ravel(scores)
@@ -136,9 +134,10 @@ function detect_faces(
     proposals = proposals[(order, begin:end)+1]
     scores = scores[order+1]
     landmarks = vstack(np, landmarks_list)
-    landmarks = astype(landmarks[order+1], np.float32, false)
-    pre_det = astype(hstack(np, (proposals[(begin:end, 1:4)+1], scores)), np.float32, false)
-    keep = cpu_nms(pre_det, nms_threshold)
+    landmarks = astype(landmarks[order+1], np.float32, copy = false)
+    pre_det =
+        astype(np.hstack((proposals[(begin:end, 1:4)+1], scores)), np.float32, copy = false)
+    keep = postprocess.cpu_nms(pre_det, nms_threshold)
     det = hstack(np, (pre_det, proposals[(begin:end, 5:end)+1]))
     det = det[(keep, begin:end)+1]
     landmarks = landmarks[keep+1]
@@ -181,7 +180,8 @@ function extract_faces(
                 nose = landmarks["nose"]
                 mouth_right = landmarks["mouth_right"]
                 mouth_left = landmarks["mouth_left"]
-                facial_img = alignment_procedure(facial_img, right_eye, left_eye, nose)
+                facial_img =
+                    postprocess.alignment_procedure(facial_img, right_eye, left_eye, nose)
             end
             push!(resp, facial_img[(begin:end, begin:end, end:-1:begin)+1])
         end

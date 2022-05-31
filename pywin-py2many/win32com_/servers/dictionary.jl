@@ -38,99 +38,121 @@ using win32com_.server: util, policy
 using win32com_.server.exception: COMException
 import winerror
 
-
 using pythoncom: DISPATCH_METHOD, DISPATCH_PROPERTYGET
 using winerror: S_OK
 abstract type AbstractDictionaryPolicy <: policy.BasicWrapPolicy end
 mutable struct DictionaryPolicy <: AbstractDictionaryPolicy
-_obj_
-_com_interfaces_::Vector
-_name_to_dispid_::Dict{String, Any}
-_reg_clsid_::String
-_reg_desc_::String
-_reg_policy_spec_::String
-_reg_progid_::String
-_reg_verprogid_::String
+    _obj_
+    _com_interfaces_::Vector
+    _name_to_dispid_::Dict{String, Any}
+    _reg_clsid_::String
+    _reg_desc_::String
+    _reg_policy_spec_::String
+    _reg_progid_::String
+    _reg_verprogid_::String
 end
 function _CreateInstance_(self::AbstractDictionaryPolicy, clsid, reqIID)
-_wrap_(self, Dict())
-return pythoncom.WrapObject(self, reqIID)
+    _wrap_(self, Dict())
+    return pythoncom.WrapObject(self, reqIID)
 end
 
 function _wrap_(self::AbstractDictionaryPolicy, ob)
-self._obj_ = ob
+    self._obj_ = ob
 end
 
-function _invokeex_(self::AbstractDictionaryPolicy, dispid, lcid, wFlags, args, kwargs, serviceProvider)::Int64
-if dispid == 0
-l = length(args)
-if l < 1
-throw(COMException(desc = "not enough parameters", scode = winerror.DISP_E_BADPARAMCOUNT))
-end
-key = args[1]
-if type_(key) ∉ [str, str]
-throw(COMException(desc = "Key must be a string", scode = winerror.DISP_E_TYPEMISMATCH))
-end
-key = lower(key)
-if wFlags & __or__(DISPATCH_METHOD, DISPATCH_PROPERTYGET)
-if l > 1
-throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
-end
-try
-return self._obj_[key + 1]
-catch exn
-if exn isa KeyError
-return nothing
-end
-end
-end
-if l != 2
-throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
-end
-if args[2] === nothing
-try
-#Delete Unsupported
-del(self._obj_)
-catch exn
-if exn isa KeyError
-#= pass =#
-end
-end
-else
-self._obj_[key + 1] = args[2]
-end
-return S_OK
-end
-if dispid == 1
-if !(__and__(wFlags, DISPATCH_PROPERTYGET))
-throw(COMException(scode = winerror.DISP_E_MEMBERNOTFOUND))
-end
-if length(args) != 0
-throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
-end
-return length(self._obj_)
-end
-if dispid == pythoncom.DISPID_NEWENUM
-return util.NewEnum(collect(keys(self._obj_)))
-end
-throw(COMException(scode = winerror.DISP_E_MEMBERNOTFOUND))
+function _invokeex_(
+    self::AbstractDictionaryPolicy,
+    dispid,
+    lcid,
+    wFlags,
+    args,
+    kwargs,
+    serviceProvider,
+)::Int64
+    if dispid == 0
+        l = length(args)
+        if l < 1
+            throw(
+                COMException(
+                    desc = "not enough parameters",
+                    scode = winerror.DISP_E_BADPARAMCOUNT,
+                ),
+            )
+        end
+        key = args[1]
+        if type_(key) ∉ [str, str]
+            throw(
+                COMException(
+                    desc = "Key must be a string",
+                    scode = winerror.DISP_E_TYPEMISMATCH,
+                ),
+            )
+        end
+        key = lower(key)
+        if wFlags & __or__(DISPATCH_METHOD, DISPATCH_PROPERTYGET)
+            if l > 1
+                throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
+            end
+            try
+                return self._obj_[key+1]
+            catch exn
+                if exn isa KeyError
+                    return nothing
+                end
+            end
+        end
+        if l != 2
+            throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
+        end
+        if args[2] === nothing
+            try
+                #Delete Unsupported
+                del(self._obj_)
+            catch exn
+                if exn isa KeyError
+                    #= pass =#
+                end
+            end
+        else
+            self._obj_[key+1] = args[2]
+        end
+        return S_OK
+    end
+    if dispid == 1
+        if !(__and__(wFlags, DISPATCH_PROPERTYGET))
+            throw(COMException(scode = winerror.DISP_E_MEMBERNOTFOUND))
+        end
+        if length(args) != 0
+            throw(COMException(scode = winerror.DISP_E_BADPARAMCOUNT))
+        end
+        return length(self._obj_)
+    end
+    if dispid == pythoncom.DISPID_NEWENUM
+        return util.NewEnum(collect(keys(self._obj_)))
+    end
+    throw(COMException(scode = winerror.DISP_E_MEMBERNOTFOUND))
 end
 
 function _getidsofnames_(self::AbstractDictionaryPolicy, names, lcid)
-name = lower(names[1])
-try
-return (self._name_to_dispid_[name + 1],)
-catch exn
-if exn isa KeyError
-throw(COMException(scode = winerror.DISP_E_MEMBERNOTFOUND, desc = "Member not found"))
-end
-end
+    name = lower(names[1])
+    try
+        return (self._name_to_dispid_[name+1],)
+    catch exn
+        if exn isa KeyError
+            throw(
+                COMException(
+                    scode = winerror.DISP_E_MEMBERNOTFOUND,
+                    desc = "Member not found",
+                ),
+            )
+        end
+    end
 end
 
 function Register()
-return UseCommandLine(DictionaryPolicy)
+    return UseCommandLine(DictionaryPolicy)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-Register()
+    Register()
 end

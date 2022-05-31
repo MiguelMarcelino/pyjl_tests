@@ -1,11 +1,11 @@
-import numpy as np
+
 using PIL: Image
 
 import cv2
 function findEuclideanDistance(source_representation, test_representation)::Any
     euclidean_distance = source_representation - test_representation
-    euclidean_distance = sum(np, multiply(np, euclidean_distance, euclidean_distance))
-    euclidean_distance = sqrt(np, euclidean_distance)
+    euclidean_distance = sum(repeat(euclidean_distance, euclidean_distance))
+    euclidean_distance = √(euclidean_distance)
     return euclidean_distance
 end
 
@@ -14,22 +14,28 @@ function alignment_procedure(img, left_eye, right_eye, nose)
     right_eye_x, right_eye_y = right_eye
     center_eyes = (Int((left_eye_x + right_eye_x) / 2), Int((left_eye_y + right_eye_y) / 2))
     if false
-        img = circle(
+        img = cv2.circle(
             img,
             (parse(Int, left_eye[1]), parse(Int, left_eye[2])),
             2,
             (0, 255, 255),
             2,
         )
-        img = circle(
+        img = cv2.circle(
             img,
             (parse(Int, right_eye[1]), parse(Int, right_eye[2])),
             2,
             (255, 0, 0),
             2,
         )
-        img = circle(img, center_eyes, 2, (0, 0, 255), 2)
-        img = circle(img, (parse(Int, nose[1]), parse(Int, nose[2])), 2, (255, 255, 255), 2)
+        img = cv2.circle(img, center_eyes, 2, (0, 0, 255), 2)
+        img = cv2.circle(
+            img,
+            (parse(Int, nose[1]), parse(Int, nose[2])),
+            2,
+            (255, 255, 255),
+            2,
+        )
     end
     if left_eye_y > right_eye_y
         point_3rd = (right_eye_x, left_eye_y)
@@ -38,22 +44,22 @@ function alignment_procedure(img, left_eye, right_eye, nose)
         point_3rd = (left_eye_x, right_eye_y)
         direction = 1
     end
-    a = findEuclideanDistance(array(np, left_eye), array(np, point_3rd))
-    b = findEuclideanDistance(array(np, right_eye), array(np, point_3rd))
-    c = findEuclideanDistance(array(np, right_eye), array(np, left_eye))
+    a = findEuclideanDistance(Vector{Float64}(left_eye), Vector{Float64}(point_3rd))
+    b = findEuclideanDistance(Vector{Float64}(right_eye), Vector{Float64}(point_3rd))
+    c = findEuclideanDistance(Vector{Float64}(right_eye), Vector{Float64}(left_eye))
     if b != 0 && c != 0
         cos_a = ((b * b + c * c) - a * a) / 2 * b * c
         cos_a = min(1.0, max(-1.0, cos_a))
-        angle = arccos(np, cos_a)
+        angle = acos(cos_a)
         angle = angle * 180 / math.pi
-        if direction === -1
+        if direction == -1
             angle = 90 - angle
         end
-        img = fromarray(img)
-        img = array(np, rotate(img, direction * angle))
+        img = Image.fromarray(img)
+        img = Vector{Float64}(rotate(img, direction * angle))
         if center_eyes[2] > nose[2]
-            img = fromarray(img)
-            img = array(np, rotate(img, 180))
+            img = Image.fromarray(img)
+            img = Vector{Float64}(rotate(img, 180))
         end
     end
     return img
@@ -61,9 +67,9 @@ end
 
 function bbox_pred(boxes, box_deltas)
     if boxes.shape[1] == 0
-        return zeros(np, (0, box_deltas.shape[2]))
+        return zeros(Float64, (0, box_deltas.shape[2]))
     end
-    boxes = astype(boxes, np.float64, false)
+    boxes = astype(boxes, np.float64, copy = false)
     widths = (boxes[(begin:end, 2)+1] - boxes[(begin:end, 0)+1]) + 1.0
     heights = (boxes[(begin:end, 3)+1] - boxes[(begin:end, 1)+1]) + 1.0
     ctr_x = boxes[(begin:end, 0)+1] + 0.5 * (widths - 1.0)
@@ -74,9 +80,9 @@ function bbox_pred(boxes, box_deltas)
     dh = box_deltas[(begin:end, 4:4)+1]
     pred_ctr_x = dx * widths[(begin:end, np.newaxis)+1] + ctr_x[(begin:end, np.newaxis)+1]
     pred_ctr_y = dy * heights[(begin:end, np.newaxis)+1] + ctr_y[(begin:end, np.newaxis)+1]
-    pred_w = exp(np, dw) * widths[(begin:end, np.newaxis)+1]
-    pred_h = exp(np, dh) * heights[(begin:end, np.newaxis)+1]
-    pred_boxes = zeros(np, box_deltas.shape)
+    pred_w = [ℯ^i for i in dw] * widths[(begin:end, np.newaxis)+1]
+    pred_h = [ℯ^i for i in dh] * heights[(begin:end, np.newaxis)+1]
+    pred_boxes = zeros(Float64, box_deltas.shape)
     pred_boxes[(begin:end, 1:1)+1] = pred_ctr_x - 0.5 * (pred_w - 1.0)
     pred_boxes[(begin:end, 2:2)+1] = pred_ctr_y - 0.5 * (pred_h - 1.0)
     pred_boxes[(begin:end, 3:3)+1] = pred_ctr_x + 0.5 * (pred_w - 1.0)
@@ -89,9 +95,9 @@ end
 
 function landmark_pred(boxes, landmark_deltas)
     if boxes.shape[1] == 0
-        return zeros(np, (0, landmark_deltas.shape[2]))
+        return zeros(Float64, (0, landmark_deltas.shape[2]))
     end
-    boxes = astype(boxes, np.float, false)
+    boxes = astype(boxes, np.float, copy = false)
     widths = (boxes[(begin:end, 2)+1] - boxes[(begin:end, 0)+1]) + 1.0
     heights = (boxes[(begin:end, 3)+1] - boxes[(begin:end, 1)+1]) + 1.0
     ctr_x = boxes[(begin:end, 0)+1] + 0.5 * (widths - 1.0)
@@ -129,7 +135,7 @@ function anchors_plane(height, width, stride, base_anchors)::Any
         (1, width, A, 1),
     )
     all_anchors =
-        concatenate(np, [c_0_2, c_1_3, c_0_2, c_1_3], -1) * stride + tile(
+        concatenate(np, [c_0_2, c_1_3, c_0_2, c_1_3], axis = -1) * stride + tile(
             np,
             base_anchors[(np.newaxis, np.newaxis, begin:end, begin:end)+1],
             (height, width, 1, 1),
@@ -146,7 +152,7 @@ function cpu_nms(dets, threshold)::Vector
     areas = ((x2 - x1) + 1) * ((y2 - y1) + 1)
     order = argsort(scores)[end:-1:begin]
     ndets = dets.shape[1]
-    suppressed = zeros(np, ndets, parse(Int, np))
+    suppressed = zeros(np.int, ndets)
     keep = []
     for _i = 0:ndets-1
         i = order[_i+1]
