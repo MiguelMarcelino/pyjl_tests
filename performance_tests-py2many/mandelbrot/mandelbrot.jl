@@ -34,8 +34,8 @@ function pixels(y, n, abs)
 end
 
 function compute_row(p)
-    y, n = p
-    result = Vector{UInt8}([pixels(y, n, abs) for _ in (0:(n+7)÷8)])
+    (y, n) = p
+    result = Vector{UInt8}([pixels(y, n, abs) for _ in (0:n+7÷8)])
     result[end] = result[end] & 255 << (8 - (n % 8))
     return (y, result)
 end

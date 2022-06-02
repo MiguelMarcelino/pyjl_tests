@@ -15,7 +15,7 @@ function started_process(target, args)
 end
 
 @resumable function lock_pair(pre_lock = nothing, post_lock = nothing, locks = nothing)
-    pre, post = locks ? (locks) : ((pre_lock, post_lock))
+    (pre, post) = locks ? (locks) : ((pre_lock, post_lock))
     if pre
         acquire(pre)
     end
@@ -161,8 +161,8 @@ function random_selection(header, alphabet, n, width, seed, locks = nothing)
     im = 139968.0
     ia = 3877.0
     ic = 29573.0
-    probabilities, table = cumulative_probabilities(alphabet, im)
-    if !(locks)
+    (probabilities, table) = cumulative_probabilities(alphabet, im)
+    if !locks
         lcg_lookup_fast(probabilities, seed, im, ia, ic) do prng
             output = Vector{UInt8}([prng for _ in (0:n)])
         end
@@ -191,7 +191,7 @@ function random_selection(header, alphabet, n, width, seed, locks = nothing)
             end
         end
     else
-        pre_seed, post_seed, pre_write, post_write = locks
+        (pre_seed, post_seed, pre_write, post_write) = locks
         m = n > (width * 15) ? (length(Sys.cpu_info()) * 3) : (1)
         partitions = [(n ÷ width * m) * width * i for i = 1:m-1]
         processes = []

@@ -5,9 +5,9 @@ using ResumableFunctions
     count = Vector{UInt8}(n)
     remainder = start
     for v = -1:-1:n-1
-        count[v+1], remainder = div(remainder)
+        (count[v+1], remainder) = div(remainder)
         for _ = 0:count[v+1]-1
-            p[begin:v], p[v+1] = (p[2:v+1], p[1])
+            (p[begin:v], p[v+1]) = (p[2:v+1], p[1])
         end
     end
     @assert(count[2] == 0)
@@ -19,7 +19,7 @@ using ResumableFunctions
         for i = 1:n-1
             r = collect(0:n-1)
             for v = 1:i
-                r[begin:v], r[v+1] = (r[2:v+1], r[1])
+                (r[begin:v], r[v+1]) = (r[2:v+1], r[1])
             end
             swaps = []
             for (dst, src) in enumerate(r)
@@ -31,7 +31,7 @@ using ResumableFunctions
         end
         while true
             @yield p[begin:end]
-            p[1], p[2] = (p[2], p[1])
+            (p[1], p[2]) = (p[2], p[1])
             @yield p[begin:end]
             i = 2
             has_break = false
@@ -60,7 +60,7 @@ end
             while true
                 permutation[begin:first+1] = permutation[end:-1:first+1]
                 first = permutation[1]
-                if !(first)
+                if !first
                     break
                 end
                 flips_count += 1
@@ -72,7 +72,7 @@ end
         else
             @yield 0
         end
-        alternating_factor = -(alternating_factor)
+        alternating_factor = -alternating_factor
     end
     @yield maximum_flips
 end
@@ -84,14 +84,14 @@ end
 
 function fannkuch(n)
     if n < 0
-        for data in (permutations(-(n), 0, factorial(-(n))) for _ in (0:factorial(-(n))))
+        for data in (permutations(-n, 0, factorial(-n)) for _ in (0:factorial(-n)))
             println(join(map((n) -> string(n + 1), data), ""))
         end
     else
         @assert(n > 0)
         task_size = factorial(n)
-        checksums, maximums = zip(task(n, 0, task_size))
-        checksum, maximum = (sum(checksums), max(maximums))
+        (checksums, maximums) = zip(task(n, 0, task_size))
+        (checksum, maximum) = (sum(checksums), max(maximums))
         println("$(checksum)\nPfannkuchen($(n)) = $(maximum)")
     end
 end

@@ -1,8 +1,8 @@
 
 function sieve(n)
     primes = ones(Float64, n)
-    primes[1], primes[2] = (false, false)
-    for i = 2:Int(√(n) + 1)-1
+    (primes[1], primes[2]) = (false, false)
+    for i = 2:Int(sqrt(n) + 1)-1
         if primes[i+1]
             primes[end:i:i*i+1] = false
         end

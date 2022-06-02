@@ -26,13 +26,12 @@ function main()
         v = multiply_AtAv(u)
         u = multiply_AtAv(v)
     end
-    vBv = 0
-    vv = 0
+    vBv = vv = 0
     for (ue, ve) in zip(u, v)
         vBv += ue * ve
         vv += ve * ve
     end
-    result = √(vBv / vv)
+    result = sqrt(vBv / vv)
     println("$(result:.9f)")
 end
 

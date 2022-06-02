@@ -98,7 +98,7 @@ function offset_momentum(ref, bodies = SYSTEM, px = 0.0, py = 0.0, pz = 0.0)
         py -= vy * m
         pz -= vz * m
     end
-    r, v, m = ref
+    (r, v, m) = ref
     v[1] = px / m
     v[2] = py / m
     v[3] = pz / m

@@ -57,7 +57,7 @@ PAIRS = combinations(SYSTEM)
 function advance(dt, n, bodies = SYSTEM, pairs = PAIRS)
     for i = 0:n-1
         for j = 0:length(pairs)-1
-            (x1, y1, z1, v11, v12, v13, m1), (x2, y2, z2, v21, v22, v23, m2) = pairs[j+1]
+            ((x1, y1, z1, v11, v12, v13, m1), (x2, y2, z2, v21, v22, v23, m2)) = pairs[j+1]
             dx = x1 - x2
             dy = y1 - y2
             dz = z1 - z2

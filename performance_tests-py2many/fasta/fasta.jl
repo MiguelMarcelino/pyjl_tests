@@ -55,7 +55,7 @@ function randomFasta(table, n::Int64)
     gR = Random
     bb = bisect_right
     jn = x -> join(x, "")
-    probs, chars = makeCumulative(table)
+    (probs, chars) = makeCumulative(table)
     for j = 0:n÷width-1
         x = jn([chars[bb(probs, gR())] for i in r])
         println(x)
