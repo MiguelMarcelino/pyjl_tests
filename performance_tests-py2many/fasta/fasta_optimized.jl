@@ -1,6 +1,5 @@
 using BisectPy
 using ResumableFunctions
-# using Continuables
 
 alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 iub = collect(
@@ -15,19 +14,7 @@ homosapiens = [
     ("g", 0.1975473066391),
     ("t", 0.3015094502008),
 ]
-# genRandom(ia::Int64 = 3877, ic::Int64 = 29573, im::Int64 = 139968) = @cont begin 
-#     seed = 42
-#     imf = float(im)
-#     while true
-#         seed = (seed * ia + ic) % im
-#         cont(seed / imf)
-#     end
-# end
-@resumable function genRandom(
-    ia::Int64 = 3877,
-    ic::Int64 = 29573,
-    im::Int64 = 139968,
-)::Float64
+@resumable function genRandom(ia = 3877, ic = 29573, im = 139968)
     seed = 42
     imf = float(im)
     while true
@@ -38,8 +25,8 @@ end
 
 Random = genRandom()
 function makeCumulative(
-    table::Vector{Tuple{String, Float64}},
-)::Tuple{Vector{Float64}, Vector{String}}
+    table::Vector{Tuple{String,Float64}},
+)::Tuple{Vector{Float64},Vector{String}}
     P::Vector{Float64} = []
     C::Vector{String} = []
     prob = 0.0
@@ -64,13 +51,13 @@ function repeatFasta(src::String, n::Int64)
     end
 end
 
-function randomFasta(table::Vector{Tuple{String, Float64}}, n::Int64)
+function randomFasta(table, n::Int64)
     width = 60
     r = (0:width-1)
     gR = Random
     bb = bisect_right
     jn = x -> join(x, "")
-    probs::Vector{Float64}, chars::Vector{String} = makeCumulative(table)
+    probs, chars = makeCumulative(table)
     for j in (0:n÷width-1)
         x = jn([chars[bb(probs, gR())] for i in r])
         println(x)

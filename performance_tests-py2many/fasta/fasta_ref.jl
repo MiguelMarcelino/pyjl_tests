@@ -5,6 +5,7 @@ https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
 Contributed by Adam Beckmeyer. Based on Drake Diedrich's C implementation #9
 =#
 
+
 const LINESIZE = 60
 const BUFFERLINES = 1000
 
@@ -131,12 +132,11 @@ end
 function fasta(n, io = stdout)
     write(io, ">ONE Homo sapiens alu\n")
     repeat_fasta(io, alu, 2n)
-
     write(io, ">TWO IUB ambiguity codes\n")
     random_fasta(io, lookup_table(iub, iub_prob), 3n)
     write(io, ">THREE Homo sapiens frequency\n")
     random_fasta(io, lookup_table(homosapiens, homosapiens_prob), 5n)
 end
 
-isinteractive() || @time fasta(1000000)
-# fasta(parse(Int,ARGS[1]))
+
+isinteractive() || fasta(parse(Int,ARGS[1]))
