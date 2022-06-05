@@ -12,6 +12,6 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @assert(tan(0) == 0)
     @assert(sin(deg2rad(30)) == 0.49999999999999994)
     @assert(cos(deg2rad(30)) == 0.8660254037844387)
-    @assert(tan(deg2rad(30)) == (√(3) / 3))
+    @assert(tan(deg2rad(30)) == (sqrt(3) / 3))
     @assert(round(12.556, digits = 2) == 12.56)
 end

@@ -5,7 +5,7 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     @assert(true)
-    @assert(!(false))
+    @assert(!false)
     compare_assert(1, 1)
     @assert(true)
     @assert(true)

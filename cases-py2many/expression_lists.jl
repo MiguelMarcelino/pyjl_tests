@@ -11,7 +11,7 @@ function expression_list()
 end
 
 function starred_item()
-    a, b..., c = 0:5
+    (a, b..., c) = 0:5
     @assert(a == 0)
     @assert(b == [1, 2, 3, 4])
     @assert(c == 5)

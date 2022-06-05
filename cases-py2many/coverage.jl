@@ -22,8 +22,7 @@ end
 
 function show()
     a1 = 10
-    b1 = 15
-    b2 = 15
+    b1 = b2 = 15
     @assert(b1 == 15)
     @assert(b2 == 15)
     b9 = 2
@@ -42,7 +41,7 @@ function show()
         push!(res, i)
     end
     @assert(res == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2, 4, 6, 8, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    a3 = -(a1)
+    a3 = -a1
     @assert(a3 == -10)
     a4 = a3 + a1
     @assert(a4 == 0)
@@ -52,7 +51,7 @@ function show()
     @assert(sum1 == 45)
     a5 = [1, 2, 3]
     println(length(a5))
-    a9::Vector{String} = ["a", "b", "c", "d"]
+    a9 = ["a", "b", "c", "d"]
     @assert(length(a9) == 4)
     @assert(a9 == ["a", "b", "c", "d"])
     a6 = Set([1, 2, 3, 4])
@@ -68,8 +67,8 @@ function show()
     @assert(a7["a"] == 1)
     @assert(a7["b"] == 2)
     a8 = true
-    a9 = false
-    @assert(a8 == true)
+    a10 = false
+    @assert(a10 == true)
     @assert(a9 == false)
     if true
         a1 += 1
@@ -101,7 +100,7 @@ function show()
     _escape_quotes = " foo \"bar\" baz "
     @assert(findfirst("bbc", "aaabbccc") != Nothing)
     2
-    _c1, _c2 = (1, 3)
+    (_c1, _c2) = (1, 3)
     (_c3, _, _c4) = [1, 2, 3]
     @assert(_c1 == 1)
     @assert(_c2 == 3)
