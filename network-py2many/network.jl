@@ -9,13 +9,12 @@ using backpropagation.  Note that I have focused on making the code
 simple, easily readable, and easily modifiable.  It is not optimized,
 and omits many desirable features.
  =#
-using LinearAlgebra
 using Random
 
 abstract type AbstractNetwork end
 mutable struct Network <: AbstractNetwork
-    sizes
     num_layers::Int64
+    sizes
     biases
     weights
 
@@ -41,7 +40,7 @@ end
 function feedforward(self::AbstractNetwork, a)
     #= Return the output of the network if ``a`` is input. =#
     for (b, w) in zip(self.biases, self.weights)
-        a = sigmoid(LinearAlgebra.dot(w, a) + b)
+        a = sigmoid((w .* a) + b)
     end
     return a
 end
@@ -51,7 +50,7 @@ function SGD(
     training_data,
     epochs,
     mini_batch_size,
-    eta;
+    eta,
     test_data = nothing,
 )
     #= Train the neural network using mini-batch stochastic
@@ -64,7 +63,7 @@ function SGD(
             tracking progress, but slows things down substantially. =#
     training_data = collect(training_data)
     n = length(training_data)
-    if test_data !== nothing
+    if test_data
         test_data = collect(test_data)
         n_test = length(test_data)
     end
@@ -87,8 +86,8 @@ function update_mini_batch(self::AbstractNetwork, mini_batch, eta)
             gradient descent using backpropagation to a single mini batch.
             The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
             is the learning rate. =#
-    nabla_b = [zeros(Float64, size(b)) for b in self.biases]
-    nabla_w = [zeros(Float64, size(w)) for w in self.weights]
+    nabla_b = [zeros(Float64, b.shape) for b in self.biases]
+    nabla_w = [zeros(Float64, w.shape) for w in self.weights]
     for (x, y) in mini_batch
         (delta_nabla_b, delta_nabla_w) = backprop(self, x, y)
         nabla_b = [nb + dnb for (nb, dnb) in zip(nabla_b, delta_nabla_b)]
@@ -105,26 +104,26 @@ function backprop(self::AbstractNetwork, x, y)::Tuple
             gradient for the cost function C_x.  ``nabla_b`` and
             ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
             to ``self.biases`` and ``self.weights``. =#
-    nabla_b = [zeros(Float64, size(b)) for b in self.biases]
-    nabla_w = [zeros(Float64, size(w)) for w in self.weights]
+    nabla_b = [zeros(Float64, b.shape) for b in self.biases]
+    nabla_w = [zeros(Float64, w.shape) for w in self.weights]
     activation = x
     activations = [x]
     zs = []
     for (b, w) in zip(self.biases, self.weights)
-        z = LinearAlgebra.dot(w, activation) + b
+        z = (w .* activation) + b
         push!(zs, z)
         activation = sigmoid(z)
         push!(activations, activation)
     end
     delta = cost_derivative(self, activations[end], y) * sigmoid_prime(zs[end])
     nabla_b[end] = delta
-    nabla_w[end] = LinearAlgebra.dot(delta, transpose(activations[end-1]))
+    nabla_w[end] = (delta .* transpose(activations[end-1]))
     for l = 2:self.num_layers-1
         z = zs[-l+1]
         sp = sigmoid_prime(z)
-        delta = LinearAlgebra.dot(transpose(self.weights[-l+2]), delta) * sp
+        delta = (transpose(self.weights[-l+2]) .* delta) * sp
         nabla_b[-l+1] = delta
-        nabla_w[-l+1] = LinearAlgebra.dot(delta, transpose(activations[-l]))
+        nabla_w[-l+1] = (delta .* transpose(activations[-l]))
     end
     return (nabla_b, nabla_w)
 end
@@ -146,7 +145,7 @@ end
 
 function sigmoid(z)::Float64
     #= The sigmoid function. =#
-    return 1.0 / (1.0 + [ℯ^i for i in -z])
+    return 1.0 / (1.0 + ℯ .^ -z)
 end
 
 function sigmoid_prime(z)::Float64
