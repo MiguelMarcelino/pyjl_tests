@@ -37,7 +37,7 @@ function main(requested_max_depth, min_depth = 4)
                         pool,
                         run,
                         repeat([(test_depth,)...], tree_count),
-                        tree_count ÷ length(Sys.cpu_info()) + 1,
+                        (tree_count ÷ length(Sys.cpu_info())) + 1,
                     ),
                 )
                 println(

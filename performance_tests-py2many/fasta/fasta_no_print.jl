@@ -22,8 +22,8 @@ function genRandom(ia::Int64 = 3877, ic::Int64 = 29573, im::Int64 = 139968)
 end
 
 function makeCumulative(
-    table::Vector{Tuple{String,Float64}},
-)::Tuple{Vector{Float64},Vector{String}}
+    table::Vector{Tuple{String, Float64}},
+)::Tuple{Vector{Float64}, Vector{String}}
     P::Vector{Float64} = []
     C::Vector{String} = []
     prob = 0.0
@@ -77,6 +77,5 @@ function main()
     write(stdout, ">THREE Homo sapiens frequency\n")
     randomFasta(homosapiens, n * 5)
 end
-
 
 main()

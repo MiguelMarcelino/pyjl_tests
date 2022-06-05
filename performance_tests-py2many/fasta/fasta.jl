@@ -24,7 +24,7 @@ homosapiens = [
 end
 
 Random = genRandom()
-function makeCumulative(table)::Tuple
+function makeCumulative(table)
     P = []
     C = []
     prob = 0.0
@@ -40,28 +40,28 @@ function repeatFasta(src::String, n::Int64)
     width = 60
     r = length(src)
     s = src * src * src[begin:n%r]
-    for j in (0:n÷width-1)
+    for j = 0:n÷width-1
         i = j * width % r
-        println(s[(i+1):i+width])
+        println(s[i+1:i+width])
     end
     if (n % width) != 0
-        println(s[(length(s)-n%width+1):end])
+        println(s[length(s):end])
     end
 end
 
 function randomFasta(table, n::Int64)
     width = 60
-    r = (0:width-1)
+    r = 0:width-1
     gR = Random
     bb = bisect_right
     jn = x -> join(x, "")
-    probs, chars = makeCumulative(table)
-    for j in (0:n÷width-1)
+    (probs, chars) = makeCumulative(table)
+    for j = 0:n÷width-1
         x = jn([chars[bb(probs, gR())] for i in r])
         println(x)
     end
     if (n % width) != 0
-        println(jn([chars[bb(probs, gR())] for i in (0:n%width-1)]))
+        println(jn([chars[bb(probs, gR())] for i = 0:n%width-1]))
     end
 end
 

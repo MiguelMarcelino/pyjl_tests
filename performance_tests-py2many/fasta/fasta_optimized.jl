@@ -25,8 +25,8 @@ end
 
 Random = genRandom()
 function makeCumulative(
-    table::Vector{Tuple{String,Float64}},
-)::Tuple{Vector{Float64},Vector{String}}
+    table::Vector{Tuple{String, Float64}},
+)::Tuple{Vector{Float64}, Vector{String}}
     P::Vector{Float64} = []
     C::Vector{String} = []
     prob = 0.0

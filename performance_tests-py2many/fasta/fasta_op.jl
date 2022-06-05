@@ -23,15 +23,14 @@ const alu = Vector{UInt8}(
 const iub = collect(
     zip(
         Vector{UInt8}(string("acgtBDHKMNRSVWY")),
-        append!([0.27, 0.12, 0.12, 0.27], repeat([0.02], 11))
-    )
+        append!([0.27, 0.12, 0.12, 0.27], repeat([0.02], 11)),
+    ),
 )
 const homosapiens = collect(
     zip(
-        Vector{UInt8}(string("acgt")), 
-        [0.302954942668, 0.1979883004921, 
-            0.1975473066391, 0.3015094502008]
-    )
+        Vector{UInt8}(string("acgt")),
+        [0.302954942668, 0.1979883004921, 0.1975473066391, 0.3015094502008],
+    ),
 )
 
 const SEED = Ref(42 % UInt32)

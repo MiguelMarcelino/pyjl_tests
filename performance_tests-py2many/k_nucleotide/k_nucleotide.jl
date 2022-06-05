@@ -34,7 +34,7 @@ end
 function count_frequencies(sequence, reading_frames, i, j)
     frames = tuple(sorted([frame for (frame, _) in reading_frames], reverse = true))
     frequences_mask_list =
-        tuple(((defaultdict(int), 1 << repeat([frame...], 2) - 1) for frame in frames)...)
+        tuple(((defaultdict(int), (1 << repeat([frame...], 2)) - 1) for frame in frames)...)
     frame = frames[1]
     (frequences, mask) = frequences_mask_list[1]
     short_frame_frequences = frequences_mask_list[2:end]
@@ -80,7 +80,7 @@ function count_frequencies(sequence, reading_frames, i, j)
     if length(short_frame_frequences) != 0
         bits = 0
         if i == 0
-            for k = i:i+frame-2
+            for k = i:(i+frame)-2
                 bits = bits * 4 + sequence[k+1]
                 for (t, (f, m)) in enumerate(short_frame_frequences)
                     if ((k - i) + 1) >= frames[t+1]
@@ -89,7 +89,7 @@ function count_frequencies(sequence, reading_frames, i, j)
                 end
             end
         else
-            for k = i-frame+1:i-1
+            for k = (i-frame)+1:i-1
                 bits = bits * 4 + sequence[k+1]
             end
         end

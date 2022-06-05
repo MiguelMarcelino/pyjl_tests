@@ -5,7 +5,6 @@ https://salsa.debian.org/benchmarksgame-team/benchmarksgame/
 Contributed by Adam Beckmeyer. Based on Drake Diedrich's C implementation #9
 =#
 
-
 const LINESIZE = 60
 const BUFFERLINES = 1000
 
@@ -138,5 +137,4 @@ function fasta(n, io = stdout)
     random_fasta(io, lookup_table(homosapiens, homosapiens_prob), 5n)
 end
 
-
-isinteractive() || fasta(parse(Int,ARGS[1]))
+isinteractive() || fasta(parse(Int, ARGS[1]))
