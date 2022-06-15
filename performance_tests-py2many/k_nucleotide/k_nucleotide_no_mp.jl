@@ -12,6 +12,7 @@ end
 mutable struct lean_call <: Abstractlean_call
     func
 end
+
 function __call__(self::Abstractlean_call, lean_key, reading_frames, i, j)::Vector
     global lean_buffer
     sequence = lean_buffer[lean_key]
@@ -31,10 +32,10 @@ function __call__(self::Abstractlean_call, lean_key, reading_frames, i, j)::Vect
     return lean_results
 end
 
-function count_frequencies(sequence::Vector{Int8}, reading_frames, i, j)
+function count_frequencies(sequence::bytearray{Any}, reading_frames, i, j)
     frames = tuple(sorted([frame for (frame, _) in reading_frames], reverse = true))
     frequences_mask_list =
-        tuple(((defaultdict(int), (1 << repeat([frame...], 2)) - 1) for frame in frames)...)
+        tuple(((defaultdict(int), (1 << 2 * frame) - 1) for frame in frames)...)
     frame = frames[1]
     (frequences, mask) = frequences_mask_list[1]
     short_frame_frequences = frequences_mask_list[2:end]
@@ -59,7 +60,7 @@ function count_frequencies(sequence::Vector{Int8}, reading_frames, i, j)
         worklist = sequence[i+1:min(j + 1, length(sequence))]
         overlaps = []
         for v in (n + m for n in mono_nucleotides for m in mono_nucleotides)
-            bits = append!(repeat(v[1], 4), v[2])
+            bits = v[1] * 4 + v[2]
             freq[bits+1] = count(worklist, v)
             if v[2:end] == v[begin:1]
                 push!(overlaps, (v, bits, append!(v[begin:1], v)))

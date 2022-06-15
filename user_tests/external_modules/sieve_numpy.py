@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def sieve(n):
     primes = np.ones(n, dtype=bool)
     primes[0], primes[1] = False, False

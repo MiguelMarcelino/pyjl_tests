@@ -2,10 +2,11 @@ using tempfile: NamedTemporaryFile
 using textwrap: wrap
 abstract type AbstractFileOp end
 mutable struct FileOp <: AbstractFileOp
+    file
     file_name
     method
-    file
 end
+
 function __enter__(self::AbstractFileOp)
     self.file = open(self.file_name, self.method)
     return self.file

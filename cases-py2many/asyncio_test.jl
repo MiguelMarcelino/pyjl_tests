@@ -6,20 +6,6 @@ end
     @assert(wait(nested()) == 42)
     println("OK")
 end
-@async function echo_server()
-    server = listen(2001)
-    while true
-        sock = wait(accept(server))
-        @async function writer()
-            while isopen(sock)
-                data = wait(readline(sock))
-                wait(write(sock, upper(data)))
-            end
-        end
-        wait(writer())
-    end
-end
 if abspath(PROGRAM_FILE) == @__FILE__
     asyncio.run(async_main())
-    asyncio.run(echo_server())
 end

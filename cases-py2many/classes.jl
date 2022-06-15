@@ -19,6 +19,7 @@ end
 mutable struct Person <: AbstractPerson
     name::String
 end
+
 function get_name(self::AbstractPerson)::String
     return self.name
 end
@@ -27,7 +28,10 @@ mutable struct Student <: AbstractStudent
     name::String
     student_number::Int64
     domain::String
+    Student(name::String, student_number::Int64, domain::String = "school.student.pt") =
+        new(name, student_number, domain)
 end
+
 function get_name(self::AbstractStudent)
     return "$(self.name) - $(self.student_number)"
 end

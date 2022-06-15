@@ -13,8 +13,8 @@ using Random
 
 abstract type AbstractNetwork end
 mutable struct Network <: AbstractNetwork
-    num_layers::Int64
     sizes
+    num_layers::Int64
     biases
     weights
 
@@ -37,6 +37,7 @@ mutable struct Network <: AbstractNetwork
         new(sizes, num_layers, biases, weights)
     end
 end
+
 function feedforward(self::AbstractNetwork, a)
     #= Return the output of the network if ``a`` is input. =#
     for (b, w) in zip(self.biases, self.weights)

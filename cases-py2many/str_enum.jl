@@ -1,10 +1,6 @@
 
 abstract type AbstractColors <: str end
-@enum Colors::String begin
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-end
+@enum Colors::String begin end
 function show()
     color_map = Dict(Colors.RED => "1", Colors.GREEN => "2", Colors.BLUE => "3")
     a = Colors.GREEN
