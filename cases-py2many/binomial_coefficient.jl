@@ -1,4 +1,4 @@
-function binomialCoef(n::Int64, k::Int64)
+function binomialCoef(n::Int64, k::Int64)::Int64
     C = [[0 for x = 0:k] for x = 0:n]
     for i = 0:n
         for j = 0:min(i, k)

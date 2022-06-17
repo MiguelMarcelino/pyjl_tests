@@ -1,5 +1,3 @@
-using PyCall
-datetime = pyimport("datetime")
 
 import JSON as js
 function typing_test()::Int64

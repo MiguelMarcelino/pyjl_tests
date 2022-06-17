@@ -15,6 +15,7 @@ and omits many desirable features.
 #### Libraries
 # Standard library
 import random
+from typing import List, Optional
 
 # Third-party libraries
 import numpy as np
@@ -22,7 +23,7 @@ import numpy as np
 # Changed
 class Network(object):
 
-    def __init__(self, sizes):
+    def __init__(self, sizes: List[int]):
         """The list ``sizes`` contains the number of neurons in the
         respective layers of the network.  For example, if the list
         was [2, 3, 1] then it would be a three-layer network, with the
@@ -35,18 +36,18 @@ class Network(object):
         ever used in computing the outputs from later layers."""
         self.num_layers = len(sizes)
         self.sizes = sizes
-        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
-        self.weights = [np.random.randn(y, x)
+        self.biases: List[np.ndarray] = [np.random.randn(y, 1) for y in sizes[1:]]
+        self.weights: List[np.ndarray] = [np.random.randn(y, x)
                         for x, y in zip(sizes[:-1], sizes[1:])]
 
-    def feedforward(self, a):
+    def feedforward(self, a: np.ndarray):
         """Return the output of the network if ``a`` is input."""
         for b, w in zip(self.biases, self.weights):
             a = sigmoid(np.dot(w, a)+b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta,
-            test_data=None):
+    def SGD(self, training_data: List, epochs: int, mini_batch_size: int, eta: float,
+            test_data:Optional[list]=None):
         """Train the neural network using mini-batch stochastic
         gradient descent.  The ``training_data`` is a list of tuples
         ``(x, y)`` representing the training inputs and the desired
@@ -75,7 +76,7 @@ class Network(object):
             else:
                 print("Epoch {} complete".format(j))
 
-    def update_mini_batch(self, mini_batch, eta):
+    def update_mini_batch(self, mini_batch: List[tuple], eta: float):
         """Update the network's weights and biases by applying
         gradient descent using backpropagation to a single mini batch.
         The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
@@ -91,7 +92,7 @@ class Network(object):
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
 
-    def backprop(self, x, y):
+    def backprop(self, x: np.ndarray, y: np.ndarray):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
         gradient for the cost function C_x.  ``nabla_b`` and
         ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
@@ -126,7 +127,7 @@ class Network(object):
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
-    def evaluate(self, test_data):
+    def evaluate(self, test_data: list):
         """Return the number of test inputs for which the neural
         network outputs the correct result. Note that the neural
         network's output is assumed to be the index of whichever
@@ -135,16 +136,16 @@ class Network(object):
                         for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)
 
-    def cost_derivative(self, output_activations, y):
+    def cost_derivative(self, output_activations: np.ndarray, y: np.ndarray):
         """Return the vector of partial derivatives \partial C_x /
         \partial a for the output activations."""
         return (output_activations-y)
 
 #### Miscellaneous functions
-def sigmoid(z):
+def sigmoid(z: np.ndarray) -> np.ndarray:
     """The sigmoid function."""
     return 1.0/(1.0+np.exp(-z))
 
-def sigmoid_prime(z):
+def sigmoid_prime(z: np.ndarray) -> np.ndarray:
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))

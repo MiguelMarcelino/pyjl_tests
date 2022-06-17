@@ -2,7 +2,7 @@ function something()::String
     return "test"
 end
 
-function lookup_and_write(values::list{Any})
+function lookup_and_write(values::Vector)
     output = nothing
     if length(values) == 1
         output = values[1]
@@ -16,7 +16,7 @@ function lookup_and_write(values::list{Any})
     return output
 end
 
-function lookup_and_write_without_else(values::list{Any})
+function lookup_and_write_without_else(values::Vector)
     output = nothing
     if length(values) == 1
         output = values[1]

@@ -38,8 +38,7 @@ mutable struct aug_test4 <: Abstractaug_test4
     aug_test4(__iadd__ = nothing) = new(__iadd__)
 end
 
-mutable struct testall <: Abstracttestall
-end
+mutable struct testall <: Abstracttestall end
 function __add__(self, val)
     push!(output, "__add__ called")
 end
@@ -213,8 +212,7 @@ function __ilshift__(self, val)
     return self
 end
 
-mutable struct AugAssignTest <: AbstractAugAssignTest
-end
+mutable struct AugAssignTest <: AbstractAugAssignTest end
 function testBasic(self)
     x = 2
     x += 1

@@ -1,6 +1,6 @@
 using ResumableFunctions
 
-@resumable function permutations(n, start, size)
+@resumable function permutations(n::Int64, start::Int64, size::Int64)
     p = Vector{UInt8}(0:n-1)
     count = Vector{UInt8}(n)
     remainder = start
@@ -15,7 +15,7 @@ using ResumableFunctions
     if size < 2
         @yield p[begin:end]
     else
-        rotation_swaps = [nothing] * n
+        rotation_swaps = repeat([nothing], n)
         for i = 1:n-1
             r = collect(0:n-1)
             for v = 1:i
@@ -50,10 +50,11 @@ using ResumableFunctions
     end
 end
 
-@resumable function alternating_flips_generator(n, start, size)
+@resumable function alternating_flips_generator(n::Int64, start::Int64, size::Int64)
     maximum_flips = 0
     alternating_factor = 1
-    for permutation in (permutations(n, start, size) for _ in (0:size))
+    permutations_ = permutations(n, start, size)
+    for permutation in (permutations_() for _ in (0:size))
         first = permutation[1]
         if first
             flips_count = 1
@@ -77,12 +78,12 @@ end
     @yield maximum_flips
 end
 
-function task(n, start, size)::Tuple
+function task(n::Int64, start::Int64, size::Int64)::Tuple
     alternating_flips = alternating_flips_generator(n, start, size)
     return (sum((alternating_flips for _ in (0:size))), alternating_flips())
 end
 
-function fannkuch(n)
+function fannkuch(n::Int64)
     if n < 0
         for data in (permutations(-n, 0, factorial(-n)) for _ in (0:factorial(-n)))
             println(join(map((n) -> string(n + 1), data), ""))

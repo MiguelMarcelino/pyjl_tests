@@ -32,7 +32,7 @@ function __call__(self::Abstractlean_call, lean_key, reading_frames, i, j)::Vect
     return lean_results
 end
 
-function count_frequencies(sequence::bytearray{Any}, reading_frames, i, j)
+function count_frequencies(sequence::Vector{Int8}, reading_frames, i, j)
     frames = tuple(sorted([frame for (frame, _) in reading_frames], reverse = true))
     frequences_mask_list =
         tuple(((defaultdict(int), (1 << 2 * frame) - 1) for frame in frames)...)

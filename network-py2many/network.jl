@@ -9,20 +9,23 @@ using backpropagation.  Note that I have focused on making the code
 simple, easily readable, and easily modifiable.  It is not optimized,
 and omits many desirable features.
  =#
+using LinearAlgebra
 using Random
 
 abstract type AbstractNetwork end
 mutable struct Network <: AbstractNetwork
-    sizes
+    sizes::Vector{Int64}
     num_layers::Int64
     biases
     weights
 
     Network(
-        sizes,
+        sizes::Vector{Int64},
         num_layers = length(sizes),
-        biases = [randn(y, 1) for y in sizes[2:end]],
-        weights = [randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])],
+        biases::Vector{Vector} = [randn(y, 1) for y in sizes[2:end]],
+        weights::Vector{Vector} = [
+            randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])
+        ],
     ) = begin
         #= The list ``sizes`` contains the number of neurons in the
         respective layers of the network.  For example, if the list
@@ -38,21 +41,21 @@ mutable struct Network <: AbstractNetwork
     end
 end
 
-function feedforward(self::AbstractNetwork, a)
+function feedforward(self::AbstractNetwork, a::Vector)::Vector
     #= Return the output of the network if ``a`` is input. =#
     for (b, w) in zip(self.biases, self.weights)
-        a = sigmoid((w .* a) + b)
+        a = sigmoid((w .* a) .+ b)
     end
     return a
 end
 
 function SGD(
     self::AbstractNetwork,
-    training_data,
-    epochs,
-    mini_batch_size,
-    eta,
-    test_data = nothing,
+    training_data::Vector,
+    epochs::Int64,
+    mini_batch_size::Int64,
+    eta::Float64,
+    test_data::Union{Vector, Nothing} = nothing,
 )
     #= Train the neural network using mini-batch stochastic
             gradient descent.  The ``training_data`` is a list of tuples
@@ -64,7 +67,7 @@ function SGD(
             tracking progress, but slows things down substantially. =#
     training_data = collect(training_data)
     n = length(training_data)
-    if test_data
+    if test_data !== nothing
         test_data = collect(test_data)
         n_test = length(test_data)
     end
@@ -74,21 +77,23 @@ function SGD(
         for mini_batch in mini_batches
             update_mini_batch(self, mini_batch, eta)
         end
-        if test_data
-            println("Epoch $(j) : $(evaluate(self, test_data)) / $(n_test)")
+        if test_data !== nothing
+            println(
+                "Epoch $(j) : $(evaluate(self, convert(Vector, test_data))) / $(n_test)",
+            )
         else
             println("Epoch $(j) complete")
         end
     end
 end
 
-function update_mini_batch(self::AbstractNetwork, mini_batch, eta)
+function update_mini_batch(self::AbstractNetwork, mini_batch::Vector{Tuple}, eta::Float64)
     #= Update the network's weights and biases by applying
             gradient descent using backpropagation to a single mini batch.
             The ``mini_batch`` is a list of tuples ``(x, y)``, and ``eta``
             is the learning rate. =#
-    nabla_b = [zeros(Float64, b.shape) for b in self.biases]
-    nabla_w = [zeros(Float64, w.shape) for w in self.weights]
+    nabla_b = [zeros(Float64, size(b)) for b in self.biases]
+    nabla_w = [zeros(Float64, size(w)) for w in self.weights]
     for (x, y) in mini_batch
         (delta_nabla_b, delta_nabla_w) = backprop(self, x, y)
         nabla_b = [nb + dnb for (nb, dnb) in zip(nabla_b, delta_nabla_b)]
@@ -100,36 +105,38 @@ function update_mini_batch(self::AbstractNetwork, mini_batch, eta)
         [b - (eta / length(mini_batch)) * nb for (b, nb) in zip(self.biases, nabla_b)]
 end
 
-function backprop(self::AbstractNetwork, x, y)::Tuple
+function backprop(self::AbstractNetwork, x::Vector, y::Vector)
     #= Return a tuple ``(nabla_b, nabla_w)`` representing the
             gradient for the cost function C_x.  ``nabla_b`` and
             ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
             to ``self.biases`` and ``self.weights``. =#
-    nabla_b = [zeros(Float64, b.shape) for b in self.biases]
-    nabla_w = [zeros(Float64, w.shape) for w in self.weights]
+    nabla_b = [zeros(Float64, size(b)) for b in self.biases]
+    nabla_w = [zeros(Float64, size(w)) for w in self.weights]
     activation = x
     activations = [x]
     zs = []
     for (b, w) in zip(self.biases, self.weights)
-        z = (w .* activation) + b
+        z = (w .* activation) .+ b
         push!(zs, z)
         activation = sigmoid(z)
         push!(activations, activation)
     end
-    delta = cost_derivative(self, activations[end], y) * sigmoid_prime(zs[end])
+    delta =
+        cost_derivative(self, convert(Vector, activations[end]), y) .*
+        sigmoid_prime(convert(Vector, zs[end]))
     nabla_b[end] = delta
-    nabla_w[end] = (delta .* transpose(activations[end-1]))
+    nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
         z = zs[-l+1]
         sp = sigmoid_prime(z)
-        delta = (transpose(self.weights[-l+2]) .* delta) * sp
+        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) .* sp
         nabla_b[-l+1] = delta
-        nabla_w[-l+1] = (delta .* transpose(activations[-l]))
+        nabla_w[-l+1] = (delta .* LinearAlgebra.transpose(activations[-l]))
     end
     return (nabla_b, nabla_w)
 end
 
-function evaluate(self::AbstractNetwork, test_data)
+function evaluate(self::AbstractNetwork, test_data::Vector)
     #= Return the number of test inputs for which the neural
             network outputs the correct result. Note that the neural
             network's output is assumed to be the index of whichever
@@ -138,18 +145,22 @@ function evaluate(self::AbstractNetwork, test_data)
     return sum((Int(x == y) for (x, y) in test_results))
 end
 
-function cost_derivative(self::AbstractNetwork, output_activations, y)::Any
+function cost_derivative(
+    self::AbstractNetwork,
+    output_activations::Vector,
+    y::Vector,
+)::Vector
     #= Return the vector of partial derivatives \partial C_x /
             \partial a for the output activations. =#
-    return output_activations - y
+    return output_activations .- y
 end
 
-function sigmoid(z)::Float64
+function sigmoid(z::Vector)::Vector
     #= The sigmoid function. =#
-    return 1.0 / (1.0 + ℯ .^ -z)
+    return 1.0 ./ (1.0 .+ ℯ .^ -z)
 end
 
-function sigmoid_prime(z)::Float64
+function sigmoid_prime(z::Vector)::Vector
     #= Derivative of the sigmoid function. =#
-    return sigmoid(z) * (1 - sigmoid(z))
+    return sigmoid(z) .* (1 .- sigmoid(z))
 end

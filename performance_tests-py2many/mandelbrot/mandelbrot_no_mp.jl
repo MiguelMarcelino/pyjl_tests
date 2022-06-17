@@ -1,7 +1,7 @@
 using ResumableFunctions
 using StringEncodings
 
-@resumable function pixels(y, n, abs)
+@resumable function pixels(y::Int64, n::Int64, abs)
     range7 = Vector{UInt8}(0:6)
     pixel_bits = Vector{UInt8}([128 >> pos for pos = 0:7])
     c1 = 2.0 / float(n)
@@ -31,7 +31,7 @@ using StringEncodings
     end
 end
 
-function compute_row(p)
+function compute_row(p::Tuple{Int64, Int64})
     (y, n) = p
     pixels_ = pixels(y, n, abs)
     result = Vector{UInt8}([pixels_() for _ in (0:(n+7)÷8)])
@@ -39,14 +39,14 @@ function compute_row(p)
     return (y, result)
 end
 
-@resumable function compute_rows(n, f)
+@resumable function compute_rows(n::Int64, f)
     row_jobs = ((y, n) for y = 0:n-1)
     for v in map(f, row_jobs)
         @yield v
     end
 end
 
-function mandelbrot(n)
+function mandelbrot(n::Int64)
     write = x -> Base.write(stdout, x)
     write(encode("P4\n$(n) $(n)\n", "UTF-8"))
     for row in compute_rows(n, compute_row)

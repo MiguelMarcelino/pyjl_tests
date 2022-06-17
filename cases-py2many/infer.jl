@@ -14,7 +14,7 @@ function fibonacci(n)::Int64
     end
 end
 
-function mul_list()
+function mul_list()::Vector
     a::Vector = []
     for i = 0:4
         push!(a, i)
@@ -32,7 +32,7 @@ function combinations(array)::Vector
     return result
 end
 
-function mul_recvd_list(a::Vector)
+function mul_recvd_list(a::Vector)::Vector
     for i = 0:length(a)-1
         push!(a, i)
     end

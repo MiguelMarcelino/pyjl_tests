@@ -168,7 +168,7 @@ function random_selection(header, alphabet, n, width, seed, locks = nothing)
         end
         lookup_and_write(header, probabilities, table, output, 0, n, width)
         lcg(seed, im, ia, ic) do prng
-            for (start, stop) in zip([0] + partitions, partitions + [n])
+            for (start, stop) in zip([0] .+ partitions, partitions .+ [n])
                 values = collect((prng for _ in (0:stop-start)))
                 post = stop < n ? (acquired_lock()) : (post_write)
                 push!(
@@ -239,7 +239,7 @@ function fasta(n)
             (seeded_2, nothing, written_2, nothing),
         ]
         processes = [
-            started_process(target, args + [locks_sets[i+1]]) for
+            started_process(target, args .+ [locks_sets[i+1]]) for
             (i, (target, args)) in enumerate(tasks)
         ]
         for p in processes

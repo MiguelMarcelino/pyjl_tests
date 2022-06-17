@@ -2,8 +2,7 @@
 using Test
 
 abstract type AbstractTestNumbers end
-mutable struct TestNumbers <: AbstractTestNumbers
-end
+mutable struct TestNumbers <: AbstractTestNumbers end
 function test_int(self)
     @test Int64 <: Integer
     @test (7 == Int(7).real)

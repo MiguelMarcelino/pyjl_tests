@@ -6,8 +6,6 @@ structures that are returned, see the doc strings for ``load_data``
 and ``load_data_wrapper``.  In practice, ``load_data_wrapper`` is the
 function usually called by our neural network code.
  =#
-using GZip
-using Pickle
 
 function load_data()::Tuple
     #= Return the MNIST data as a tuple containing the training data,
@@ -28,11 +26,11 @@ function load_data()::Tuple
         That's done in the wrapper function ``load_data_wrapper()``, see
         below.
          =#
-    f = GZip.open(
+    f = gzip.open(
         "/home/miguel/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz",
         "rb",
     )
-    (training_data, validation_data, test_data) = Pickle.load(f)
+    (training_data, validation_data, test_data) = pickle.load(f, encoding = "latin1")
     close(f)
     return (training_data, validation_data, test_data)
 end
@@ -66,7 +64,7 @@ function load_data_wrapper()::Tuple
     return (training_data, validation_data, test_data)
 end
 
-function vectorized_result(j)
+function vectorized_result(j)::Vector
     #= Return a 10-dimensional unit vector with a 1.0 in the jth
         position and zeroes elsewhere.  This is used to convert a digit
         (0...9) into a corresponding desired output from the neural
