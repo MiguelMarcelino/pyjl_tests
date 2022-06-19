@@ -57,20 +57,20 @@ function load_data_wrapper()::Tuple
         turn out to be the most convenient for use in our neural network
         code. =#
     (tr_d, va_d, te_d) = load_data()
-    tr_d_arr = array_or_arrays(tr_d[1])
-    va_d_arr = array_or_arrays(va_d[1])
-    te_d_arr = array_or_arrays(te_d[1])
+    tr_d_arr = array_of_arrays(tr_d[1])
+    va_d_arr = array_of_arrays(va_d[1])
+    te_d_arr = array_of_arrays(te_d[1])
 
     training_inputs = [reshape(x, (784, 1)) for x in tr_d_arr]
     training_results = [vectorized_result(y) for y in tr_d[2]]
-    # training_inputs = [array_or_arrays(reshape(x, (784, 1))) for x in tr_d_arr]
-    # training_results = [array_or_arrays(vectorized_result(y)) for y in tr_d[2]]
+    # training_inputs = [array_of_arrays(reshape(x, (784, 1))) for x in tr_d_arr]
+    # training_results = [array_of_arrays(vectorized_result(y)) for y in tr_d[2]]
     training_data = zip(training_inputs, training_results)
     validation_inputs = [reshape(x, (784, 1)) for x in va_d_arr]
-    # validation_inputs = [array_or_arrays(reshape(x, (784, 1))) for x in va_d_arr]
+    # validation_inputs = [array_of_arrays(reshape(x, (784, 1))) for x in va_d_arr]
     validation_data = zip(validation_inputs, va_d[2])
     test_inputs = [reshape(x, (784, 1)) for x in te_d_arr]
-    # test_inputs = [array_or_arrays(reshape(x, (784, 1))) for x in te_d_arr]
+    # test_inputs = [array_of_arrays(reshape(x, (784, 1))) for x in te_d_arr]
     test_data = zip(test_inputs, te_d[2])
     return (training_data, validation_data, test_data)
 end

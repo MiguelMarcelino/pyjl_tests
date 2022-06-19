@@ -35,8 +35,10 @@ def load_data():
     That's done in the wrapper function ``load_data_wrapper()``, see
     below.
     """
-    f = gzip.open("/home/miguel/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz", 'rb')
-    training_data, validation_data, test_data = pickle.load(f, encoding="latin1")
+    f = gzip.open("/home/miguel/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz", 'rb') 
+    # Hack to get type hint working
+    data = pickle.load(f, encoding="latin1") # type: numpy
+    training_data, validation_data, test_data = data
     f.close()
     return (training_data, validation_data, test_data)
 

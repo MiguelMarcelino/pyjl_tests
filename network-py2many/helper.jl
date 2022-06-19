@@ -1,5 +1,5 @@
 # Temp function:
-function array_or_arrays(matrix::Matrix)
+function array_of_arrays(matrix::Matrix)
     arr::Vector{Vector} = []
     row, col = size(matrix)
     for i = 0:row-1
