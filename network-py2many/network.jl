@@ -16,14 +16,14 @@ abstract type AbstractNetwork end
 mutable struct Network <: AbstractNetwork
     sizes::Vector{Int64}
     num_layers::Int64
-    biases
-    weights
+    biases::Vector{np.ndarray}, Vector{np.ndarray}
+    weights::Vector{np.ndarray}, Vector{np.ndarray}
 
     Network(
         sizes::Vector{Int64},
         num_layers = length(sizes),
-        biases::Vector{Vector} = [randn(y, 1) for y in sizes[2:end]],
-        weights::Vector{Vector} = [
+        biases::Vector{Matrix} = [randn(y, 1) for y in sizes[2:end]],
+        weights::Vector{Matrix} = [
             randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])
         ],
     ) = begin
@@ -41,10 +41,10 @@ mutable struct Network <: AbstractNetwork
     end
 end
 
-function feedforward(self::AbstractNetwork, a::Vector)::Vector
+function feedforward(self::AbstractNetwork, a::Matrix)::Matrix
     #= Return the output of the network if ``a`` is input. =#
     for (b, w) in zip(self.biases, self.weights)
-        a = sigmoid((w .* a) .+ b)
+        a = sigmoid((w .* a) + b)
     end
     return a
 end
@@ -78,9 +78,7 @@ function SGD(
             update_mini_batch(self, mini_batch, eta)
         end
         if test_data !== nothing
-            println(
-                "Epoch $(j) : $(evaluate(self, convert(Vector, test_data))) / $(n_test)",
-            )
+            println("Epoch $(j) : $(evaluate(self, convert(list, test_data))) / $(n_test)")
         else
             println("Epoch $(j) complete")
         end
@@ -105,7 +103,7 @@ function update_mini_batch(self::AbstractNetwork, mini_batch::Vector{Tuple}, eta
         [b - (eta / length(mini_batch)) * nb for (b, nb) in zip(self.biases, nabla_b)]
 end
 
-function backprop(self::AbstractNetwork, x::Vector, y::Vector)
+function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)
     #= Return a tuple ``(nabla_b, nabla_w)`` representing the
             gradient for the cost function C_x.  ``nabla_b`` and
             ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
@@ -113,23 +111,21 @@ function backprop(self::AbstractNetwork, x::Vector, y::Vector)
     nabla_b = [zeros(Float64, size(b)) for b in self.biases]
     nabla_w = [zeros(Float64, size(w)) for w in self.weights]
     activation = x
-    activations = [x]
-    zs = []
+    activations::Vector{Matrix} = [x]
+    zs::Vector{Matrix} = []
     for (b, w) in zip(self.biases, self.weights)
-        z = (w .* activation) .+ b
+        z = (w .* activation) + b
         push!(zs, z)
         activation = sigmoid(z)
         push!(activations, activation)
     end
-    delta =
-        cost_derivative(self, convert(Vector, activations[end]), y) .*
-        sigmoid_prime(convert(Vector, zs[end]))
+    delta = cost_derivative(self, activations[end], y) .* sigmoid_prime(zs[end])
     nabla_b[end] = delta
     nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
         z = zs[-l+1]
         sp = sigmoid_prime(z)
-        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) .* sp
+        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) * sp
         nabla_b[-l+1] = delta
         nabla_w[-l+1] = (delta .* LinearAlgebra.transpose(activations[-l]))
     end
@@ -147,20 +143,20 @@ end
 
 function cost_derivative(
     self::AbstractNetwork,
-    output_activations::Vector,
-    y::Vector,
-)::Vector
+    output_activations::Matrix,
+    y::Matrix,
+)::Matrix
     #= Return the vector of partial derivatives \partial C_x /
             \partial a for the output activations. =#
-    return output_activations .- y
+    return output_activations - y
 end
 
-function sigmoid(z::Vector)::Vector
+function sigmoid(z::Matrix)::Matrix
     #= The sigmoid function. =#
     return 1.0 ./ (1.0 .+ ℯ .^ -z)
 end
 
-function sigmoid_prime(z::Vector)::Vector
+function sigmoid_prime(z::Matrix)::Matrix
     #= Derivative of the sigmoid function. =#
     return sigmoid(z) .* (1 .- sigmoid(z))
 end

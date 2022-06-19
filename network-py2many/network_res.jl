@@ -23,9 +23,7 @@ mutable struct Network <: AbstractNetwork
         sizes::Vector{Int64},
         num_layers = length(sizes),
         biases = [randn(y, 1) for y in sizes[2:end]],
-        weights = [
-            randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])
-        ],
+        weights = [randn(y, x) for (x, y) in zip(sizes[begin:end-1], sizes[2:end])],
     ) = begin
         #= The list ``sizes`` contains the number of neurons in the
         respective layers of the network.  For example, if the list
@@ -121,9 +119,7 @@ function backprop(self::AbstractNetwork, x, y)
         activation = sigmoid(z)
         push!(activations, activation)
     end
-    delta =
-        cost_derivative(self, activations[end], y) .*
-        sigmoid_prime(zs[end])
+    delta = cost_derivative(self, activations[end], y) .* sigmoid_prime(zs[end])
     nabla_b[end] = delta
     nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
@@ -148,14 +144,10 @@ function evaluate(self::AbstractNetwork, test_data::Vector)
     return sum((Int(x[1] == y + 1) for (x, y) in test_results))
 end
 
-function cost_derivative(
-    self::AbstractNetwork,
-    output_activations,
-    y,
-)
+function cost_derivative(self::AbstractNetwork, output_activations, y)
     #= Return the vector of partial derivatives \partial C_x /
             \partial a for the output activations. =#
-    return output_activations .- y
+    return output_activations - y
 end
 
 function sigmoid(z)

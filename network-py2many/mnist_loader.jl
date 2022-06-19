@@ -38,7 +38,7 @@ function load_data()::Tuple
     return (training_data, validation_data, test_data)
 end
 
-function load_data_wrapper()::Tuple
+function load_data_wrapper()
     #= Return a tuple containing ``(training_data, validation_data,
         test_data)``. Based on ``load_data``, but the format is more
         convenient for use in our implementation of neural networks.
@@ -67,7 +67,7 @@ function load_data_wrapper()::Tuple
     return (training_data, validation_data, test_data)
 end
 
-function vectorized_result(j)::Vector
+function vectorized_result(j)::numpy.ndarray
     #= Return a 10-dimensional unit vector with a 1.0 in the jth
         position and zeroes elsewhere.  This is used to convert a digit
         (0...9) into a corresponding desired output from the neural

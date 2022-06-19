@@ -1,5 +1,5 @@
-include("mnist_loader_res.jl")
-include("network_res.jl")
+include("mnist_loader.jl")
+include("network.jl")
 (training_data, validation_data, test_data) = load_data_wrapper()
 training_data = collect(training_data)
 net = Network([784, 30, 10])
