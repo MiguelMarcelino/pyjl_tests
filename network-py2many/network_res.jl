@@ -76,9 +76,7 @@ function SGD(
             update_mini_batch(self, mini_batch, eta)
         end
         if test_data !== nothing
-            println(
-                "Epoch $(j) : $(evaluate(self, convert(Vector, test_data))) / $(n_test)",
-            )
+            println("Epoch $(j) : $(evaluate(self, test_data)) / $(n_test)")
         else
             println("Epoch $(j) complete")
         end

@@ -78,7 +78,7 @@ function SGD(
             update_mini_batch(self, mini_batch, eta)
         end
         if test_data !== nothing
-            println("Epoch $(j) : $(evaluate(self, convert(list, test_data))) / $(n_test)")
+            println("Epoch $(j) : $(evaluate(self, test_data)) / $(n_test)")
         else
             println("Epoch $(j) complete")
         end
@@ -121,13 +121,13 @@ function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)
     end
     delta = cost_derivative(self, activations[end], y) .* sigmoid_prime(zs[end])
     nabla_b[end] = delta
-    nabla_w[end] = (delta * LinearAlgebra.transpose(activations[end-1]))
+    nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
         z = zs[-l+1]
         sp = sigmoid_prime(z)
-        delta = (LinearAlgebra.transpose(self.weights[-l+2]) * delta) .* sp
+        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) .* sp
         nabla_b[-l+1] = delta
-        nabla_w[-l+1] = (delta * LinearAlgebra.transpose(activations[-l]))
+        nabla_w[-l+1] = (delta .* LinearAlgebra.transpose(activations[-l]))
     end
     return (nabla_b, nabla_w)
 end
