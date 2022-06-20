@@ -44,7 +44,7 @@ end
 function feedforward(self::AbstractNetwork, a::Matrix)::Matrix
     #= Return the output of the network if ``a`` is input. =#
     for (b, w) in zip(self.biases, self.weights)
-        a = sigmoid((w .* a) + b)
+        a = sigmoid((w * a) .+ b)
     end
     return a
 end
@@ -114,20 +114,20 @@ function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)
     activations::Vector{Matrix} = [x]
     zs::Vector{Matrix} = []
     for (b, w) in zip(self.biases, self.weights)
-        z = (w .* activation) + b
+        z = (w * activation) .+ b
         push!(zs, z)
         activation = sigmoid(z)
         push!(activations, activation)
     end
     delta = cost_derivative(self, activations[end], y) .* sigmoid_prime(zs[end])
     nabla_b[end] = delta
-    nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
+    nabla_w[end] = (delta * LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
         z = zs[-l+1]
         sp = sigmoid_prime(z)
-        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) * sp
+        delta = (LinearAlgebra.transpose(self.weights[-l+2]) * delta) .* sp
         nabla_b[-l+1] = delta
-        nabla_w[-l+1] = (delta .* LinearAlgebra.transpose(activations[-l]))
+        nabla_w[-l+1] = (delta * LinearAlgebra.transpose(activations[-l]))
     end
     return (nabla_b, nabla_w)
 end
@@ -148,7 +148,7 @@ function cost_derivative(
 )::Matrix
     #= Return the vector of partial derivatives \partial C_x /
             \partial a for the output activations. =#
-    return output_activations - y
+    return output_activations .- y
 end
 
 function sigmoid(z::Matrix)::Matrix
