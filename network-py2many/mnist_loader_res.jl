@@ -29,6 +29,8 @@ function load_data()::Tuple
         That's done in the wrapper function ``load_data_wrapper()``, see
         below.
         =#
+    # Windows: "C:/Users/Miguel Marcelino/Desktop/Tese/Repositories/pyjl_tests/network-py2many/mnist.pkl.gz"
+    # Linux: "/home/miguel/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz"
     f = GZip.open(
         "C:/Users/Miguel Marcelino/Desktop/Tese/Repositories/pyjl_tests/network-py2many/mnist.pkl.gz",
         "rb",

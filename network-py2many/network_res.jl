@@ -136,10 +136,12 @@ function evaluate(self::AbstractNetwork, test_data::Vector)
             network's output is assumed to be the index of whichever
             neuron in the final layer has the highest activation. =#
     test_results = [(argmax(feedforward(self, x)), y) for (x, y) in test_data]
-    # x is a CartesianIndex. In this case, CartesianIndex indexes the array using 
-    # CartesianIndex(row, column). As Python uses arrays of arrays and uses
-    # row-major order, we retrieve the row of the CartesianIndex as seen below
-    return sum((Int(x[1] == y + 1) for (x, y) in test_results))
+    # As argmax returns an index (not necessarily the first one) holding the maximum 
+    # value, x will be a CartesianIndex. In this case, we CartesianIndex(row, column). 
+    # As Python uses arrays of arrays and stores them along rows, we retrieve the 
+    # row of the CartesianIndex and decrease it by 1 to match Python's zero-based 
+    # indexing.
+    return sum((Int(x[1] - 1 == y) for (x, y) in test_results))
 end
 
 function cost_derivative(self::AbstractNetwork, output_activations, y)

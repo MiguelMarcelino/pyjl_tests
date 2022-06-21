@@ -65,6 +65,7 @@ class Network(object):
             n_test = len(test_data)
 
         for j in range(epochs):
+            # Update the mini-batches for the selected amount of epochs
             random.shuffle(training_data)
             mini_batches = [
                 training_data[k:k+mini_batch_size]
@@ -87,6 +88,11 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        # Update weights and biases
+        # w -> weight of the connection to the current neuron
+        # (eta/len(mini_batch) -> learning rate
+        # nb -> the updated nabla_biases and nabla_weights after 
+        # feedforward and backpropagation
         self.weights = [w-(eta/len(mini_batch))*nw
                         for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb
@@ -100,25 +106,42 @@ class Network(object):
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
+        # In this case, the activation function is the sigmoid function,
+        # which will normalize the values into a range from 0-1
         activation = x 
         activations: list[np.ndarray] = [x] # list to store all the activations, layer by layer
         zs: list[np.ndarray] = [] # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation)+b
             zs.append(z)
+            # The variable "activation" represents the output of the previous 
+            #   iteration (in this case a mini-batch)
+            # sigmoid((w x output[n-1]) + b) --> We sum b because...?
             activation = sigmoid(z)
             activations.append(activation)
         # backward pass
+        # After calculating the activations, we measure the difference
+        # between them and the stored unit vector (for a tuple (x, y), 
+        # y holds the unit vector with the correct digit for x). We then 
+        # multiply it by the derivative of the sigmoid function (at a given
+        # point) to measure the error. The goal is to get an error close
+        # to zero.
         delta = self.cost_derivative(activations[-1], y) * \
             sigmoid_prime(zs[-1])
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         # Note that the variable l in the loop below is used a little
-        # differently to the notation in Chapter 2 of the book.  Here,
+        # differently to the notation in Chapter 2 of the book. Here,
         # l = 1 means the last layer of neurons, l = 2 is the
         # second-last layer, and so on.  It's a renumbering of the
         # scheme in the book, used here to take advantage of the fact
         # that Python can use negative indices in lists.
+        ##########
+        # Above, we prepare the delta value for the first position to
+        # start propagating the error. Now, we do the same thing for 
+        # the remainder of nabla_biases and nabla_weights. Notice that 
+        # for the nabla weights we calculate the errors by using the 
+        # activations
         for l in range(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)
@@ -134,6 +157,7 @@ class Network(object):
         neuron in the final layer has the highest activation."""
         test_results = [(np.argmax(self.feedforward(x)), y)
                         for (x, y) in test_data]
+        print(test_data)
         return sum(int(x == y) for (x, y) in test_results)
 
     def cost_derivative(self, output_activations: np.ndarray, y: np.ndarray):
