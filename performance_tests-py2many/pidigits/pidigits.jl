@@ -15,7 +15,7 @@ function eliminate_Digit(d)
     num = num * 10
 end
 
-function next_Term(k)
+function next_term(k)
     global acc, den, num
     k2 = k * 2 + 1
     acc = acc + num * 2

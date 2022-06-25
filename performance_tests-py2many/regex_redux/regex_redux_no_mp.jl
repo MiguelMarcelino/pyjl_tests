@@ -34,7 +34,7 @@ function main()
     for (f, r) in collect(subst)
         seq = replace(seq, Regex(f) => SubstitutionString(r))
     end
-    println
+    println()
     println(ilen)
     println(clen)
     println(length(seq))
@@ -43,3 +43,4 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
 end
+main()

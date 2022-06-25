@@ -1,4 +1,5 @@
 using ResumableFunctions
+using StringEncodings
 
 @resumable function pixels(y, n, abs)
     range7 = Vector{UInt8}(0:6)
