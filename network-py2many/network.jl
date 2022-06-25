@@ -8,7 +8,7 @@ algorithm for a feedforward neural network.  Gradients are calculated
 using backpropagation.  Note that I have focused on making the code
 simple, easily readable, and easily modifiable.  It is not optimized,
 and omits many desirable features.
- =#
+=#
 using LinearAlgebra
 using Random
 
@@ -16,8 +16,8 @@ abstract type AbstractNetwork end
 mutable struct Network <: AbstractNetwork
     sizes::Vector{Int64}
     num_layers::Int64
-    biases::Vector{np.ndarray}, Vector{np.ndarray}
-    weights::Vector{np.ndarray}, Vector{np.ndarray}
+    biases
+    weights
 
     Network(
         sizes::Vector{Int64},
@@ -103,14 +103,14 @@ function update_mini_batch(self::AbstractNetwork, mini_batch::Vector{Tuple}, eta
         [b - (eta / length(mini_batch)) * nb for (b, nb) in zip(self.biases, nabla_b)]
 end
 
-function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)
+function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)::Tuple
     #= Return a tuple ``(nabla_b, nabla_w)`` representing the
             gradient for the cost function C_x.  ``nabla_b`` and
             ``nabla_w`` are layer-by-layer lists of numpy arrays, similar
             to ``self.biases`` and ``self.weights``. =#
     nabla_b = [zeros(Float64, size(b)) for b in self.biases]
     nabla_w = [zeros(Float64, size(w)) for w in self.weights]
-    activation = x
+    activation::Matrix = x
     activations::Vector{Matrix} = [x]
     zs::Vector{Matrix} = []
     for (b, w) in zip(self.biases, self.weights)
@@ -121,13 +121,13 @@ function backprop(self::AbstractNetwork, x::Matrix, y::Matrix)
     end
     delta = cost_derivative(self, activations[end], y) .* sigmoid_prime(zs[end])
     nabla_b[end] = delta
-    nabla_w[end] = (delta .* LinearAlgebra.transpose(activations[end-1]))
+    nabla_w[end] = (delta * LinearAlgebra.transpose(activations[end-1]))
     for l = 2:self.num_layers-1
-        z = zs[-l+1]
+        z = zs[end-l+1]
         sp = sigmoid_prime(z)
-        delta = (LinearAlgebra.transpose(self.weights[-l+2]) .* delta) .* sp
-        nabla_b[-l+1] = delta
-        nabla_w[-l+1] = (delta .* LinearAlgebra.transpose(activations[-l]))
+        delta = (LinearAlgebra.transpose(self.weights[end-l+2]) * delta) .* sp
+        nabla_b[end-l+1] = delta
+        nabla_w[end-l+1] = (delta * LinearAlgebra.transpose(activations[end-l]))
     end
     return (nabla_b, nabla_w)
 end
@@ -137,7 +137,7 @@ function evaluate(self::AbstractNetwork, test_data::Vector)
             network outputs the correct result. Note that the neural
             network's output is assumed to be the index of whichever
             neuron in the final layer has the highest activation. =#
-    test_results = [(argmax(feedforward(self, x)), y) for (x, y) in test_data]
+    test_results = [(argmax(feedforward(self, x)[:]) - 1, y) for (x, y) in test_data]
     return sum((Int(x == y) for (x, y) in test_results))
 end
 

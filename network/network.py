@@ -108,7 +108,7 @@ class Network(object):
         # feedforward
         # In this case, the activation function is the sigmoid function,
         # which will normalize the values into a range from 0-1
-        activation = x 
+        activation: np.ndarray = x 
         activations: list[np.ndarray] = [x] # list to store all the activations, layer by layer
         zs: list[np.ndarray] = [] # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
@@ -142,6 +142,8 @@ class Network(object):
         # the remainder of nabla_biases and nabla_weights. Notice that 
         # for the nabla weights we calculate the errors by using the 
         # activations
+        ##########
+        # Old for loop using negative indexing
         for l in range(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)
@@ -157,10 +159,9 @@ class Network(object):
         neuron in the final layer has the highest activation."""
         test_results = [(np.argmax(self.feedforward(x)), y)
                         for (x, y) in test_data]
-        print(test_data)
         return sum(int(x == y) for (x, y) in test_results)
 
-    def cost_derivative(self, output_activations: np.ndarray, y: np.ndarray):
+    def cost_derivative(self, output_activations: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Return the vector of partial derivatives \partial C_x /
         \partial a for the output activations."""
         return (output_activations-y)
