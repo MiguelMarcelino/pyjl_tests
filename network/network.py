@@ -142,8 +142,6 @@ class Network(object):
         # the remainder of nabla_biases and nabla_weights. Notice that 
         # for the nabla weights we calculate the errors by using the 
         # activations
-        ##########
-        # Old for loop using negative indexing
         for l in range(2, self.num_layers):
             z = zs[-l]
             sp = sigmoid_prime(z)

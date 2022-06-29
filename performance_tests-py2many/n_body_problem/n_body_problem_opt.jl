@@ -2,7 +2,6 @@ using Printf
 using Profile
 
 function combinations(l)::Vector
-    result = []
     # result = Tuple{eltype(l), eltype(l)}[]
     result::Vector{
         Tuple{

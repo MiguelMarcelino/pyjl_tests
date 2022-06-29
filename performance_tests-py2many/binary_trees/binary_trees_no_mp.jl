@@ -2,7 +2,7 @@
 function make_tree(depth::Int64)::Tuple
     #=  Trees or tuples, final leaves have None as values.  =#
     return depth == 0 ? ((nothing, nothing)) :
-           ((make_tree(depth - 1), make_tree(depth - 1)))
+           (make_tree(depth - 1), make_tree(depth - 1))
 end
 
 function check_node(left, right)::Int64
