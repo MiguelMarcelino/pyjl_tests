@@ -51,7 +51,7 @@ function add_two_lists()
         push!(a, i)
         push!(b, i)
     end
-    return append!(a, b)
+    return [a; b]
 end
 
 function and_op_int_and_int()::Int64

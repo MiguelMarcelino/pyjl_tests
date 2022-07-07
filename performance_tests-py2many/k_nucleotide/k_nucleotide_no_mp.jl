@@ -63,7 +63,7 @@ function count_frequencies(sequence::Vector{Int8}, reading_frames, i, j)
             bits = v[1] * 4 + v[2]
             freq[bits+1] = count(worklist, v)
             if v[2:end] == v[begin:1]
-                push!(overlaps, (v, bits, append!(v[begin:1], v)))
+                push!(overlaps, (v, bits, [v[begin:1]; v]))
             end
         end
         for (v, bits, pattern) in overlaps
@@ -177,20 +177,20 @@ function main()
     end
 
     function display_list(k_nucleotides)
-        return [(n, length(n), str_to_bits(convert(String, n))) for n in k_nucleotides]
+        return [(n, length(n), str_to_bits(convert(str, n))) for n in k_nucleotides]
     end
 
     sequence = read_sequence(stdin.buffer, b"THREE", translation)
     mono_nucleotides = ("G", "A", "T", "C")
     di_nucleotides = tuple((n * m for n in mono_nucleotides for m in mono_nucleotides)...)
     k_nucleotides = ("GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT")
-    reading_frames = append!(
+    reading_frames = [
         [
             (1, tuple(map(str_to_bits, mono_nucleotides))),
             (2, tuple(map(str_to_bits, di_nucleotides))),
-        ],
-        collect(map((s) -> (length(s), (str_to_bits(s),)), k_nucleotides)),
-    )
+        ]
+        collect(map((s) -> (length(s), (str_to_bits(s),)), k_nucleotides))
+    ]
     n = 1
     partitions = [length(sequence) * i ÷ n for i = 0:n]
     count_jobs = [

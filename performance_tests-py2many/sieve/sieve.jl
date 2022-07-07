@@ -13,5 +13,5 @@ function sieve(n::Int64)::Vector
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    sieve(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    sieve(parse(Int, ARGS[1]))
 end

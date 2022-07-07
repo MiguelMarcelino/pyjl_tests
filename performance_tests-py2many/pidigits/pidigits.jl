@@ -15,7 +15,7 @@ function eliminate_Digit(d)
     num = num * 10
 end
 
-function next_term(k)
+function next_Term(k)
     global acc, den, num
     k2 = k * 2 + 1
     acc = acc + num * 2
@@ -26,7 +26,7 @@ end
 
 function main()
     global tmp1, tmp2, acc, den, num
-    n = parse(Int, append!([PROGRAM_FILE], ARGS)[2])
+    n = parse(Int, ARGS[1])
     tmp1 = BigInt(0)
     tmp2 = BigInt(0)
     acc = BigInt(0)

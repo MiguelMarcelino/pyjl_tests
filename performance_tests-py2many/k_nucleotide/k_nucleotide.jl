@@ -63,7 +63,7 @@ function count_frequencies(sequence, reading_frames, i, j)
             bits = v[1] * 4 + v[2]
             freq[bits+1] = count(worklist, v)
             if v[2:end] == v[begin:1]
-                push!(overlaps, (v, bits, append!(v[begin:1], v)))
+                push!(overlaps, (v, bits, [v[begin:1]; v]))
             end
         end
         for (v, bits, pattern) in overlaps
@@ -184,13 +184,13 @@ function main()
     mono_nucleotides = ("G", "A", "T", "C")
     di_nucleotides = tuple((n * m for n in mono_nucleotides for m in mono_nucleotides)...)
     k_nucleotides = ("GGT", "GGTA", "GGTATT", "GGTATTTTAATT", "GGTATTTTAATTTATAGT")
-    reading_frames = append!(
+    reading_frames = [
         [
             (1, tuple(map(str_to_bits, mono_nucleotides))),
             (2, tuple(map(str_to_bits, di_nucleotides))),
-        ],
-        collect(map((s) -> (length(s), (str_to_bits(s),)), k_nucleotides)),
-    )
+        ]
+        collect(map((s) -> (length(s), (str_to_bits(s),)), k_nucleotides))
+    ]
     if length(sequence) > (128 * length(Sys.cpu_info()))
         n = length(Sys.cpu_info())
     else

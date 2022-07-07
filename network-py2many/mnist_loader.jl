@@ -29,7 +29,7 @@ function load_data()::Tuple
         below.
          =#
     f = GZip.open(
-        "/home/miguel/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz",
+        "C:/Users/Miguel Marcelino/Desktop/Tese/Repositories/pyjl_tests/network/mnist.pkl.gz",
         "rb",
     )
     data = Pickle.npyload(f)
@@ -67,7 +67,7 @@ function load_data_wrapper()
     return (training_data, validation_data, test_data)
 end
 
-function vectorized_result(j)::numpy.ndarray
+function vectorized_result(j)::Matrix
     #= Return a 10-dimensional unit vector with a 1.0 in the jth
         position and zeroes elsewhere.  This is used to convert a digit
         (0...9) into a corresponding desired output from the neural

@@ -39,7 +39,7 @@ function main()
     for (f, r) in collect(collect(subst))
         seq = replace(seq, Regex(f) => SubstitutionString(r))
     end
-    println
+    println()
     println(ilen)
     println(clen)
     println(length(seq))

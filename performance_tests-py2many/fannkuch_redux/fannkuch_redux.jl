@@ -56,7 +56,7 @@ function alternating_flips_generator(n::Int64, start::Int64, size::Int64)
     Channel() do ch_alternating_flips_generator
         maximum_flips = 0
         alternating_factor = 1
-        for permutation in (permutations(n, start, size) for _ in (0:size))
+        for permutation in (permutations(n, start, size) for _ in (1:size))
             first = permutation[1]
             if first
                 flips_count = 1
@@ -83,12 +83,12 @@ end
 
 function task(n::Int64, start::Int64, size::Int64)::Tuple
     alternating_flips = alternating_flips_generator(n, start, size)
-    return (sum((alternating_flips for _ in (0:size))), take!(alternating_flips))
+    return (sum((alternating_flips for _ in (1:size))), take!(alternating_flips))
 end
 
 function fannkuch(n::Int64)
     if n < 0
-        for data in (permutations(-n, 0, factorial(-n)) for _ in (0:factorial(-n)))
+        for data in (permutations(-n, 0, factorial(-n)) for _ in (1:factorial(-n)))
             println(join(map((n) -> string(n + 1), data), ""))
         end
     else

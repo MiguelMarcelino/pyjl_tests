@@ -8,7 +8,7 @@ algorithm for a feedforward neural network.  Gradients are calculated
 using backpropagation.  Note that I have focused on making the code
 simple, easily readable, and easily modifiable.  It is not optimized,
 and omits many desirable features.
-=#
+ =#
 using LinearAlgebra
 using Random
 
@@ -137,7 +137,7 @@ function evaluate(self::AbstractNetwork, test_data::Vector)
             network outputs the correct result. Note that the neural
             network's output is assumed to be the index of whichever
             neuron in the final layer has the highest activation. =#
-    test_results = [(argmax(feedforward(self, x)[:]) - 1, y) for (x, y) in test_data]
+    test_results = [(argmax(@view feedforward(self, x)[:]) - 1, y) for (x, y) in test_data]
     return sum((Int(x == y) for (x, y) in test_results))
 end
 

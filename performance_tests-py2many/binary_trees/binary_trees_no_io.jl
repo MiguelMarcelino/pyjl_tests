@@ -41,5 +41,5 @@ function main(requested_max_depth, min_depth = 4)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    main(parse(Int, ARGS[1]))
 end

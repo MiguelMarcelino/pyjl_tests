@@ -1,10 +1,11 @@
+using BisectPy
 using ResumableFunctions
 
 alu = "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGGGAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGACCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAATACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCAGCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGGAGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCCAGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
 iub = collect(
     zip(
         ["a", "c", "g", "t", "B", "D", "H", "K", "M", "N", "R", "S", "V", "W", "Y"],
-        append!([0.27, 0.12, 0.12, 0.27], repeat([0.02], 11)),
+        [[0.27, 0.12, 0.12, 0.27]; repeat([0.02], 11)],
     ),
 )
 homosapiens = [
@@ -23,14 +24,14 @@ homosapiens = [
 end
 
 Random = genRandom()
-function makeCumulative(table)
+function make_cumulative(table::Vector{Tuple{String, Float64}})
     P = []
     C = []
     prob = 0.0
     for (char, p) in table
         prob += p
-        P = append!(P, [prob])
-        C = append!(C, [char])
+        push!(P, prob)
+        push!(C, char)
     end
     return (P, C)
 end
@@ -51,10 +52,10 @@ end
 function randomFasta(table, n::Int64)
     width = 60
     r = 0:width-1
-    gR = Random
-    bb = bisect.bisect
+    gR = Random.__next__
+    bb = bisect_right
     jn = x -> join(x, "")
-    (probs, chars) = makeCumulative(table)
+    (probs, chars) = make_cumulative(table)
     for j = 0:n÷width-1
         x = jn([chars[bb(probs, gR())] for i in r])
         println(x)
@@ -65,7 +66,7 @@ function randomFasta(table, n::Int64)
 end
 
 function main()
-    n = parse(Int, append!([PROGRAM_FILE], ARGS)[2])
+    n = parse(Int, ARGS[1])
     println(">ONE Homo sapiens alu")
     repeatFasta(alu, n * 2)
     println(">TWO IUB ambiguity codes")

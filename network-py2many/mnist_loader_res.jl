@@ -70,7 +70,6 @@ function load_data_wrapper()::Tuple
     return (training_data, validation_data, test_data)
 end
 
-
 function vectorized_result(j)
     #= Return a 10-dimensional unit vector with a 1.0 in the jth
         position and zeroes elsewhere.  This is used to convert a digit

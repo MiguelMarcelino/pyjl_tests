@@ -1,7 +1,7 @@
 using BisectPy
 using ResumableFunctions
 
-write = stdout.buffer.write
+write = Base.write(stdout, stdout.buffer)
 function acquired_lock()
     lock = Lock()
     acquire(lock)
@@ -145,7 +145,7 @@ function lookup_and_write(
     width,
     locks = nothing,
 )
-    if isa(values, bytearray)
+    if isa(values, Vector{Int8})
         output = values
     else
         output = Vector{UInt8}()
@@ -164,12 +164,12 @@ function random_selection(header, alphabet, n, width, seed, locks = nothing)
     (probabilities, table) = cumulative_probabilities(alphabet, im)
     if !locks
         lcg_lookup_fast(probabilities, seed, im, ia, ic) do prng
-            output = Vector{UInt8}([prng for _ in (0:n)])
+            output = Vector{UInt8}([prng for _ in (1:n)])
         end
         lookup_and_write(header, probabilities, table, output, 0, n, width)
         lcg(seed, im, ia, ic) do prng
-            for (start, stop) in zip([0] .+ partitions, partitions .+ [n])
-                values = collect((prng for _ in (0:stop-start)))
+            for (start, stop) in zip([0] + partitions, partitions + [n])
+                values = collect((prng for _ in (1:stop-start)))
                 post = stop < n ? (acquired_lock()) : (post_write)
                 push!(
                     processes,
@@ -239,7 +239,7 @@ function fasta(n)
             (seeded_2, nothing, written_2, nothing),
         ]
         processes = [
-            started_process(target, args .+ [locks_sets[i+1]]) for
+            started_process(target, args + [locks_sets[i+1]]) for
             (i, (target, args)) in enumerate(tasks)
         ]
         for p in processes
@@ -249,5 +249,5 @@ function fasta(n)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    fasta(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    fasta(parse(Int, ARGS[1]))
 end

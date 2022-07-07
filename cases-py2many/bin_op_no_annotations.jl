@@ -34,7 +34,7 @@ function add_two_lists()::Vector
         push!(a, i)
         push!(b, i)
     end
-    return append!(a, b)
+    return [a; b]
 end
 
 function mult_int_and_bool()::Int64

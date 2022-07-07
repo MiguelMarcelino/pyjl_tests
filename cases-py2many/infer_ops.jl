@@ -65,11 +65,14 @@ function fadd1(x::Int8, y::Float64)::Float64
 end
 
 function show()
-    @assert(fadd1(convert(Int8, 6), 6.0) == 12)
-    @assert(add1(convert(Int8, 127), convert(Int8, 1)) == 128)
-    @assert(add2(convert(Int16, 32767), convert(Int16, 1)) == 32768)
-    @assert(add3(convert(Int32, 2147483647), convert(Int32, 1)) == 2147483648)
-    @assert(add4(9223372036854775807, 1) == 9223372036854775808)
+    @assert(fadd1(convert(c_int8, 6), 6.0) == 12)
+    @assert(add1(convert(c_int8, 127), convert(c_int8, 1)) == 128)
+    @assert(add2(convert(c_int16, 32767), convert(c_int16, 1)) == 32768)
+    @assert(add3(convert(c_int32, 2147483647), convert(c_int32, 1)) == 2147483648)
+    @assert(
+        add4(convert(c_int64, 9223372036854775807), convert(c_int64, 1)) ==
+        9223372036854775808
+    )
     println("OK")
 end
 

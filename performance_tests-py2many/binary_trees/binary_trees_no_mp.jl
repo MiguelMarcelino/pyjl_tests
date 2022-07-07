@@ -2,7 +2,7 @@
 function make_tree(depth::Int64)::Tuple
     #=  Trees or tuples, final leaves have None as values.  =#
     return depth == 0 ? ((nothing, nothing)) :
-           (make_tree(depth - 1), make_tree(depth - 1))
+           ((make_tree(depth - 1), make_tree(depth - 1)))
 end
 
 function check_node(left, right)::Int64
@@ -38,5 +38,5 @@ function main(requested_max_depth, min_depth = 4)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    main(parse(Int, append!([PROGRAM_FILE], ARGS)[2]))
+    main(parse(Int, ARGS[1]))
 end

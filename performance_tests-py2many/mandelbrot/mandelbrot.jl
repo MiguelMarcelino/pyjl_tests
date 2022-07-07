@@ -1,7 +1,7 @@
 using Distributed
 using StringEncodings
 
-function pixels(y::Int64, n::Int64, abs)
+function pixels(y, n, abs)
     Channel() do ch_pixels
         range7 = Vector{UInt8}(0:6)
         pixel_bits = Vector{UInt8}([128 >> pos for pos = 0:7])
@@ -19,6 +19,7 @@ function pixels(y::Int64, n::Int64, abs)
                         z = z * z + c
                     end
                     if abs(z) >= 2.0
+                        has_break = true
                         break
                     end
                 end
@@ -33,16 +34,16 @@ function pixels(y::Int64, n::Int64, abs)
     end
 end
 
-function compute_row(p::Tuple{Int64, Int64})
+function compute_row(p)
     (y, n) = p
-    result = Vector{UInt8}([pixels(y, n, abs) for _ in (0:(n+7)÷8)])
-    result[end] = result[end] & 255 << (8 - (n % 8))
+    result = Vector{UInt8}([pixels(y, n, abs) for _ in (1:(n+7)÷8)])
+    result[end] &= 255 << (8 - (n % 8))
     return (y, result)
 end
 
 function ordered_rows(rows, n)
     Channel() do ch_ordered_rows
-        order = [nothing] .* n
+        order = [nothing] * n
         i = 0
         j = n
         while i < length(order)
@@ -60,7 +61,7 @@ function ordered_rows(rows, n)
     end
 end
 
-function compute_rows(n::Int64, f)
+function compute_rows(n, f)
     Channel() do ch_compute_rows
         row_jobs = ((y, n) for y = 0:n-1)
         if length(Sys.cpu_info()) < 2
@@ -76,7 +77,7 @@ function compute_rows(n::Int64, f)
     end
 end
 
-function mandelbrot(n::Int64)
+function mandelbrot(n)
     write = x -> Base.write(stdout, x)
     compute_rows(n, compute_row) do rows
         write(encode("P4\n$(n) $(n)\n", "UTF-8"))
@@ -87,5 +88,5 @@ function mandelbrot(n::Int64)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    mandelbrot(20)
+    mandelbrot(parse(Int, argv[2]))
 end
