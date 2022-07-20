@@ -64,6 +64,37 @@ mutable struct Worker <: AbstractWorker
     hours_per_week::Int64
 end
 
+# Just for testing (Manually created)
+mutable struct StudentWorker
+    student_base::Student
+    worker_base::Worker
+    is_exhausted::Bool
+
+    StudentWorker(
+        name::String,
+        student_number::Int64,
+        domain::String,
+        company_name::String,
+        hours_per_week::Int64,
+        is_exhausted::Bool,
+    ) = begin
+            student_base = Student(name, student_number, domain)
+            worker_base = Worker(name, company_name, hours_per_week)
+            is_exhausted = is_exhausted
+            new(student_base, worker_base, is_exhausted)
+        end
+end
+
+Base.getproperty(self::StudentWorker, sym::Symbol) =
+    if sym === :name || sym === :student_number || 
+            sym === :domain
+        Base.getfield(self.student_base, sym)
+    elseif sym === :company_name || sym === :hours_per_week
+        Base.getfield(self.worker_base, sym)
+    else
+        Base.getfield(self, sym)
+    end
+
 if abspath(PROGRAM_FILE) == @__FILE__
     f = Foo()
     b = bar(f)
@@ -87,4 +118,14 @@ if abspath(PROGRAM_FILE) == @__FILE__
     @assert(w.hours_per_week == 35)
     @assert(get_id(w) == "John")
     println("OK")
+    # Trying multiple dispatch
+    sw = StudentWorker("Timo Marcello", 1111, "school.student.pt", "Cisco", 40, true)
+    @assert(sw.company_name == "Cisco")
+    @assert(sw.is_exhausted == true)
+    @assert(sw.name == "Timo Marcello")
+    @assert(sw.student_number == 1111)
+    @assert(sw.domain == "school.student.pt")
+    @assert(sw.company_name == "Cisco")
+    @assert(sw.hours_per_week == 40)
+    @assert(sw.is_exhausted == true)
 end
