@@ -50,7 +50,7 @@ end
         end
     end
 
-    function get_id(self)::String
+    function get_id(self::Person)::String
         return self.name
     end
 end
