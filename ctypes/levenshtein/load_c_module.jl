@@ -8,21 +8,15 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     cmodule = load_module()
-    source = "levenshtein"
-    target = "levenstein"
-    insert_cost = 1
-    delete_cost = 1
-    replace_cost = 2
-    levenshtein = Libdl.dlsym(cmodule, :levenshtein)
     res = ccall(
-        levenshtein,
+        Libdl.dlsym(cmodule, :levenshtein),
         Cint,
         (Ptr{Cchar}, Ptr{Cchar}, Cint, Cint, Cint),
-        encode(source, "utf-8"),
-        encode(target, "utf-8"),
-        Int32(insert_cost),
-        Int32(delete_cost),
-        Int32(replace_cost),
+        encode("levenshtein", "utf-8"),
+        encode("levenstein", "utf-8"),
+        Int32(1),
+        Int32(1),
+        Int32(2),
     )
-    println("Levenshtein distance between \'$(source)\' and \'$(target)\': $(res)")
+    println("Levenshtein distance between \'levenshtein\' and \'levenstein\': $(res)")
 end

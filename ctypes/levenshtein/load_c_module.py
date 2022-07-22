@@ -21,18 +21,11 @@ def load_module():
 if __name__ == "__main__":
     # load c library
     cmodule = load_module()
-    # define source and target strings
-    source = "levenshtein"
-    target = "levenstein"
-    # define edition costs
-    insert_cost = 1
-    delete_cost = 1
-    replace_cost = 2
     # call c function
-    res = cmodule.levenshtein(source.encode('utf-8'),  # encode the string into binary representation
-                            target.encode('utf-8'),
-                            np.int32(insert_cost),  #explicitly tells that we need a 32bits integer
-                            np.int32(delete_cost),
-                            np.int32(replace_cost))
-    print(f"Levenshtein distance between '{source}' and '{target}': {res}")
+    res = cmodule.levenshtein("levenshtein".encode("utf-8"),
+                            "levenstein".encode("utf-8"),
+                            np.int32(1),
+                            np.int32(1),
+                            np.int32(2))
+    print(f"Levenshtein distance between 'levenshtein' and 'levenstein': {res}")
     # prints "Levenshtein distance between 'levenshtein' and 'levenstein': 1"
