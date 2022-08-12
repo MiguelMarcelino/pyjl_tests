@@ -1,4 +1,4 @@
-using tempfile: NamedTemporaryFile
+
 if abspath(PROGRAM_FILE) == @__FILE__
     NamedTempFile::new() do temp_file
         file_path = temp_file.name

@@ -3,6 +3,10 @@ abstract type AbstractOptions end
 mutable struct Options <: AbstractOptions
     n::Int64
     v::Bool
+    Options(n::Int64 = 0, v::Bool = false) = begin
+        n = n
+        v = v
+    end
 end
 
 function __repr__(self::AbstractOptions)::String

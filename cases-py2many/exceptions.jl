@@ -24,6 +24,15 @@ function show()::Vector
         push!(s, "foo_2")
     end
     return s
+    try
+        throw(Exception("foo"))
+    catch exn
+        let e = exn
+            if e isa Exception
+                @assert(findfirst("foo", string(e)) != Nothing)
+            end
+        end
+    end
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__

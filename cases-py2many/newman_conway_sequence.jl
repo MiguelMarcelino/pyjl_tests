@@ -1,6 +1,7 @@
 #=  Python program to find the n-th element of
     Newman-Conway Sequence =#
-function newman_conway_sequence(n::Int64)
+function newman_conway_sequence(n::Int64)::Int64
+    r = 0
     f = [0, 1, 1]
     for i = 3:n
         r = f[f[i]+1] + f[i-f[i]+1]

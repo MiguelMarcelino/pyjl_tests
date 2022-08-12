@@ -1,4 +1,5 @@
 
+import datetime as dt
 import JSON as js
 function typing_test()::Int64
     a::Vector{Int64} = [1, 2, 3]
@@ -6,7 +7,7 @@ function typing_test()::Int64
 end
 
 function calendar_test()
-    return isoformat(dt.datetime.utcnow())
+    return isoformat(utcnow(dt.datetime))
 end
 
 function date_to_json(objDate::dt.datetime)::js
@@ -19,7 +20,7 @@ function date_to_json(objDate::dt.datetime)::js
         "minute" => objDate.minute,
         "second" => objDate.second,
         "microsecond" => objDate.microsecond,
-        "tz" => (tzname(objDate.tzinfo, objDate), total_seconds(objDate.utcoffset())),
+        "tz" => (tzname(objDate.tzinfo, objDate), total_seconds(utcoffset(objDate))),
     )
 end
 

@@ -1,16 +1,17 @@
+using SuperEnum
 
-abstract type AbstractColors <: IntEnum end
-abstract type AbstractPermissions <: IntFlag end
-@enum Colors begin
+@se Colors begin
     RED = 0
     GREEN = 1
     BLUE = 2
 end
-@enum Permissions begin
+
+@se Permissions begin
     R = 1
     W = 2
     X = 16
 end
+
 function show()
     color_map = Dict(Colors.RED => "red", Colors.GREEN => "green", Colors.BLUE => "blue")
     a = Colors.GREEN
