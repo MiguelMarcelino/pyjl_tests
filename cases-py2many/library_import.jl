@@ -7,11 +7,11 @@ function typing_test()::Int64
 end
 
 function calendar_test()
-    return isoformat(utcnow(dt.datetime))
+    return isoformat(utcnow(dt))
 end
 
 function date_to_json(objDate::dt.datetime)::js
-    return Dict(
+    return Dict{str, Any}(
         "__type__" => "datetime",
         "year" => objDate.year,
         "month" => objDate.month,
@@ -25,7 +25,7 @@ function date_to_json(objDate::dt.datetime)::js
 end
 
 function calendar_json_test()::js
-    now = now(dt.datetime, dt.timezone.utc)
+    now = now(dt, dt.timezone.utc)
     return dumps(js, now, default = date_to_json)
 end
 

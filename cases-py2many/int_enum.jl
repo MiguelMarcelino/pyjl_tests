@@ -13,7 +13,11 @@ end
 end
 
 function show()
-    color_map = Dict(Colors.RED => "red", Colors.GREEN => "green", Colors.BLUE => "blue")
+    color_map = Dict{Colors, String}(
+        Colors.RED => "red",
+        Colors.GREEN => "green",
+        Colors.BLUE => "blue",
+    )
     a = Colors.GREEN
     if a == Colors.GREEN
         println("green")

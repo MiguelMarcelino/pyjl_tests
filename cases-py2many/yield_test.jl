@@ -69,7 +69,6 @@ function fib()
 end
 
 mutable struct TestClass <: AbstractTestClass
-
 end
 function generator_func(self::AbstractTestClass)
     Channel() do ch_generator_func

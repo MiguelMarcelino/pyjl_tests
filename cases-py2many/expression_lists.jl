@@ -15,7 +15,9 @@ function starred_item()
     @assert(a == 0)
     @assert(b == [1, 2, 3, 4])
     @assert(c == 5)
-    @assert(Dict("x" => 1, Dict("y" => 2)...) == Dict("x" => 1, "y" => 2))
+    @assert(
+        Dict("x" => 1, Dict{str, int}("y" => 2)...) == Dict{str, int}("x" => 1, "y" => 2)
+    )
     @assert([0:3..., 4] == [0, 1, 2, 3, 4])
     @assert(Set([0:3..., 4]) == Set([0, 1, 2, 3, 4]))
 end

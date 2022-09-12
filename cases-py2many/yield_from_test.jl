@@ -17,9 +17,9 @@ end
 function yield_from()
     Channel() do ch_yield_from
         # Unsupported
-        @yield_from generator1()
+        # yield_from generator1()
         # Unsupported
-        @yield_from generator2()
+        # yield_from generator2()
     end
 end
 

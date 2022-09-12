@@ -1,5 +1,5 @@
 function nested_containers()::Bool
-    CODES = Dict("KEY" => [1, 3])
+    CODES = Dict{String, Vector{Int64}}("KEY" => [1, 3])
     return 1 ∈ CODES["KEY"]
 end
 

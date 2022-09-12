@@ -1,38 +1,38 @@
+# Transpiled with flags: 
+# - oop
 #= Unit tests for numbers.py. =#
+using ObjectOriented
 using Test
 
-abstract type AbstractTestNumbers end
-mutable struct TestNumbers <: AbstractTestNumbers end
-function test_int(self)
-    @test Int64 <: Integer
-    @test (7 == Int(7).real)
-    @test (0 == Int(7).imag)
-    @test (7 == conj(Int(7)))
-    @test (-7 == conj(Int(-7)))
-    @test (7 == Int(7).numerator)
-    @test (1 == Int(7).denominator)
+@oodef mutable struct TestNumbers
+
 end
 
-function test_float(self)
+function test_int(self::@like(TestNumbers))
+    @test Int64 <: Integer
+    @test (7 == real(Int(7)))
+    @test (0 == imag(Int(7)))
+    @test (7 == conj(Int(7)))
+    @test (-7 == conj(Int(-7)))
+    @test (7 == numerator(Int(7)))
+    @test (1 == denominator(Int(7)))
+end
+
+function test_float(self::@like(TestNumbers))
     @test !(Float64 <: Rational)
     @test Float64 <: Real
-    @test (7.3 == float(7.3).real)
-    @test (0 == float(7.3).imag)
+    @test (7.3 == real(float(7.3)))
+    @test (0 == imag(float(7.3)))
     @test (7.3 == conj(float(7.3)))
     @test (-7.3 == conj(float(-7.3)))
 end
 
-function test_complex(self)
+function test_complex(self::@like(TestNumbers))
     @test !(Complex <: Real)
     @test Complex <: Complex
-    c1, c2 = (complex(3, 2), complex(4, 1))
-    @test_throws TypeError math.trunc(c1)
-    @test_throws TypeError operator.mod(c1, c2)
-    @test_throws TypeError divmod(c1, c2)
-    @test_throws TypeError operator.floordiv(c1, c2)
-    @test_throws TypeError float(c1)
-    @test_throws TypeError int(c1)
+    (c1, c2) = (complex(3, 2), complex(4, 1))
 end
+
 
 if abspath(PROGRAM_FILE) == @__FILE__
     test_numbers = TestNumbers()

@@ -1,25 +1,25 @@
 function implicit_keys()::Bool
-    CODES = Dict("KEY" => 1)
+    CODES = Dict{String, Int64}("KEY" => 1)
     return "KEY" ∈ keys(CODES)
 end
 
 function explicit_keys()::Bool
-    CODES = Dict("KEY" => 1)
+    CODES = Dict{String, Int64}("KEY" => 1)
     return "KEY" ∈ keys(CODES)
 end
 
 function dict_values()::Bool
-    CODES = Dict("KEY" => 1)
+    CODES = Dict{String, Int64}("KEY" => 1)
     return 1 ∈ values(CODES)
 end
 
 function return_dict_index_str(key::String)
-    CODES = Dict("KEY" => 1)
+    CODES = Dict{String, Int64}("KEY" => 1)
     return CODES[key]
 end
 
 function return_dict_index_int(key::Int64)
-    CODES = Dict(1 => "one")
+    CODES = Dict{Int64, String}(1 => "one")
     return CODES[key]
 end
 

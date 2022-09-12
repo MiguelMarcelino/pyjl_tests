@@ -23,9 +23,9 @@ function __key(self::AbstractRectangle)
 end
 
 function show()
-    r = Rectangle(1, 1)
+    r = Rectangle(height = 1, length = 1)
     @assert(is_square(r))
-    r = Rectangle(1, 2)
+    r = Rectangle(height = 1, length = 2)
     @assert(!is_square(r))
     println(r.height)
     println(r.length)
